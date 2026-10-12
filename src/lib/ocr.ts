@@ -24,8 +24,13 @@ Pročitaj registre energije koji se vide. Oznake registara (OBIS):
 - 1.8.1 ili 1.8.1.0 ili 01.8.1 = tarifa 1 (viša, VT)
 - 1.8.2 ili 1.8.2.0 ili 01.8.2 = tarifa 2 (niža, NT)
 - 1.8.0 = ukupno; 2.8.x = predana energija (proizvodnja)
+- 0.9.1 je vrijeme, 0.9.2 datum: to NISU registri energije, ne vraćaj ih.
 Vrijednost je u kWh i može imati vodeće nule i decimalni dio (npr. 0015283.4).
+Na Iskra AM550 zadnja od 8 znamenki je decimala (00154365 = 15436.5).
 Ako oznaka registra nije vidljiva, ne nagađaj: stavi "obis": "?".
+Ako je ijedna znamenka mutna, prekrivena odsjajem ili nesigurna, NE vraćaj tu
+vrijednost: ostavi "registri" prazan i u "napomena" napiši da treba oštrija slika.
+Pogrešan broj je gori od nikakvog.
 Odgovori SAMO JSON-om, bez ikakvog drugog teksta:
 {"registri":[{"obis":"1.8.1","vrijednost":15283.4}],"napomena":"kratko, ako je nešto nečitljivo"}`;
 
