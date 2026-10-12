@@ -55,6 +55,14 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `DELETE /api/snimak/:id` | briše snimak i slike |
 | `GET /api/slika/<ključ>/<uuid>.jpg` | slika |
 
+**Usporedba sa zadnjim stanjem** (`src/lib/usporedba.ts`): zadnje stanje je
+najnovije od (a) zadnjeg očitanja u uvozu s HEP-a i (b) našeg očitanja koje je HEP
+prihvatio (`hep_dostava.Status = 1`). Za svaki pročitani registar probaju se
+položaji decimalnog zareza (×10^k) i, ako oznaka tarife nije vidljiva, obje
+tarife; bira se vrijednost odmah iznad zadnjeg stanja (najviše 150 kWh/dan).
+Primjer 2026-10-12, AM550: zaslon 0009062.6, model 906.25, usporedba 9062.5.
+`/api/ocitaj` prima opcionalno `omm` i vraća `zadnje`, `usporedba`, `upozorenja`.
+
 `t1`/`t2` su cijeli kWh (decimale se odbacuju). `neodredeno` je vrijednost bez
 sigurne oznake tarife; klijent je stavlja u prvo prazno polje (prva slika 1.8.1,
 druga 1.8.2) i upozori.

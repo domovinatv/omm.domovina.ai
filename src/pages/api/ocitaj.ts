@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 import { zapisi } from "../../lib/dnevnik";
 import { greska, json, noviId, opcije, uredaj } from "../../lib/http";
 import { kwh, procitaj } from "../../lib/ocr";
+import { usporedi, zadnjeStanje } from "../../lib/usporedba";
 
 /**
  * POST multipart `slika` (jedna slika zaslona) → prijedlog 1.8.1 / 1.8.2.
@@ -22,6 +23,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const forma = await request.formData().catch(() => null);
   const slika = forma?.get("slika");
+  const ommPolje = forma?.get("omm");
+  const omm = typeof ommPolje === "string" && /^\d{10}$/.test(ommPolje) ? ommPolje : null;
   if (!(slika instanceof File)) return greska("Pošalji sliku u polju 'slika'");
   if (slika.size > 8 * 1024 * 1024) return greska("Slika je veća od 8 MB", 413);
 
@@ -40,22 +43,44 @@ export const POST: APIRoute = async ({ request }) => {
     const zatrazen = forma?.get("model");
     const model = typeof zatrazen === "string" && /^@cf\/[\w.\/-]+$/.test(zatrazen) ? zatrazen : env.OCR_MODEL;
     const r = await procitaj(env.AI, model, bajtovi, mime);
-    const t1 = r.registri.find((x) => x.obis === "1.8.1");
-    const t2 = r.registri.find((x) => x.obis === "1.8.2");
+    let t1: number | null = r.registri.find((x) => x.obis === "1.8.1")?.vrijednost ?? null;
+    let t2: number | null = r.registri.find((x) => x.obis === "1.8.2")?.vrijednost ?? null;
     // Vrijednost bez sigurne oznake tarife (npr. "?" ili 1.8.0): klijent je
     // stavlja u prvo prazno polje i upozori korisnika.
-    const neodredeno = !t1 && !t2 ? r.registri.find((x) => !x.obis.startsWith("2.")) : undefined;
+    let neodredeno: number | null =
+      t1 == null && t2 == null ? (r.registri.find((x) => !x.obis.startsWith("2."))?.vrijednost ?? null) : null;
+
+    // Usporedba sa zadnjim poznatim stanjem: ispravlja zarez i određuje tarifu.
+    const zadnje = await zadnjeStanje(kljuc, omm);
+    const usporedba = zadnje ? usporedi(r.registri, zadnje) : null;
+    if (usporedba) {
+      for (const p of usporedba.prijedlozi) {
+        if (p.tarifa === "t1") t1 = p.vrijednost;
+        else t2 = p.vrijednost;
+      }
+      if (usporedba.prijedlozi.length) neodredeno = null;
+    }
+    const upozorenja = [
+      ...(usporedba?.upozorenja ?? []),
+      ...(usporedba?.prijedlozi ?? []).flatMap((p) => [
+        ...(p.ispravljenZarez ? [`Model je pročitao ${p.procitano}; prema zadnjem stanju to je ${p.vrijednost}.`] : []),
+        ...(p.tarifaPoUsporedbi ? [`Oznaka tarife nije vidljiva; po zadnjem stanju je ${p.tarifa === "t1" ? "1.8.1" : "1.8.2"}.`] : []),
+      ]),
+    ];
     await zapisi(request, {
       uredaj: kljuc,
       vrsta: "ocitaj",
       ishod: "ok",
-      tijelo: { slika: r2, model, registri: r.registri, napomena: r.napomena },
+      tijelo: { slika: r2, model, registri: r.registri, napomena: r.napomena, zadnje, usporedba },
     });
     return json({
       slika: r2,
-      t1: t1 ? kwh(t1.vrijednost) : null,
-      t2: t2 ? kwh(t2.vrijednost) : null,
-      neodredeno: neodredeno ? kwh(neodredeno.vrijednost) : null,
+      t1: t1 == null ? null : kwh(t1),
+      t2: t2 == null ? null : kwh(t2),
+      neodredeno: neodredeno == null ? null : kwh(neodredeno),
+      zadnje,
+      usporedba: usporedba?.prijedlozi ?? [],
+      upozorenja,
       registri: r.registri,
       napomena: r.napomena ?? null,
       model: r.model,

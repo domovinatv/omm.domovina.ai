@@ -142,6 +142,8 @@
           try {
             const fd = new FormData();
             fd.append("slika", await smanji(f), "brojilo.jpg");
+            const omm = $<HTMLInputElement>("omm").value.trim();
+            if (/^\d{10}$/.test(omm)) fd.append("omm", omm);
             const r = await fetch("/api/ocitaj", { method: "POST", headers: auth, body: fd });
             const d = await r.json();
             if (d.slika) slike.push(d.slika);
@@ -159,6 +161,9 @@
               continue;
             }
             const nasao = [d.t1 != null && "1.8.1", d.t2 != null && "1.8.2"].filter(Boolean).join(" i ");
+            const dodatno = (d.upozorenja ?? []).join(" ");
+            if (d.zadnje) stanje("stanje-lokacija", `Zadnje stanje (${d.zadnje.datum}): 1.8.1 ${d.zadnje.t1 ?? "–"} · 1.8.2 ${d.zadnje.t2 ?? "–"}`);
+            if (nasao && dodatno) { stanje("stanje-ocr", `Pročitano: ${nasao}. ${dodatno} Provjeri brojeve.`, "upozorenje"); osvjeziGumb(); continue; }
             stanje("stanje-ocr", nasao ? `Pročitano: ${nasao}. Provjeri brojeve.` :
               `Nisam našao 1.8.1 ni 1.8.2${d.napomena ? ` (${d.napomena})` : ""}. Probaj opet ili upiši ručno.`,
               nasao ? "" : "upozorenje");
