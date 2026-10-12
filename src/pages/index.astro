@@ -94,6 +94,13 @@
       // Ključ uređaja umjesto prijave (privremeno).
       function kljuc(): string {
         let k: string | null = null;
+        // ?k=<ključ> iz aplikacije: preuzmi ključ uređaja i makni ga iz adrese.
+        const izAdrese = new URLSearchParams(location.search).get("k");
+        if (izAdrese && /^[A-Za-z0-9_-]{22,64}$/.test(izAdrese)) {
+          try { localStorage.setItem("omm-kljuc", izAdrese); } catch {}
+          history.replaceState(null, "", location.pathname);
+          return izAdrese;
+        }
         try { k = localStorage.getItem("omm-kljuc"); } catch {}
         if (!k) {
           const b = crypto.getRandomValues(new Uint8Array(18));
