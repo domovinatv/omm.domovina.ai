@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "omm-domovina-ai",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // D.O.M. račun — isti kao podcast.domovina.ai i glazba.domovina.ai.
+  "account_id": "7dc7167b7e2e00923bfa7cd697df14e4",
+
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "omm-domovina-ai",
+      "database_id": "c0031a54-6fea-4e69-9b60-d37f68d801a5",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  // Slike brojila, ključ <uređaj>/<id>.jpg. Čuvamo ih da se OCR može provjeriti.
+  "r2_buckets": [{ "binding": "SLIKE", "bucket_name": "omm-domovina-ai-slike" }],
+  "ai": { "binding": "AI" },
+
+  "vars": {
+    // Vision model za čitanje zaslona brojila. Usporedba 2026-10-12 na slici
+    // Iskra MT171: llama-4-scout točno za 2 s (oznaku registra zna izmisliti),
+    // kimi-k2.6 točno za 30 s, gemma-4 prazan odgovor, mistral-small greška.
+    "OCR_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct"
+  },
+
+  "routes": [{ "pattern": "omm.domovina.ai", "custom_domain": true }],
+  "observability": { "enabled": true }
+}

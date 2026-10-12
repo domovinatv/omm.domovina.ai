@@ -1,0 +1,228 @@
+---
+// Očitavač brojila u pregledniku: slika zaslona → OCR → potvrda → snimak.
+// Ista API ruta služi i mobilnoj aplikaciji (flutter_moja_mreza/example).
+---
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Očitaj brojilo</title>
+    <meta name="description" content="Uslikaj zaslon brojila, provjeri 1.8.1 i 1.8.2 i spremi očitanje." />
+    <style>
+      :root {
+        --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
+        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --upozorenje: #9a5b00; --greska: #b3261e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
+          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --upozorenje: #f0b45a; --greska: #ff8a80; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--tekst);
+        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 560px; margin: 0 auto; padding: 24px 16px 64px; }
+      h1 { font-size: 1.6rem; margin: 0 0 4px; }
+      h2 { font-size: 1.1rem; margin: 0 0 12px; }
+      p.uvod { color: var(--blijedo); margin: 0 0 20px; }
+      .kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+      label { display: block; font-size: .9rem; color: var(--blijedo); margin: 12px 0 4px; }
+      input[type=number], input[type=text] { width: 100%; font-size: 1.4rem; padding: 10px 12px; border-radius: 10px;
+        border: 1px solid var(--rub); background: var(--bg); color: var(--tekst); font-variant-numeric: tabular-nums; }
+      button, .gumb { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+        min-height: 48px; border: 0; border-radius: 12px; font: inherit; font-weight: 600; cursor: pointer;
+        background: var(--akcent); color: var(--akcent-tekst); margin-top: 12px; }
+      button.sporedni, .gumb.sporedni { background: transparent; color: var(--tekst); border: 1px solid var(--rub); }
+      button:disabled { opacity: .5; cursor: default; }
+      input[type=file] { display: none; }
+      .slike { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      .slike img { width: 88px; height: 88px; object-fit: cover; border-radius: 10px; border: 1px solid var(--rub); }
+      .stanje { font-size: .9rem; color: var(--blijedo); min-height: 1.5em; margin-top: 8px; }
+      .stanje.greska { color: var(--greska); } .stanje.upozorenje { color: var(--upozorenje); }
+      .red { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      ul.snimci { list-style: none; padding: 0; margin: 0; }
+      ul.snimci li { padding: 10px 0; border-top: 1px solid var(--rub); display: flex; gap: 12px; align-items: center; }
+      ul.snimci li:first-child { border-top: 0; }
+      ul.snimci img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+      ul.snimci .vrijednosti { font-variant-numeric: tabular-nums; font-weight: 600; }
+      ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
+      details { font-size: .85rem; color: var(--blijedo); margin-top: 8px; }
+      pre { white-space: pre-wrap; word-break: break-word; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Očitaj brojilo</h1>
+      <p class="uvod">Uslikaj zaslon brojila dok pokazuje <b>1.8.1</b>, pa dok pokazuje <b>1.8.2</b>.
+        Brojeve pročitamo automatski, a ti ih provjeriš prije spremanja.</p>
+
+      <section class="kartica">
+        <h2>1. Slike zaslona</h2>
+        <label class="gumb" for="kamera">📷 Uslikaj zaslon</label>
+        <input id="kamera" type="file" accept="image/*" capture="environment" />
+        <label class="gumb sporedni" for="galerija">Odaberi iz galerije</label>
+        <input id="galerija" type="file" accept="image/*" multiple />
+        <div class="slike" id="slike"></div>
+        <div class="stanje" id="stanje-ocr"></div>
+      </section>
+
+      <section class="kartica">
+        <h2>2. Provjeri brojeve</h2>
+        <div class="red">
+          <div><label for="t1">1.8.1 (viša tarifa), kWh</label><input id="t1" type="number" inputmode="numeric" min="0" step="1" /></div>
+          <div><label for="t2">1.8.2 (niža tarifa), kWh</label><input id="t2" type="number" inputmode="numeric" min="0" step="1" /></div>
+        </div>
+        <label for="omm">OMM (10 znamenki, nije obavezno)</label>
+        <input id="omm" type="text" inputmode="numeric" maxlength="10" pattern="\d{10}" />
+        <button class="sporedni" id="lokacija" type="button">📍 Dodaj lokaciju</button>
+        <div class="stanje" id="stanje-lokacija"></div>
+        <button id="spremi" type="button" disabled>Spremi očitanje</button>
+        <div class="stanje" id="stanje-spremi"></div>
+        <details><summary>Što je pročitao model</summary><pre id="sirovo"></pre></details>
+      </section>
+
+      <section class="kartica">
+        <h2>Moja očitanja</h2>
+        <ul class="snimci" id="snimci"><li class="meta">Još nema očitanja.</li></ul>
+      </section>
+      <p class="stanje">Ovo je rana verzija bez prijave: očitanja su vezana uz ovaj preglednik.</p>
+    </main>
+
+    <script>
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+      // Ključ uređaja umjesto prijave (privremeno).
+      function kljuc(): string {
+        let k: string | null = null;
+        try { k = localStorage.getItem("omm-kljuc"); } catch {}
+        if (!k) {
+          const b = crypto.getRandomValues(new Uint8Array(18));
+          k = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+          try { localStorage.setItem("omm-kljuc", k); } catch {}
+        }
+        return k;
+      }
+      const auth = { Authorization: `Bearer ${kljuc()}` };
+
+      const stanje = (id: string, tekst: string, vrsta = "") => {
+        const el = $(id); el.textContent = tekst; el.className = `stanje ${vrsta}`;
+      };
+
+      // Smanji sliku prije slanja: brže i dovoljno za zaslon brojila.
+      async function smanji(f: File): Promise<Blob> {
+        const bmp = await createImageBitmap(f);
+        const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+        c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
+        return new Promise((ok) => c.toBlob((b) => ok(b!), "image/jpeg", 0.85));
+      }
+
+      const slike: string[] = [];
+      const ocr: unknown[] = [];
+      let lokacija: { lat: number; lon: number; tocnost_m: number } | null = null;
+
+      function osvjeziGumb() {
+        $<HTMLButtonElement>("spremi").disabled = !$<HTMLInputElement>("t1").value;
+      }
+
+      async function obradi(datoteke: FileList | null) {
+        for (const f of Array.from(datoteke ?? [])) {
+          stanje("stanje-ocr", "Čitam brojeve…");
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(f);
+          $("slike").append(img);
+          try {
+            const fd = new FormData();
+            fd.append("slika", await smanji(f), "brojilo.jpg");
+            const r = await fetch("/api/ocitaj", { method: "POST", headers: auth, body: fd });
+            const d = await r.json();
+            if (d.slika) slike.push(d.slika);
+            ocr.push(d);
+            $("sirovo").textContent += `${d.model ?? ""}\n${d.sirovo ?? d.greska ?? ""}\n\n`;
+            if (!r.ok) { stanje("stanje-ocr", d.greska ?? "Čitanje nije uspjelo", "greska"); continue; }
+            if (d.t1 != null) $<HTMLInputElement>("t1").value = String(d.t1);
+            if (d.t2 != null) $<HTMLInputElement>("t2").value = String(d.t2);
+            if (d.t1 == null && d.t2 == null && d.neodredeno != null) {
+              const t1 = $<HTMLInputElement>("t1");
+              const polje = t1.value ? $<HTMLInputElement>("t2") : t1;
+              polje.value = String(d.neodredeno);
+              stanje("stanje-ocr", `Pročitano ${d.neodredeno}, ali oznaka tarife nije sigurna: upisano u ${polje.id === "t1" ? "1.8.1" : "1.8.2"}. Provjeri.`, "upozorenje");
+              osvjeziGumb();
+              continue;
+            }
+            const nasao = [d.t1 != null && "1.8.1", d.t2 != null && "1.8.2"].filter(Boolean).join(" i ");
+            stanje("stanje-ocr", nasao ? `Pročitano: ${nasao}. Provjeri brojeve.` :
+              `Nisam našao 1.8.1 ni 1.8.2${d.napomena ? ` (${d.napomena})` : ""}. Probaj opet ili upiši ručno.`,
+              nasao ? "" : "upozorenje");
+          } catch (e) {
+            stanje("stanje-ocr", `Greška: ${e}`, "greska");
+          }
+          osvjeziGumb();
+        }
+      }
+      $<HTMLInputElement>("kamera").onchange = (e) => obradi((e.target as HTMLInputElement).files);
+      $<HTMLInputElement>("galerija").onchange = (e) => obradi((e.target as HTMLInputElement).files);
+      $("t1").oninput = osvjeziGumb;
+
+      $("lokacija").onclick = () => {
+        if (!navigator.geolocation) return stanje("stanje-lokacija", "Preglednik ne daje lokaciju", "greska");
+        stanje("stanje-lokacija", "Tražim lokaciju…");
+        navigator.geolocation.getCurrentPosition(
+          (p) => {
+            lokacija = { lat: p.coords.latitude, lon: p.coords.longitude, tocnost_m: p.coords.accuracy };
+            stanje("stanje-lokacija", `📍 ${lokacija.lat.toFixed(5)}, ${lokacija.lon.toFixed(5)} (±${Math.round(lokacija.tocnost_m)} m)`);
+          },
+          (e) => stanje("stanje-lokacija", `Lokacija nije dostupna: ${e.message}`, "greska"),
+          { enableHighAccuracy: true, timeout: 15000 },
+        );
+      };
+
+      $("spremi").onclick = async () => {
+        const t1 = parseInt($<HTMLInputElement>("t1").value, 10);
+        const t2v = $<HTMLInputElement>("t2").value;
+        const omm = $<HTMLInputElement>("omm").value.trim();
+        if (omm && !/^\d{10}$/.test(omm)) return stanje("stanje-spremi", "OMM ima 10 znamenki", "greska");
+        const r = await fetch("/api/snimak", {
+          method: "POST",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            izvor: slike.length ? "foto" : "rucno", t1, t2: t2v ? parseInt(t2v, 10) : null,
+            omm: omm || null, slike, ocr, lokacija,
+          }),
+        });
+        const d = await r.json();
+        if (!r.ok) return stanje("stanje-spremi", d.greska ?? "Spremanje nije uspjelo", "greska");
+        stanje("stanje-spremi", "Spremljeno ✓");
+        slike.length = 0; ocr.length = 0; $("slike").innerHTML = ""; $("sirovo").textContent = "";
+        ucitaj();
+      };
+
+      async function ucitaj() {
+        const r = await fetch("/api/snimak", { headers: auth });
+        if (!r.ok) return;
+        const lista = await r.json();
+        const ul = $("snimci");
+        if (!lista.length) return;
+        ul.innerHTML = "";
+        for (const s of lista) {
+          const li = document.createElement("li");
+          if (s.slike[0]) {
+            const img = document.createElement("img");
+            img.src = `/api/slika/${s.slike[0]}`; img.alt = "";
+            li.append(img);
+          }
+          const div = document.createElement("div");
+          const v = document.createElement("div"); v.className = "vrijednosti";
+          v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže" : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
+          const m = document.createElement("div"); m.className = "meta";
+          m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`,
+            s.lat != null && "📍", s.hep_dostava && (s.hep_dostava.Status === 1 ? "poslano HEP-u ✓" : "HEP: " + (s.hep_dostava.Opis ?? "?"))]
+            .filter(Boolean).join(" · ");
+          div.append(v, m); li.append(div); ul.append(li);
+        }
+      }
+      ucitaj();
+    </script>
+  </body>
+</html>
