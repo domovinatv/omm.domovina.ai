@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { zapisi } from "../../../lib/dnevnik";
 import { greska, json, noviId, opcije, uredaj } from "../../../lib/http";
 
 type Ulaz = {
@@ -13,6 +14,11 @@ type Ulaz = {
   uvoz?: unknown;
   hep_dostava?: unknown;
 };
+
+async function sha256(tekst: string): Promise<string> {
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(tekst));
+  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 const cijeli = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null);
 const broj = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -34,11 +40,30 @@ export const POST: APIRoute = async ({ request }) => {
   if (izvor !== "hep" && t1 === null) return greska("Nedostaje stanje 1.8.1 (t1)");
   if (izvor === "hep" && b.uvoz == null) return greska("Izvor 'hep' traži uvoz");
 
-  const id = noviId();
   const stvoren = new Date().toISOString();
-  await env.DB.prepare(
-    `INSERT INTO snimci (id, uredaj, stvoren, izvor, omm, t1, t2, slike, ocr, lat, lon, tocnost_m, uvoz, hep_dostava)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  // Isti sadržaj = isti snimak; vraća se postojeći umjesto duplikata.
+  const otisak = await sha256(
+    JSON.stringify(
+      izvor === "hep"
+        ? { izvor, uvoz: b.uvoz }
+        : { izvor: "ocitanje", omm, t1, t2, dan: stvoren.slice(0, 10) },
+    ),
+  );
+  const nadji = () =>
+    env.DB.prepare(`SELECT id, stvoren FROM snimci WHERE uredaj = ? AND otisak = ?`)
+      .bind(kljuc, otisak)
+      .first<{ id: string; stvoren: string }>();
+  const postojeci = await nadji();
+  if (postojeci) {
+    await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "duplikat", snimakId: postojeci.id, otisak, tijelo: b });
+    return json({ ...postojeci, duplikat: true });
+  }
+
+  const id = noviId();
+  const upis = await env.DB.prepare(
+    `INSERT INTO snimci (id, uredaj, stvoren, izvor, omm, t1, t2, slike, ocr, lat, lon, tocnost_m, uvoz, hep_dostava, otisak)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT (uredaj, otisak) DO NOTHING`,
   )
     .bind(
       id,
@@ -55,8 +80,16 @@ export const POST: APIRoute = async ({ request }) => {
       broj(b.lokacija?.tocnost_m),
       b.uvoz == null ? null : JSON.stringify(b.uvoz),
       b.hep_dostava == null ? null : JSON.stringify(b.hep_dostava),
+      otisak,
     )
     .run();
+  // Dva istovremena zahtjeva: drugi ne upiše ništa i vrati prvi.
+  if (!upis.meta.changes) {
+    const prvi = await nadji();
+    await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "duplikat", snimakId: prvi?.id, otisak, tijelo: b });
+    return json({ ...prvi, duplikat: true });
+  }
+  await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "novo", snimakId: id, otisak, tijelo: b });
   return json({ id, stvoren }, 201);
 };
 

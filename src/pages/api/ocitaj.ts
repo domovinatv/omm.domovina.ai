@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { zapisi } from "../../lib/dnevnik";
 import { greska, json, noviId, opcije, uredaj } from "../../lib/http";
 import { kwh, procitaj } from "../../lib/ocr";
 
@@ -32,6 +33,12 @@ export const POST: APIRoute = async ({ request }) => {
     // Vrijednost bez sigurne oznake tarife (npr. "?" ili 1.8.0): klijent je
     // stavlja u prvo prazno polje i upozori korisnika.
     const neodredeno = !t1 && !t2 ? r.registri.find((x) => !x.obis.startsWith("2.")) : undefined;
+    await zapisi(request, {
+      uredaj: kljuc,
+      vrsta: "ocitaj",
+      ishod: "ok",
+      tijelo: { slika: r2, model, registri: r.registri, napomena: r.napomena },
+    });
     return json({
       slika: r2,
       t1: t1 ? kwh(t1.vrijednost) : null,
@@ -43,6 +50,7 @@ export const POST: APIRoute = async ({ request }) => {
       sirovo: r.sirovo,
     });
   } catch (e) {
+    await zapisi(request, { uredaj: kljuc, vrsta: "ocitaj", ishod: "greska", tijelo: { slika: r2, greska: String(e) } });
     return json({ slika: r2, t1: null, t2: null, registri: [], greska: `OCR nije uspio: ${e}` }, 502);
   }
 };
