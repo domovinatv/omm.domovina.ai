@@ -36,8 +36,9 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 ## Baza: pročišćeno + sirovi dnevnik
 
 - **`snimci`** je pročišćena tablica: jedan redak po otisku sadržaja
-  (`UNIQUE (uredaj, otisak)`). Otisak uvoza s HEP-a je `uvoz` (nosi trenutak
-  dohvata), a otisak očitanja je OMM + t1 + t2 + dan (UTC). Ponovljeni
+  (`UNIQUE (uredaj, otisak)`). Otisak uvoza s HEP-a je `uvoz` bez `dohvaceno`
+  (od 2026-10-13; prije je trenutak dohvata činio svaki uvoz novim), a otisak
+  očitanja je OMM + t1 + t2 + dan (UTC). Ponovljeni
   `POST /api/snimak` vraća postojeći snimak (200, `duplikat: true`).
 - **`dogadaji`** je sirovi dnevnik svakog upisa (`snimak`, `ocitaj`, `dostava`,
   `brisanje`) s ishodom (`novo`, `duplikat`, `ok`, `greska`), tijelom zahtjeva,
@@ -49,14 +50,15 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | Ruta | Što |
 |---|---|
 | `POST /api/ocitaj` | multipart `slika` (+ opcionalno `model`) → `{slika, t1, t2, neodredeno, registri, napomena, sirovo}` |
-| `POST /api/snimak` | (201 novi, 200 + `duplikat: true` postojeći) JSON `{izvor: foto\|rucno\|hep, t1, t2, omm, slike[], ocr, lokacija{lat,lon,tocnost_m}, uvoz, hep_dostava}` |
+| `POST /api/snimak` | (201 novi, 200 + `duplikat: true` postojeći) JSON `{izvor: foto\|rucno\|hep\|hep-moj-racun, t1, t2, omm, slike[], ocr, lokacija{lat,lon,tocnost_m}, uvoz, hep_dostava}` |
 | `GET /api/snimak` | snimci ovog ključa |
 | `PATCH /api/snimak/:id` | `{hep_dostava, omm?}` nakon slanja HEP-u |
 | `DELETE /api/snimak/:id` | briše snimak i slike |
 | `GET /api/slika/<ključ>/<uuid>.jpg` | slika |
 
 **Usporedba sa zadnjim stanjem** (`src/lib/usporedba.ts`): zadnje stanje je
-najnovije od (a) zadnjeg očitanja u uvozu s HEP-a i (b) našeg očitanja koje je HEP
+najnovije od (a) zadnjeg očitanja u zadnjem uvozu s Moje mreže (`hep`, `mjesta[]`)
+odnosno Mojeg računa HEP Elektre (`hep-moj-racun`, `kupci[]`), bez procjena ODS-a, i (b) našeg očitanja koje je HEP
 prihvatio (`hep_dostava.Status = 1`). Za svaki pročitani registar probaju se
 položaji decimalnog zareza (×10^k) i, ako oznaka tarife nije vidljiva, obje
 tarife; bira se vrijednost odmah iznad zadnjeg stanja (najviše 150 kWh/dan).

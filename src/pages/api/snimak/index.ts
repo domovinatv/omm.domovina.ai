@@ -23,6 +23,9 @@ async function sha256(tekst: string): Promise<string> {
 const cijeli = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null);
 const broj = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
+/** `hep`: uvoz s Moje mreže (HEP ODS), `hep-moj-racun`: s Mojeg računa (HEP Elektra). */
+const IZVORI = ["foto", "rucno", "hep", "hep-moj-racun"];
+
 /** POST JSON snimak (očitanje i/ili uvoz s HEP-a). */
 export const POST: APIRoute = async ({ request }) => {
   const kljuc = uredaj(request);
@@ -30,22 +33,28 @@ export const POST: APIRoute = async ({ request }) => {
   const b = (await request.json().catch(() => null)) as Ulaz | null;
   if (!b) return greska("Tijelo mora biti JSON");
 
-  const izvor = b.izvor === "foto" || b.izvor === "rucno" || b.izvor === "hep" ? b.izvor : null;
-  if (!izvor) return greska("izvor mora biti 'foto', 'rucno' ili 'hep'");
+  const izvor = IZVORI.includes(b.izvor as string) ? (b.izvor as string) : null;
+  if (!izvor) return greska(`izvor mora biti ${IZVORI.map((i) => `'${i}'`).join(", ")}`);
+  const uvozni = izvor === "hep" || izvor === "hep-moj-racun";
   const omm = b.omm == null ? null : String(b.omm);
   if (omm !== null && !/^\d{10}$/.test(omm)) return greska("OMM ima 10 znamenki");
   const slike = (b.slike ?? []).filter((s) => typeof s === "string" && s.startsWith(`${kljuc}/`));
   const t1 = cijeli(b.t1);
   const t2 = cijeli(b.t2);
-  if (izvor !== "hep" && t1 === null) return greska("Nedostaje stanje 1.8.1 (t1)");
-  if (izvor === "hep" && b.uvoz == null) return greska("Izvor 'hep' traži uvoz");
+  if (!uvozni && t1 === null) return greska("Nedostaje stanje 1.8.1 (t1)");
+  if (uvozni && b.uvoz == null) return greska(`Izvor '${izvor}' traži uvoz`);
+  if (izvor === "hep-moj-racun" && !Array.isArray((b.uvoz as { kupci?: unknown })?.kupci)) {
+    return greska("Uvoz s Mojeg računa traži kupci[]");
+  }
 
   const stvoren = new Date().toISOString();
   // Isti sadržaj = isti snimak; vraća se postojeći umjesto duplikata.
+  // Trenutak dohvata nije sadržaj: isti podaci uvezeni ponovno su duplikat
+  // (koliko je puta stigao vidi se u dnevniku).
   const otisak = await sha256(
     JSON.stringify(
-      izvor === "hep"
-        ? { izvor, uvoz: b.uvoz }
+      uvozni
+        ? { izvor, uvoz: { ...(b.uvoz as object), dohvaceno: undefined } }
         : { izvor: "ocitanje", omm, t1, t2, dan: stvoren.slice(0, 10) },
     ),
   );
