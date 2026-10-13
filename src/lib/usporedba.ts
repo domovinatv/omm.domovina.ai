@@ -13,36 +13,42 @@ export interface Zadnje {
   t1: number | null;
   t2: number | null;
   datum: string; // YYYY-MM-DD
-  izvor: string; // 'hep' (uvoz s Moje mreže) ili 'dostava' (naše poslano očitanje)
+  izvor: string; // 'hep' (Moja mreža), 'hep-moj-racun' (Moj račun) ili 'dostava' (naše poslano očitanje)
 }
 
 /** Najviše kWh dnevno po tarifi koje još smatramo uvjerljivim. */
 const MAX_DNEVNO = 150;
 
-type Uvoz = { mjesta?: { omm?: string; ocitanja?: { datum?: string; t1_kwh?: number; t2_kwh?: number }[] }[] };
+type Ocitanje = { datum?: string; opis?: string; t1_kwh?: number; t2_kwh?: number };
+type Mjesto = { omm?: string | null; ocitanja?: Ocitanje[] };
+/** Moja mreža daje `mjesta[]`, Moj račun `kupci[]`; retci očitanja su istog oblika. */
+type Uvoz = { mjesta?: Mjesto[]; kupci?: Mjesto[] };
 
 /** Najnovije stanje iz uvoza s HEP-a i iz očitanja koja je HEP prihvatio. */
 export async function zadnjeStanje(uredaj: string, omm: string | null): Promise<Zadnje | null> {
   const kandidati: Zadnje[] = [];
 
-  const hep = await env.DB.prepare(
-    `SELECT uvoz FROM snimci WHERE uredaj = ? AND izvor = 'hep' ORDER BY stvoren DESC LIMIT 1`,
-  )
-    .bind(uredaj)
-    .first<{ uvoz: string }>();
-  if (hep) {
+  // Zadnji uvoz iz svakog izvora: Moja mreža i Moj račun se ne sakrivaju.
+  for (const izvor of ["hep", "hep-moj-racun"]) {
+    const hep = await env.DB.prepare(
+      `SELECT uvoz FROM snimci WHERE uredaj = ? AND izvor = ? ORDER BY stvoren DESC LIMIT 1`,
+    )
+      .bind(uredaj, izvor)
+      .first<{ uvoz: string }>();
+    if (!hep) continue;
     const u = JSON.parse(hep.uvoz) as Uvoz;
-    for (const m of u.mjesta ?? []) {
+    for (const m of u.mjesta ?? u.kupci ?? []) {
       if (omm && m.omm !== omm) continue;
-      const o = m.ocitanja?.[0];
-      if (o?.datum) kandidati.push({ t1: o.t1_kwh ?? null, t2: o.t2_kwh ?? null, datum: o.datum, izvor: "hep" });
+      // Procjena ODS-a nije stanje brojila i zna biti iznad stvarnog.
+      const o = m.ocitanja?.find((o) => o.datum && !/^procijenjeno/i.test(o.opis ?? ""));
+      if (o?.datum) kandidati.push({ t1: o.t1_kwh ?? null, t2: o.t2_kwh ?? null, datum: o.datum, izvor });
       if (!omm) break; // bez OMM-a uzmi prvo mjesto
     }
   }
 
   const dostava = await env.DB.prepare(
     `SELECT t1, t2, stvoren FROM snimci
-      WHERE uredaj = ? AND izvor != 'hep' AND json_extract(hep_dostava, '$.Status') = 1
+      WHERE uredaj = ? AND izvor IN ('foto', 'rucno') AND json_extract(hep_dostava, '$.Status') = 1
         AND (? IS NULL OR omm = ?)
       ORDER BY stvoren DESC LIMIT 1`,
   )

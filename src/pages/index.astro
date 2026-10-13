@@ -226,7 +226,9 @@
           }
           const div = document.createElement("div");
           const v = document.createElement("div"); v.className = "vrijednosti";
-          v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže" : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
+          v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže"
+            : s.izvor === "hep-moj-racun" ? "Uvoz s Mojeg računa (HEP Elektra)"
+            : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
           const m = document.createElement("div"); m.className = "meta";
           m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`,
             s.lat != null && "📍", s.hep_dostava && (s.hep_dostava.Status === 1 ? "poslano HEP-u ✓" : "HEP: " + (s.hep_dostava.Opis ?? "?"))]
