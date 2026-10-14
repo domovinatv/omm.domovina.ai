@@ -7,86 +7,699 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Očitaj brojilo</title>
+    <title>Očitaj brojilo · Domovina Energy</title>
     <meta name="description" content="Uslikaj zaslon brojila, provjeri 1.8.1 i 1.8.2 i spremi očitanje." />
-    <style>
+    <style is:global>
       :root {
-        --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
-        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --upozorenje: #9a5b00; --greska: #b3261e;
+        --bg: #f6f7f4;
+        --kartica: #ffffff;
+        --tekst: #1b1f1a;
+        --blijedo: #5d665b;
+        --vrlo-blijedo: #879284;
+        --rub: #dfe3db;
+        --rub-fokus: #1f7a3a;
+        --akcent: #1f7a3a;
+        --akcent-tekst: #ffffff;
+        --akcent-blago: #e8f4ec;
+        --upozorenje: #9a5b00;
+        --upozorenje-bg: #fff8e8;
+        --greska: #b3261e;
+        --greska-bg: #fdf2f2;
+        --uspjeh: #196931;
+        --uspjeh-bg: #eaf6ee;
+        --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+        --sjena-md: 0 4px 12px rgba(0, 0, 0, 0.07);
       }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
-          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --upozorenje: #f0b45a; --greska: #ff8a80; }
+        :root {
+          --bg: #121512;
+          --kartica: #1b1f1b;
+          --tekst: #e7ebe4;
+          --blijedo: #9ba697;
+          --vrlo-blijedo: #6f786c;
+          --rub: #2e352d;
+          --rub-fokus: #5cc97a;
+          --akcent: #5cc97a;
+          --akcent-tekst: #0b1a0f;
+          --akcent-blago: #193322;
+          --upozorenje: #f0b45a;
+          --upozorenje-bg: #2d2210;
+          --greska: #ff8a80;
+          --greska-bg: #321616;
+          --uspjeh: #6dd489;
+          --uspjeh-bg: #12281a;
+          --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+          --sjena-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
       }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--tekst);
-        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-      main { max-width: 560px; margin: 0 auto; padding: 24px 16px 64px; }
-      h1 { font-size: 1.6rem; margin: 0 0 4px; }
-      h2 { font-size: 1.1rem; margin: 0 0 12px; }
-      p.uvod { color: var(--blijedo); margin: 0 0 20px; }
-      .kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-      label { display: block; font-size: .9rem; color: var(--blijedo); margin: 12px 0 4px; }
-      input[type=number], input[type=text] { width: 100%; font-size: 1.4rem; padding: 10px 12px; border-radius: 10px;
-        border: 1px solid var(--rub); background: var(--bg); color: var(--tekst); font-variant-numeric: tabular-nums; }
-      button, .gumb { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-        min-height: 48px; border: 0; border-radius: 12px; font: inherit; font-weight: 600; cursor: pointer;
-        background: var(--akcent); color: var(--akcent-tekst); margin-top: 12px; }
-      button.sporedni, .gumb.sporedni { background: transparent; color: var(--tekst); border: 1px solid var(--rub); }
-      button:disabled { opacity: .5; cursor: default; }
-      input[type=file] { display: none; }
-      .slike { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-      .slike img { width: 88px; height: 88px; object-fit: cover; border-radius: 10px; border: 1px solid var(--rub); }
-      .stanje { font-size: .9rem; color: var(--blijedo); min-height: 1.5em; margin-top: 8px; }
-      .stanje.greska { color: var(--greska); } .stanje.upozorenje { color: var(--upozorenje); }
-      .red { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      ul.snimci { list-style: none; padding: 0; margin: 0; }
-      ul.snimci li { padding: 10px 0; border-top: 1px solid var(--rub); display: flex; gap: 12px; align-items: center; }
-      ul.snimci li:first-child { border-top: 0; }
-      ul.snimci img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
-      ul.snimci .vrijednosti { font-variant-numeric: tabular-nums; font-weight: 600; }
-      ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
-      details { font-size: .85rem; color: var(--blijedo); margin-top: 8px; }
-      pre { white-space: pre-wrap; word-break: break-word; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--tekst);
+        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--akcent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      /* Gornja navigacija */
+      .gornja-traka {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--rub);
+        background: var(--kartica);
+      }
+      .natrag-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--tekst);
+      }
+      .natrag-link:hover {
+        color: var(--akcent);
+        text-decoration: none;
+      }
+      .znacka-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--akcent-blago);
+        color: var(--akcent);
+      }
+      .tocka {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--akcent);
+      }
+
+      /* Glavni raspored */
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+      }
+      .zaglavlje-stranice {
+        margin-bottom: 24px;
+      }
+      h1 {
+        font-size: 1.85rem;
+        line-height: 1.2;
+        margin: 0 0 8px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .podnaslov {
+        color: var(--blijedo);
+        margin: 0;
+        font-size: 0.98rem;
+        line-height: 1.5;
+      }
+
+      /* Kartice */
+      .kartica {
+        background: var(--kartica);
+        border: 1px solid var(--rub);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 18px;
+        box-shadow: var(--sjena-sm);
+        transition: border-color 0.15s ease;
+      }
+      .kartica-zaglavlje {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .broj-koraka {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        background: var(--akcent-blago);
+        color: var(--akcent);
+        flex-shrink: 0;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 0;
+        font-weight: 600;
+      }
+      .uputa-koraka {
+        font-size: 0.85rem;
+        color: var(--blijedo);
+        margin: 2px 0 0;
+      }
+
+      /* Dropzone & slikanje */
+      .dropzona {
+        border: 2px dashed var(--rub);
+        border-radius: 14px;
+        padding: 24px 16px;
+        text-align: center;
+        background: var(--bg);
+        transition: all 0.2s ease;
+        position: relative;
+      }
+      .dropzona.dragover {
+        border-color: var(--akcent);
+        background: var(--akcent-blago);
+      }
+      .ikona-dropzona {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        display: inline-block;
+      }
+      .akcije-slikanja {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 380px;
+        margin: 12px auto 0;
+      }
+      input[type="file"] { display: none; }
+
+      /* Gumbi */
+      .gumb {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: 1px solid transparent;
+        text-align: center;
+        box-sizing: border-box;
+      }
+      .gumb-glavni {
+        background: var(--akcent);
+        color: var(--akcent-tekst);
+        box-shadow: 0 2px 8px rgba(31, 122, 58, 0.2);
+      }
+      .gumb-glavni:hover:not(:disabled) {
+        filter: brightness(1.06);
+        box-shadow: 0 4px 12px rgba(31, 122, 58, 0.28);
+      }
+      .gumb-sporedni {
+        background: var(--kartica);
+        color: var(--tekst);
+        border-color: var(--rub);
+      }
+      .gumb-sporedni:hover:not(:disabled) {
+        border-color: var(--akcent);
+        color: var(--akcent);
+      }
+      .gumb:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .savjet-redak {
+        font-size: 0.8rem;
+        color: var(--blijedo);
+        margin-top: 10px;
+      }
+
+      /* Galerija učitanih slika */
+      .slike-mreza {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .slika-kartica {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--rub);
+        background: var(--bg);
+      }
+      .slika-kartica img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .slika-status-oznaka {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        right: 4px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-align: center;
+        padding: 2px 4px;
+        border-radius: 4px;
+        backdrop-filter: blur(2px);
+      }
+
+      /* Status obavijesti / alerts */
+      .obavijest {
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        margin-top: 12px;
+        line-height: 1.45;
+        display: none;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .obavijest.vidljiva { display: flex; }
+      .obavijest.info { background: var(--akcent-blago); color: var(--akcent); }
+      .obavijest.upozorenje { background: var(--upozorenje-bg); color: var(--upozorenje); border: 1px solid var(--upozorenje); }
+      .obavijest.greska { background: var(--greska-bg); color: var(--greska); border: 1px solid var(--greska); }
+      .obavijest.uspjeh { background: var(--uspjeh-bg); color: var(--uspjeh); border: 1px solid var(--uspjeh); }
+
+      /* Digitalni zaslon brojila / tarife */
+      .mreza-tarifa {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      @media (max-width: 480px) {
+        .mreza-tarifa { grid-template-columns: 1fr; gap: 10px; }
+      }
+      .tarifa-kutija {
+        background: var(--bg);
+        border: 1px solid var(--rub);
+        border-radius: 12px;
+        padding: 14px;
+        transition: border-color 0.15s ease;
+      }
+      .tarifa-kutija:focus-within {
+        border-color: var(--rub-fokus);
+      }
+      .tarifa-zaglavlje {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .tarifa-oznaka {
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .tarifa-podnaslov {
+        font-size: 0.72rem;
+        color: var(--blijedo);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+      }
+      .polje-s-jedinicom {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .polje-s-jedinicom input {
+        width: 100%;
+        font-size: 1.5rem;
+        font-weight: 700;
+        padding: 10px 48px 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--rub);
+        background: var(--kartica);
+        color: var(--tekst);
+        font-variant-numeric: tabular-nums;
+        outline: none;
+        transition: border-color 0.15s ease;
+      }
+      .polje-s-jedinicom input:focus {
+        border-color: var(--rub-fokus);
+      }
+      .jedinica {
+        position: absolute;
+        right: 12px;
+        color: var(--blijedo);
+        font-size: 0.85rem;
+        font-weight: 600;
+        pointer-events: none;
+      }
+
+      /* Referenca na zadnje stanje */
+      .zadnje-stanje-traka {
+        background: var(--akcent-blago);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        font-size: 0.86rem;
+        color: var(--tekst);
+        display: none;
+        align-items: center;
+        gap: 8px;
+      }
+      .zadnje-stanje-traka.vidljiva { display: flex; }
+      .zadnje-stanje-vrijednost {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Dodatni parametri (OMM i Lokacija) */
+      .red-podataka {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 14px;
+      }
+      @media (max-width: 540px) {
+        .red-podataka { grid-template-columns: 1fr; }
+      }
+      .polje-grupa label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--blijedo);
+        margin-bottom: 6px;
+      }
+      .polje-grupa input {
+        width: 100%;
+        font-size: 1rem;
+        padding: 11px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--rub);
+        background: var(--bg);
+        color: var(--tekst);
+        font-variant-numeric: tabular-nums;
+        outline: none;
+      }
+      .polje-grupa input:focus {
+        border-color: var(--rub-fokus);
+        background: var(--kartica);
+      }
+      .lokacija-gumb-red {
+        display: flex;
+        flex-direction: column;
+      }
+      .lokacija-status {
+        font-size: 0.78rem;
+        color: var(--blijedo);
+        margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Glavna akcija spremanja */
+      .spremi-blok {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid var(--rub);
+      }
+
+      /* Tehnički inspektor / raw details */
+      details.inspektor {
+        margin-top: 16px;
+        font-size: 0.82rem;
+        color: var(--blijedo);
+        border-top: 1px dashed var(--rub);
+        padding-top: 10px;
+      }
+      details.inspektor summary {
+        cursor: pointer;
+        font-weight: 600;
+        user-select: none;
+      }
+      details.inspektor summary:hover {
+        color: var(--tekst);
+      }
+      pre.kod-ispis {
+        background: var(--bg);
+        border: 1px solid var(--rub);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-top: 8px;
+        font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      /* Povijest očitanja (snimci) */
+      .popis-snimaka {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .snimak-redak {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--rub);
+        background: var(--bg);
+        transition: background 0.15s ease;
+      }
+      .snimak-redak:hover {
+        background: var(--kartica);
+      }
+      .snimak-slika {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid var(--rub);
+        flex-shrink: 0;
+      }
+      .snimak-tijelo {
+        flex: 1;
+        min-width: 0;
+      }
+      .snimak-tarife {
+        font-weight: 700;
+        font-size: 0.95rem;
+        font-variant-numeric: tabular-nums;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .snimak-tarife span {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .snimak-meta {
+        font-size: 0.78rem;
+        color: var(--blijedo);
+        margin-top: 2px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .znacka-izvora {
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: var(--rub);
+        color: var(--tekst);
+      }
+      .znacka-izvora.foto { background: var(--akcent-blago); color: var(--akcent); }
+      .prazno-stanje {
+        color: var(--blijedo);
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 20px 10px;
+      }
+
+      /* Responzivnost: 2 stupca na računalu kao na index.astro */
+      @media (min-width: 960px) {
+        body {
+          padding-right: 360px;
+        }
+        main {
+          max-width: 780px;
+          margin: 0;
+          padding: 32px 32px 64px;
+        }
+        .akcije-slikanja {
+          flex-direction: row;
+        }
+        .bocno {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 360px;
+          margin: 0;
+          overflow-y: auto;
+          border-radius: 0;
+          border-width: 0 0 0 1px;
+          padding: 28px 22px;
+          background: var(--kartica);
+          box-shadow: -2px 0 12px rgba(0,0,0,0.03);
+        }
+      }
     </style>
   </head>
   <body>
+    <header class="gornja-traka">
+      <a href="/" class="natrag-link">
+        <span aria-hidden="true">←</span> Uvoz s HEP-a (oznaka)
+      </a>
+      <div class="znacka-status">
+        <span class="tocka"></span> OMM · OCR Asistent
+      </div>
+    </header>
+
     <main>
-      <h1>Očitaj brojilo</h1>
-      <p class="uvod">Uslikaj zaslon brojila dok pokazuje <b>1.8.1</b>, pa dok pokazuje <b>1.8.2</b>.
-        Brojeve pročitamo automatski, a ti ih provjeriš prije spremanja.</p>
-      <p class="uvod"><a href="/">← Uvoz s HEP-a</a></p>
+      <div class="zaglavlje-stranice">
+        <h1>Očitaj brojilo</h1>
+        <p class="podnaslov">
+          Uslikaj zaslon dok prikazuje <b>1.8.1</b> (viša tarifa), pa dok prikazuje <b>1.8.2</b> (niža tarifa).
+          Model automatski očitava brojeve za tvoju provjeru.
+        </p>
+      </div>
 
+      <!-- KORAK 1: Slike zaslona -->
       <section class="kartica">
-        <h2>1. Slike zaslona</h2>
-        <label class="gumb" for="kamera">📷 Uslikaj zaslon</label>
-        <input id="kamera" type="file" accept="image/*" capture="environment" />
-        <label class="gumb sporedni" for="galerija">Odaberi iz galerije</label>
-        <input id="galerija" type="file" accept="image/*" multiple />
-        <div class="slike" id="slike"></div>
-        <div class="stanje" id="stanje-ocr"></div>
-      </section>
-
-      <section class="kartica">
-        <h2>2. Provjeri brojeve</h2>
-        <div class="red">
-          <div><label for="t1">1.8.1 (viša tarifa), kWh</label><input id="t1" type="number" inputmode="numeric" min="0" step="1" /></div>
-          <div><label for="t2">1.8.2 (niža tarifa), kWh</label><input id="t2" type="number" inputmode="numeric" min="0" step="1" /></div>
+        <div class="kartica-zaglavlje">
+          <div class="broj-koraka">1</div>
+          <div>
+            <h2>Slikaj zaslon brojila</h2>
+            <p class="uputa-koraka">Učitaj jednu ili dvije fotografije digitalnog zaslona</p>
+          </div>
         </div>
-        <label for="omm">OMM (10 znamenki, nije obavezno)</label>
-        <input id="omm" type="text" inputmode="numeric" maxlength="10" pattern="\d{10}" />
-        <button class="sporedni" id="lokacija" type="button">📍 Dodaj lokaciju</button>
-        <div class="stanje" id="stanje-lokacija"></div>
-        <button id="spremi" type="button" disabled>Spremi očitanje</button>
-        <div class="stanje" id="stanje-spremi"></div>
-        <details><summary>Što je pročitao model</summary><pre id="sirovo"></pre></details>
+
+        <div class="dropzona" id="dropzona">
+          <span class="ikona-dropzona">📷</span>
+          <div><b>Fotografiraj brojilo</b> ili povuci sliku ovdje</div>
+          <div class="akcije-slikanja">
+            <label class="gumb gumb-glavni" for="kamera">
+              📸 Uslikaj kamerom
+            </label>
+            <input id="kamera" type="file" accept="image/*" capture="environment" />
+
+            <label class="gumb gumb-sporedni" for="galerija">
+              🖼️ Odaberi iz datoteka
+            </label>
+            <input id="galerija" type="file" accept="image/*" multiple />
+          </div>
+          <div class="savjet-redak">
+            Preporuka: drži kameru ravno prema zaslonu tako da se jasno vide oznake 1.8.1 ili 1.8.2.
+          </div>
+        </div>
+
+        <div class="slike-mreza" id="slike"></div>
+
+        <div class="obavijest" id="obavijest-ocr">
+          <span class="obavijest-ikona">ℹ️</span>
+          <span class="obavijest-tekst" id="tekst-ocr"></span>
+        </div>
       </section>
 
+      <!-- KORAK 2: Provjera i potvrda -->
       <section class="kartica">
-        <h2>Moja očitanja</h2>
-        <ul class="snimci" id="snimci"><li class="meta">Još nema očitanja.</li></ul>
+        <div class="kartica-zaglavlje">
+          <div class="broj-koraka">2</div>
+          <div>
+            <h2>Provjeri očitana stanja</h2>
+            <p class="uputa-koraka">Uskadi vrijednosti prije spremanja u svoj profil</p>
+          </div>
+        </div>
+
+        <!-- Traka sa zadnjim stanjem ako postoji -->
+        <div class="zadnje-stanje-traka" id="zadnje-stanje">
+          <span>📌</span>
+          <div id="zadnje-stanje-tekst"></div>
+        </div>
+
+        <div class="mreza-tarifa">
+          <div class="tarifa-kutija">
+            <div class="tarifa-zaglavlje">
+              <span class="tarifa-oznaka">☀️ 1.8.1 (VT)</span>
+              <span class="tarifa-podnaslov">Viša tarifa</span>
+            </div>
+            <div class="polje-s-jedinicom">
+              <input id="t1" type="number" inputmode="numeric" min="0" step="1" placeholder="0" />
+              <span class="jedinica">kWh</span>
+            </div>
+          </div>
+
+          <div class="tarifa-kutija">
+            <div class="tarifa-zaglavlje">
+              <span class="tarifa-oznaka">🌙 1.8.2 (NT)</span>
+              <span class="tarifa-podnaslov">Niža tarifa</span>
+            </div>
+            <div class="polje-s-jedinicom">
+              <input id="t2" type="number" inputmode="numeric" min="0" step="1" placeholder="0" />
+              <span class="jedinica">kWh</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="red-podataka">
+          <div class="polje-grupa">
+            <label for="omm">OMM broj (opcionalno, 10 znamenki)</label>
+            <input id="omm" type="text" inputmode="numeric" maxlength="10" pattern="\d{10}" placeholder="npr. 0123456789" />
+          </div>
+
+          <div class="lokacija-gumb-red">
+            <button class="gumb gumb-sporedni" id="lokacija" type="button">
+              📍 Dodaj lokaciju
+            </button>
+            <div class="lokacija-status" id="stanje-lokacija"></div>
+          </div>
+        </div>
+
+        <div class="spremi-blok">
+          <button class="gumb gumb-glavni" id="spremi" type="button" disabled>
+            💾 Spremi očitanje
+          </button>
+          <div class="obavijest" id="obavijest-spremi">
+            <span class="obavijest-ikona">✓</span>
+            <span class="obavijest-tekst" id="tekst-spremi"></span>
+          </div>
+        </div>
+
+        <details class="inspektor">
+          <summary>🔍 Tehnički detalji modela i sirovi OCR</summary>
+          <pre class="kod-ispis" id="sirovo"></pre>
+        </details>
       </section>
-      <p class="stanje">Ovo je rana verzija bez prijave: očitanja su vezana uz ovaj preglednik.</p>
+
+      <!-- Na mobilnim uređajima povijest je ispod; na desktopu je u fiksnom sidebaru -->
+      <aside class="kartica bocno">
+        <div class="kartica-zaglavlje">
+          <h2>Moja očitanja</h2>
+        </div>
+        <ul class="popis-snimaka" id="snimci">
+          <li class="prazno-stanje">Učitavam prethodna očitanja…</li>
+        </ul>
+      </aside>
     </main>
 
     <script>
@@ -95,16 +708,28 @@
 
       const auth = { Authorization: `Bearer ${kljuc()}` };
 
-      const stanje = (id: string, tekst: string, vrsta = "") => {
-        const el = $(id); el.textContent = tekst; el.className = `stanje ${vrsta}`;
-      };
+      function postaviObavijest(idKontejnera: string, idTeksta: string, poruka: string, vrsta: "info" | "upozorenje" | "greska" | "uspjeh" = "info") {
+        const wrap = $(idKontejnera);
+        const txt = $(idTeksta);
+        if (!poruka) {
+          wrap.classList.remove("vidljiva");
+          return;
+        }
+        txt.textContent = poruka;
+        wrap.className = `obavijest vidljiva ${vrsta}`;
+        const ikona = wrap.querySelector(".obavijest-ikona");
+        if (ikona) {
+          ikona.textContent = vrsta === "greska" ? "❌" : vrsta === "upozorenje" ? "⚠️" : vrsta === "uspjeh" ? "✓" : "⏳";
+        }
+      }
 
       // Smanji sliku prije slanja: brže i dovoljno za zaslon brojila.
       async function smanji(f: File): Promise<Blob> {
         const bmp = await createImageBitmap(f);
         const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
         const c = document.createElement("canvas");
-        c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+        c.width = Math.round(bmp.width * s);
+        c.height = Math.round(bmp.height * s);
         c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
         return new Promise((ok) => c.toBlob((b) => ok(b!), "image/jpeg", 0.85));
       }
@@ -118,59 +743,135 @@
       }
 
       async function obradi(datoteke: FileList | null) {
-        for (const f of Array.from(datoteke ?? [])) {
-          stanje("stanje-ocr", "Čitam brojeve…");
+        if (!datoteke || !datoteke.length) return;
+        for (const f of Array.from(datoteke)) {
+          postaviObavijest("obavijest-ocr", "tekst-ocr", "Analiziram fotografiju i čitam brojilo…", "info");
+
+          // Dodaj thumbnail u galeriju s oznakom analize
+          const kartica = document.createElement("div");
+          kartica.className = "slika-kartica";
           const img = document.createElement("img");
           img.src = URL.createObjectURL(f);
-          $("slike").append(img);
+          const oznaka = document.createElement("div");
+          oznaka.className = "slika-status-oznaka";
+          oznaka.textContent = "Čitanje…";
+          kartica.append(img, oznaka);
+          $("slike").append(kartica);
+
           try {
             const fd = new FormData();
             fd.append("slika", await smanji(f), "brojilo.jpg");
             const omm = $<HTMLInputElement>("omm").value.trim();
             if (/^\d{10}$/.test(omm)) fd.append("omm", omm);
+
             const r = await fetch("/api/ocitaj", { method: "POST", headers: auth, body: fd });
             const d = await r.json();
+
             if (d.slika) slike.push(d.slika);
             ocr.push(d);
             $("sirovo").textContent += `${d.model ?? ""}\n${d.sirovo ?? d.greska ?? ""}\n\n`;
-            if (!r.ok) { stanje("stanje-ocr", d.greska ?? "Čitanje nije uspjelo", "greska"); continue; }
+
+            if (!r.ok) {
+              oznaka.textContent = "Greška";
+              postaviObavijest("obavijest-ocr", "tekst-ocr", d.greska ?? "Čitanje nije uspjelo", "greska");
+              continue;
+            }
+
+            oznaka.textContent = "Pročitano ✓";
+
             if (d.t1 != null) $<HTMLInputElement>("t1").value = String(d.t1);
             if (d.t2 != null) $<HTMLInputElement>("t2").value = String(d.t2);
+
+            // Vrijednost bez sigurne oznake tarife
             if (d.t1 == null && d.t2 == null && d.neodredeno != null) {
               const t1 = $<HTMLInputElement>("t1");
               const polje = t1.value ? $<HTMLInputElement>("t2") : t1;
               polje.value = String(d.neodredeno);
-              stanje("stanje-ocr", `Pročitano ${d.neodredeno}, ali oznaka tarife nije sigurna: upisano u ${polje.id === "t1" ? "1.8.1" : "1.8.2"}. Provjeri.`, "upozorenje");
+              postaviObavijest(
+                "obavijest-ocr",
+                "tekst-ocr",
+                `Pročitano ${d.neodredeno} kWh, ali oznaka tarife nije sigurna: upisano u ${polje.id === "t1" ? "1.8.1 (VT)" : "1.8.2 (NT)"}. Provjeri.`,
+                "upozorenje"
+              );
               osvjeziGumb();
               continue;
             }
-            const nasao = [d.t1 != null && "1.8.1", d.t2 != null && "1.8.2"].filter(Boolean).join(" i ");
+
+            const nasao = [d.t1 != null && "1.8.1 (VT)", d.t2 != null && "1.8.2 (NT)"].filter(Boolean).join(" i ");
             const dodatno = (d.upozorenja ?? []).join(" ");
-            if (d.zadnje) stanje("stanje-lokacija", `Zadnje stanje (${d.zadnje.datum}): 1.8.1 ${d.zadnje.t1 ?? "–"} · 1.8.2 ${d.zadnje.t2 ?? "–"}`);
-            if (nasao && dodatno) { stanje("stanje-ocr", `Pročitano: ${nasao}. ${dodatno} Provjeri brojeve.`, "upozorenje"); osvjeziGumb(); continue; }
-            stanje("stanje-ocr", nasao ? `Pročitano: ${nasao}. Provjeri brojeve.` :
-              `Nisam našao 1.8.1 ni 1.8.2${d.napomena ? ` (${d.napomena})` : ""}. Probaj opet ili upiši ručno.`,
-              nasao ? "" : "upozorenje");
+
+            if (d.zadnje) {
+              const z = $("zadnje-stanje");
+              z.classList.add("vidljiva");
+              $("zadnje-stanje-tekst").innerHTML = `Zadnje stanje (${d.zadnje.datum}): <b>1.8.1:</b> <span class="zadnje-stanje-vrijednost">${d.zadnje.t1 ?? "–"} kWh</span> · <b>1.8.2:</b> <span class="zadnje-stanje-vrijednost">${d.zadnje.t2 ?? "–"} kWh</span>`;
+            }
+
+            if (nasao && dodatno) {
+              postaviObavijest("obavijest-ocr", "tekst-ocr", `Pročitano: ${nasao}. ${dodatno} Provjeri točnost.`, "upozorenje");
+              osvjeziGumb();
+              continue;
+            }
+
+            if (nasao) {
+              postaviObavijest("obavijest-ocr", "tekst-ocr", `Uspješno pročitano: ${nasao}. Provjeri vrijednosti ispod.`, "uspjeh");
+            } else {
+              postaviObavijest(
+                "obavijest-ocr",
+                "tekst-ocr",
+                `Nismo prepoznali 1.8.1 ni 1.8.2${d.napomena ? ` (${d.napomena})` : ""}. Upiši ručno ili ponovi sliku.`,
+                "upozorenje"
+              );
+            }
           } catch (e) {
-            stanje("stanje-ocr", `Greška: ${e}`, "greska");
+            oznaka.textContent = "Greška";
+            postaviObavijest("obavijest-ocr", "tekst-ocr", `Greška pri obradi: ${e}`, "greska");
           }
           osvjeziGumb();
         }
       }
+
+      // Drag and drop podrška za dropzonu
+      const dropzona = $("dropzona");
+      dropzona.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzona.classList.add("dragover");
+      });
+      dropzona.addEventListener("dragleave", () => {
+        dropzona.classList.remove("dragover");
+      });
+      dropzona.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzona.classList.remove("dragover");
+        if (e.dataTransfer?.files) obradi(e.dataTransfer.files);
+      });
+
       $<HTMLInputElement>("kamera").onchange = (e) => obradi((e.target as HTMLInputElement).files);
       $<HTMLInputElement>("galerija").onchange = (e) => obradi((e.target as HTMLInputElement).files);
       $("t1").oninput = osvjeziGumb;
+      $("t2").oninput = osvjeziGumb;
 
       $("lokacija").onclick = () => {
-        if (!navigator.geolocation) return stanje("stanje-lokacija", "Preglednik ne daje lokaciju", "greska");
-        stanje("stanje-lokacija", "Tražim lokaciju…");
+        const statusEl = $("stanje-lokacija");
+        if (!navigator.geolocation) {
+          statusEl.textContent = "Preglednik ne podržava lokaciju";
+          statusEl.style.color = "var(--greska)";
+          return;
+        }
+        statusEl.textContent = "Dohvaćam GPS…";
+        statusEl.style.color = "var(--blijedo)";
+
         navigator.geolocation.getCurrentPosition(
           (p) => {
             lokacija = { lat: p.coords.latitude, lon: p.coords.longitude, tocnost_m: p.coords.accuracy };
-            stanje("stanje-lokacija", `📍 ${lokacija.lat.toFixed(5)}, ${lokacija.lon.toFixed(5)} (±${Math.round(lokacija.tocnost_m)} m)`);
+            statusEl.textContent = `📍 ${lokacija.lat.toFixed(4)}, ${lokacija.lon.toFixed(4)} (±${Math.round(lokacija.tocnost_m)} m)`;
+            statusEl.style.color = "var(--akcent)";
+            $("lokacija").textContent = "📍 Lokacija dodana ✓";
           },
-          (e) => stanje("stanje-lokacija", `Lokacija nije dostupna: ${e.message}`, "greska"),
-          { enableHighAccuracy: true, timeout: 15000 },
+          (e) => {
+            statusEl.textContent = `Lokacija nije dostupna: ${e.message}`;
+            statusEl.style.color = "var(--greska)";
+          },
+          { enableHighAccuracy: true, timeout: 15000 }
         );
       };
 
@@ -178,50 +879,140 @@
         const t1 = parseInt($<HTMLInputElement>("t1").value, 10);
         const t2v = $<HTMLInputElement>("t2").value;
         const omm = $<HTMLInputElement>("omm").value.trim();
-        if (omm && !/^\d{10}$/.test(omm)) return stanje("stanje-spremi", "OMM ima 10 znamenki", "greska");
-        const r = await fetch("/api/snimak", {
-          method: "POST",
-          headers: { ...auth, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            izvor: slike.length ? "foto" : "rucno", t1, t2: t2v ? parseInt(t2v, 10) : null,
-            omm: omm || null, slike, ocr, lokacija,
-          }),
-        });
-        const d = await r.json();
-        if (!r.ok) return stanje("stanje-spremi", d.greska ?? "Spremanje nije uspjelo", "greska");
-        stanje("stanje-spremi", "Spremljeno ✓");
-        slike.length = 0; ocr.length = 0; $("slike").innerHTML = ""; $("sirovo").textContent = "";
-        ucitaj();
+
+        if (omm && !/^\d{10}$/.test(omm)) {
+          postaviObavijest("obavijest-spremi", "tekst-spremi", "OMM broj mora imati točno 10 znamenki", "greska");
+          return;
+        }
+
+        const spremiGumb = $<HTMLButtonElement>("spremi");
+        spremiGumb.disabled = true;
+        spremiGumb.textContent = "Spremam…";
+
+        try {
+          const r = await fetch("/api/snimak", {
+            method: "POST",
+            headers: { ...auth, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              izvor: slike.length ? "foto" : "rucno",
+              t1,
+              t2: t2v ? parseInt(t2v, 10) : null,
+              omm: omm || null,
+              slike,
+              ocr,
+              lokacija,
+            }),
+          });
+          const d = await r.json();
+          if (!r.ok) {
+            postaviObavijest("obavijest-spremi", "tekst-spremi", d.greska ?? "Spremanje nije uspjelo", "greska");
+            spremiGumb.disabled = false;
+            spremiGumb.textContent = "💾 Spremi očitanje";
+            return;
+          }
+
+          postaviObavijest("obavijest-spremi", "tekst-spremi", "Očitanje uspješno spremljeno! ✓", "uspjeh");
+          slike.length = 0;
+          ocr.length = 0;
+          $("slike").innerHTML = "";
+          $("sirovo").textContent = "";
+          postaviObavijest("obavijest-ocr", "tekst-ocr", "");
+          $<HTMLInputElement>("t1").value = "";
+          $<HTMLInputElement>("t2").value = "";
+          spremiGumb.textContent = "💾 Spremi očitanje";
+          osvjeziGumb();
+          ucitaj();
+        } catch (e) {
+          postaviObavijest("obavijest-spremi", "tekst-spremi", `Greška: ${e}`, "greska");
+          spremiGumb.disabled = false;
+          spremiGumb.textContent = "💾 Spremi očitanje";
+        }
       };
 
       async function ucitaj() {
-        const r = await fetch("/api/snimak", { headers: auth });
-        if (!r.ok) return;
-        const lista = await r.json();
         const ul = $("snimci");
-        if (!lista.length) return;
-        ul.innerHTML = "";
-        for (const s of lista) {
-          const li = document.createElement("li");
-          if (s.slike[0]) {
-            const img = document.createElement("img");
-            img.src = `/api/slika/${s.slike[0]}`; img.alt = "";
-            li.append(img);
+        try {
+          const r = await fetch("/api/snimak", { headers: auth });
+          if (!r.ok) return;
+          const lista = await r.json();
+
+          if (!lista.length) {
+            ul.innerHTML = `<li class="prazno-stanje">Još nema spremljenih očitanja u ovom pregledniku.</li>`;
+            return;
           }
-          const div = document.createElement("div");
-          const v = document.createElement("div"); v.className = "vrijednosti";
-          v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže"
-            : s.izvor === "hep-moj-racun" ? "Uvoz s Mojeg računa (HEP Elektra)"
-            : s.izvor === "hep-hepi" ? "Uvoz s Mojeg Hepi računa (HEP Opskrba)"
-            : s.izvor === "hep-racun" ? `Račun HEP Opskrbe · 1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`
-            : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
-          const m = document.createElement("div"); m.className = "meta";
-          m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`,
-            s.lat != null && "📍", s.hep_dostava && (s.hep_dostava.Status === 1 ? "poslano HEP-u ✓" : "HEP: " + (s.hep_dostava.Opis ?? "?"))]
-            .filter(Boolean).join(" · ");
-          div.append(v, m); li.append(div); ul.append(li);
+
+          ul.innerHTML = "";
+          for (const s of lista) {
+            const li = document.createElement("li");
+            li.className = "snimak-redak";
+
+            if (s.slike && s.slike[0]) {
+              const img = document.createElement("img");
+              img.className = "snimak-slika";
+              img.src = `/api/slika/${s.slike[0]}`;
+              img.alt = "Zaslon brojila";
+              img.loading = "lazy";
+              li.append(img);
+            }
+
+            const tijelo = document.createElement("div");
+            tijelo.className = "snimak-tijelo";
+
+            const tarife = document.createElement("div");
+            tarife.className = "snimak-tarife";
+
+            if (s.izvor === "hep") {
+              tarife.textContent = "Uvoz s Moje mreže";
+            } else if (s.izvor === "hep-moj-racun") {
+              tarife.textContent = "Uvoz s Mojeg računa (Elektra)";
+            } else if (s.izvor === "hep-hepi") {
+              tarife.textContent = "Uvoz s Mojeg Hepi računa";
+            } else if (s.izvor === "hep-racun") {
+              tarife.innerHTML = `<span>VT: ${s.t1 ?? "–"} kWh</span> <span>NT: ${s.t2 ?? "–"} kWh</span>`;
+            } else {
+              tarife.innerHTML = `<span>☀️ ${s.t1 ?? "–"}</span> <span>🌙 ${s.t2 ?? "–"} kWh</span>`;
+            }
+
+            const meta = document.createElement("div");
+            meta.className = "snimak-meta";
+
+            const izvorZnacka = document.createElement("span");
+            izvorZnacka.className = `znacka-izvora ${s.izvor === "foto" ? "foto" : ""}`;
+            izvorZnacka.textContent = s.izvor === "foto" ? "📷 Foto" : s.izvor === "rucno" ? "✍️ Ručno" : "⚡ HEP";
+            meta.append(izvorZnacka);
+
+            const datumTekst = document.createElement("span");
+            datumTekst.textContent = new Date(s.stvoren).toLocaleDateString("hr-HR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+            meta.append(datumTekst);
+
+            if (s.omm) {
+              const ommTekst = document.createElement("span");
+              ommTekst.textContent = `· OMM ${s.omm}`;
+              meta.append(ommTekst);
+            }
+
+            if (s.lat != null) {
+              const lokacijaTekst = document.createElement("span");
+              lokacijaTekst.textContent = "· 📍";
+              meta.append(lokacijaTekst);
+            }
+
+            if (s.hep_dostava) {
+              const dostavaTekst = document.createElement("span");
+              dostavaTekst.style.color = s.hep_dostava.Status === 1 ? "var(--akcent)" : "var(--greska)";
+              dostavaTekst.textContent = s.hep_dostava.Status === 1 ? "· HEP ✓" : `· HEP: ${s.hep_dostava.Opis ?? "Greska"}`;
+              meta.append(dostavaTekst);
+            }
+
+            tijelo.append(tarife, meta);
+            li.append(tijelo);
+            ul.append(li);
+          }
+        } catch {
+          ul.innerHTML = `<li class="prazno-stanje">Greška pri dohvatu očitanja.</li>`;
         }
       }
+
       ucitaj();
     </script>
   </body>
