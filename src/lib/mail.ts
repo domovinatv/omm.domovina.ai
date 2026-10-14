@@ -9,14 +9,10 @@
  */
 import { env } from "cloudflare:workers";
 import PostalMime from "postal-mime";
-import { procitajRacun, type HepRacun } from "./hep-racun";
+import { procitajRacun } from "./hep-racun";
+import { spremiRacun } from "./racuni";
 
 const NAJVISE = 10 * 1024 * 1024;
-
-async function sha256(tekst: string): Promise<string> {
-  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(tekst));
-  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 /** `racuni+<ključ>@…` → ključ; bez ključa nema kome pripisati mail. */
 export function kljucIzAdrese(adresa: string): string | null {
@@ -41,24 +37,6 @@ async function zapisiMail(uredaj: string, od: string, naslov: string, z: Zapis) 
     .bind(crypto.randomUUID(), uredaj, new Date().toISOString(), od, naslov, z.vrsta, z.ishod,
       z.poruka === undefined ? null : JSON.stringify(z.poruka), z.snimakId ?? null)
     .run();
-}
-
-/** Račun kao snimak `hep-racun`: OMM s računa, t1/t2 iz zadnjeg očitanja, isti broj računa je duplikat. */
-async function spremiRacun(uredaj: string, r: HepRacun): Promise<{ id: string; duplikat: boolean }> {
-  const otisak = await sha256(JSON.stringify({ izvor: "hep-racun", broj: r.broj, iznos: r.iznos }));
-  const postojeci = await env.DB.prepare(`SELECT id FROM snimci WHERE uredaj = ? AND otisak = ?`)
-    .bind(uredaj, otisak).first<{ id: string }>();
-  if (postojeci) return { id: postojeci.id, duplikat: true };
-  const zadnje = [...r.ocitanja].sort((a, b) => b.datum.localeCompare(a.datum))[0];
-  const id = crypto.randomUUID();
-  await env.DB.prepare(
-    `INSERT INTO snimci (id, uredaj, stvoren, izvor, omm, t1, t2, uvoz, otisak)
-     VALUES (?, ?, ?, 'hep-racun', ?, ?, ?, ?, ?) ON CONFLICT (uredaj, otisak) DO NOTHING`,
-  )
-    .bind(id, uredaj, new Date().toISOString(), r.omm, zadnje ? Math.floor(zadnje.vt) : null,
-      zadnje ? Math.floor(zadnje.nt) : null, JSON.stringify(r), otisak)
-    .run();
-  return { id, duplikat: false };
 }
 
 export async function primiMail(poruka: ForwardableEmailMessage): Promise<void> {

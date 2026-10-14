@@ -50,11 +50,13 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | Ruta | Što |
 |---|---|
 | `POST /api/ocitaj` | multipart `slika` (+ opcionalno `model`) → `{slika, t1, t2, neodredeno, registri, napomena, sirovo}` |
-| `POST /api/snimak` | (201 novi, 200 + `duplikat: true` postojeći) JSON `{izvor: foto\|rucno\|hep\|hep-moj-racun, t1, t2, omm, slike[], ocr, lokacija{lat,lon,tocnost_m}, uvoz, hep_dostava}` |
+| `POST /api/snimak` | (201 novi, 200 + `duplikat: true` postojeći) JSON `{izvor: foto\|rucno\|hep\|hep-moj-racun\|hep-hepi, t1, t2, omm, slike[], ocr, lokacija{lat,lon,tocnost_m}, uvoz, hep_dostava}` |
 | `GET /api/snimak` | snimci ovog ključa |
 | `PATCH /api/snimak/:id` | `{hep_dostava, omm?}` nakon slanja HEP-u |
 | `DELETE /api/snimak/:id` | briše snimak i slike |
 | `GET /api/slika/<ključ>/<uuid>.jpg` | slika |
+| `GET /api/racun` | pozivi na broj računa koje ključ već ima (bookmarklet na Hepiju šalje samo nove) |
+| `POST /api/racun` | tijelo je PDF računa HEP Opskrbe → pročita se kao mail i spremi kao `hep-racun` (201, 200 duplikat, 422 nije račun) |
 | `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
 | `/uvoz` | uvoz bez instalacije: bookmarklet „Uvezi iz HEP-a“ i adresa za račune mailom |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
@@ -66,7 +68,7 @@ pravilo `racuni@` → ovaj Worker). Zato je `main` u `wrangler.jsonc`
 `src/worker.ts` (Astro `handle` + `email()`), ne adapterov ulaz.
 `src/lib/mail.ts` parsira PDF prilog (`src/lib/hep-racun.ts`, unpdf; prijepis
 `~/git/stepanic/rezije/scripts/parse-hep-racune.py`) i sprema snimak
-`hep-racun`; svaki mail ide u tablicu `mailovi`. PDF ni mail se ne čuvaju (OIB).
+`hep-racun` (`src/lib/racuni.ts`, isto kao `POST /api/racun`); svaki mail ide u tablicu `mailovi`. PDF ni mail se ne čuvaju (OIB).
 Lokalni test: `wrangler dev`, pa
 `curl -X POST "localhost:8787/cdn-cgi/handler/email?from=a@b.hr&to=racuni%2B<ključ>@omm.domovina.ai" --data-binary @racun.eml`.
 

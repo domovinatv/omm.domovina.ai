@@ -1,5 +1,5 @@
 // Generirano iz github.com/stepanic/flutter_moja_mreza (extension/tools/bookmarklet.mjs).
-// Ne mijenjati ovdje: izvor su extension/uvoz.js, mojracun.js i bookmarklet.js.
+// Ne mijenjati ovdje: izvor su extension/uvoz.js, mojracun.js, hepi.js i bookmarklet.js.
 // ---- uvoz.js ----
 // Uvoz s Moje mreže (https://mojamreza.hep.hr) u pregledniku.
 //
@@ -348,12 +348,170 @@
   else Object.assign(globalThis, izvoz);
 })();
 
+// ---- hepi.js ----
+// Uvoz s Mojeg Hepi računa (https://mojracun.hep.hr/hepi), portala HEP Opskrbe
+// za kupce na tržištu. Zaseban od Mojeg računa HEP Elektre (/elektra), sa
+// zasebnom prijavom.
+//
+// Hepi je AngularJS aplikacija s JSON API-jem na /hepi/api/…. Prijava sprema
+// token u localStorage['hepi.token'] i stranica ga šalje kao Bearer; ovaj kod
+// radi isto, ali token nikad ne napušta stranicu. Za razliku od Elektre
+// postoji GET /api/kupci, pa ne treba Resource Timing, a /api/report/racun
+// vraća PDF računa. OIB i mail se ne uzimaju.
+//
+// Bookmarklet ubacuje datoteku u karticu i zove hepiUvoz(); može se i
+// zalijepiti u konzolu prijavljene stranice.
+
+(() => {
+  class HepiIznimka extends Error {
+    /** @param {'sesijaIstekla'|'neocekivanOdgovor'|'mreza'} greska */
+    constructor(greska, poruka) {
+      super(poruka ? `${greska}: ${poruka}` : greska);
+      this.greska = greska;
+    }
+  }
+
+  const HepiParser = (() => {
+    const prazno = (v) => (v == null || v === '' ? null : v);
+    // API daje `2026-09-30T02:00:00+02:00` (ponoć po našem vremenu); datum je prvih 10 znakova.
+    const datum = (s) => (/^\d{4}-\d{2}-\d{2}/.test(s || '') && !String(s).startsWith('0001') ? s.slice(0, 10) : null);
+    // `01.09.2026-30.09.2026` → { od, do }.
+    const razdoblje = (s) => {
+      const m = /(\d{2})\.(\d{2})\.(\d{4})\s*-\s*(\d{2})\.(\d{2})\.(\d{4})/.exec(s || '');
+      return m ? { od: `${m[3]}-${m[2]}-${m[1]}`, do: `${m[6]}-${m[5]}-${m[4]}` } : { od: null, do: null };
+    };
+    const lista = (j, sto) => {
+      if (!Array.isArray(j)) throw new HepiIznimka('neocekivanOdgovor', `${sto} nije lista`);
+      return j;
+    };
+
+    /** GET /api/kupci: objekt { kupacId: kupac }. */
+    function kupci(j) {
+      if (!j || typeof j !== 'object') throw new HepiIznimka('neocekivanOdgovor', 'kupci nisu objekt');
+      return Object.values(j).map((k) => ({
+        kupac_id: String(k.KupacId),
+        sifra_kupca: prazno(k.Sifra),
+        ime: prazno(k.Naziv),
+        omm: prazno(k.Omm),
+        adresa: prazno(k.AdresaOmm) || prazno(k.Adresa),
+        tarifni_model: prazno(k.TarifniModel),
+        ugovor_od: datum(k.UgovorOd),
+      }));
+    }
+
+    /** GET /api/potrosnja/:kupacId: { Total, Potrosnja[], Ocitanja[] }, najnovije prvo. */
+    function potrosnja(j) {
+      return {
+        potrosnja: lista(j && j.Potrosnja, 'Potrosnja').map((p) => ({
+          ...razdoblje(p.Razdoblje),
+          t1_kwh: p.Tarifa1,
+          t2_kwh: p.Tarifa2,
+          ukupno_kwh: p.Ukupno,
+        })),
+        ocitanja: lista(j && j.Ocitanja, 'Ocitanja').map((o) => ({
+          datum: datum(o.Datum),
+          opis: prazno(o.NacinOcitanja),
+          t1_kwh: o.Tarifa1,
+          t2_kwh: o.Tarifa2,
+        })),
+      };
+    }
+
+    /** GET /api/promet/:kupacId: { Total (saldo), Racuni[], Uplate[] }. */
+    function promet(j) {
+      const t = (j && j.Total) || {};
+      return {
+        saldo: { iznos_eur: typeof t.Iznos === 'number' ? t.Iznos : null, opis: prazno(t.Labela) },
+        racuni: lista(j && j.Racuni, 'Racuni').map((r) => ({
+          datum: datum(r.Datum),
+          poziv_na_broj: prazno(r.Pnb),
+          iznos_eur: r.Iznos,
+          dospijeva: datum(r.Dospijeva),
+          placen: r.Status === 1,
+          status: prazno(r.StatusText),
+          link: prazno(r.Link),
+        })),
+        uplate: lista(j && j.Uplate, 'Uplate').map((u) => ({ datum: datum(u.Datum), iznos_eur: u.Iznos })),
+      };
+    }
+
+    return { kupci, potrosnja, promet };
+  })();
+
+  function token() {
+    let t = null;
+    try { t = localStorage.getItem('hepi.token'); } catch {}
+    if (!t || t === 'undefined') throw new HepiIznimka('sesijaIstekla');
+    return t;
+  }
+
+  async function zahtjev(putanja, opcije = {}) {
+    let o;
+    try {
+      o = await fetch(`/hepi/api/${putanja}`, {
+        cache: 'no-store',
+        ...opcije,
+        headers: { Authorization: `Bearer ${token()}`, ...(opcije.headers || {}) },
+      });
+    } catch (e) {
+      throw new HepiIznimka('mreza', String(e));
+    }
+    if (o.status === 401 || o.status === 403) throw new HepiIznimka('sesijaIstekla');
+    if (o.status !== 200) throw new HepiIznimka('mreza', `HTTP ${o.status} za ${putanja}`);
+    return o;
+  }
+
+  async function api(putanja) {
+    const o = await zahtjev(putanja);
+    try {
+      return await o.json();
+    } catch {
+      throw new HepiIznimka('neocekivanOdgovor', `${putanja} nije JSON`);
+    }
+  }
+
+  /** PDF računa (`link` iz promet.racuni[]), kao gumb za ispis računa na portalu. */
+  async function hepiRacunPdf(link) {
+    const o = await zahtjev('report/racun', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ link }),
+    });
+    const b = new Uint8Array(await o.arrayBuffer());
+    // Server šalje Content-Type text/html, pa se provjerava zaglavlje datoteke.
+    if (String.fromCharCode(...b.slice(0, 5)) !== '%PDF-') throw new HepiIznimka('neocekivanOdgovor', 'račun nije PDF');
+    return b;
+  }
+
+  /** @param {{napredak?: (poruka: string) => void}} [opcije] */
+  async function hepiUvoz({ napredak = () => {} } = {}) {
+    if (location.origin !== 'https://mojracun.hep.hr' || !location.pathname.startsWith('/hepi')) {
+      throw new HepiIznimka('mreza', 'pokreni na https://mojracun.hep.hr/hepi');
+    }
+    napredak('Dohvaćam kupce…');
+    const popis = HepiParser.kupci(await api('kupci'));
+    const kupci = [];
+    for (const [i, k] of popis.entries()) {
+      napredak(`Kupac ${k.sifra_kupca || k.kupac_id}${popis.length > 1 ? ` (${i + 1}/${popis.length})` : ''}…`);
+      const { saldo, racuni, uplate } = HepiParser.promet(await api(`promet/${k.kupac_id}`));
+      const { potrosnja, ocitanja } = HepiParser.potrosnja(await api(`potrosnja/${k.kupac_id}`));
+      kupci.push({ ...k, saldo, ocitanja, potrosnja, racuni, uplate });
+    }
+    return { izvor: 'https://mojracun.hep.hr/hepi', dohvaceno: new Date().toISOString(), kupci };
+  }
+
+  const izvoz = { HepiParser, HepiIznimka, hepiUvoz, hepiRacunPdf };
+  if (typeof module !== 'undefined') module.exports = izvoz;
+  else Object.assign(globalThis, izvoz);
+})();
+
 // ---- bookmarklet.js ----
 // Bookmarklet „Uvezi iz HEP-a“: isti uvoz kao extension, bez instalacije.
 //
 // Oznaka u pregledniku ubacuje <script src="https://omm.domovina.ai/hep-uvoz.js?k=<ključ>">
-// u prijavljenu karticu Moje mreže ili Mojeg računa. Ta datoteka je spoj
-// uvoz.js + mojracun.js + ove datoteke (tools/bookmarklet.mjs), pa se kod
+// u prijavljenu karticu Moje mreže, Mojeg računa (Elektra) ili Mojeg Hepi
+// računa. Ta datoteka je spoj uvoz.js + mojracun.js + hepi.js + ove datoteke
+// (tools/bookmarklet.mjs), pa se kod
 // izvršava na HEP-ovoj domeni: fetch je same-origin s cookiejima sesije, kao u
 // extensionu. Na omm.domovina.ai odlazi samo gotov JSON, i to tek na klik.
 //
@@ -367,10 +525,16 @@
   const SERVER = adresa.origin;
   const KLJUC = adresa.searchParams.get('k');
 
-  const IZVORI = {
-    'https://mojamreza.hep.hr': { ime: 'Moja mreža (HEP ODS)', funkcija: 'mojaMrezaUvoz', ommIzvor: 'hep', datoteka: 'moja-mreza' },
-    'https://mojracun.hep.hr': { ime: 'Moj račun (HEP Elektra)', funkcija: 'mojRacunUvoz', ommIzvor: 'hep-moj-racun', datoteka: 'moj-racun' },
-  };
+  // Elektra i Hepi dijele origin mojracun.hep.hr, pa se razlikuju po putanji.
+  const IZVORI = [
+    { adresa: 'https://mojamreza.hep.hr/', ime: 'Moja mreža (HEP ODS)', funkcija: 'mojaMrezaUvoz', ommIzvor: 'hep', datoteka: 'moja-mreza',
+      cita: ['mjerna mjesta (OMM, adresa, tarifa)', 'očitanja brojila', 'potrošnju po razdobljima'] },
+    { adresa: 'https://mojracun.hep.hr/elektra', ime: 'Moj račun (HEP Elektra)', funkcija: 'mojRacunUvoz', ommIzvor: 'hep-moj-racun', datoteka: 'moj-racun',
+      cita: ['kupca (OMM, adresa)', 'očitanja i potrošnju', 'promet (računi i uplate)'] },
+    { adresa: 'https://mojracun.hep.hr/hepi', ime: 'Moj Hepi račun (HEP Opskrba)', funkcija: 'hepiUvoz', ommIzvor: 'hep-hepi', datoteka: 'hepi',
+      cita: ['kupca (OMM, adresa, tarifni model)', 'saldo, račune i uplate', 'potrošnju i očitanja', 'PDF-ove računa koje još nemamo (čitamo brojeve, PDF ne čuvamo)'],
+      racuni: true },
+  ];
   const PORUKE = {
     sesijaIstekla: 'Nisi prijavljen. Prijavi se na ovoj stranici pa klikni oznaku ponovno.',
     neocekivanHtml: 'Stranica ne izgleda kako uvoz očekuje (HEP ju je možda promijenio).',
@@ -437,7 +601,7 @@
     return p;
   };
 
-  const izvor = IZVORI[location.origin];
+  const izvor = IZVORI.find((i) => location.href.startsWith(i.adresa));
   const sadrzaj = $('sadrzaj');
 
   if (!KLJUC || !/^[A-Za-z0-9_-]{22,64}$/.test(KLJUC)) {
@@ -449,18 +613,23 @@
       odlomak('Ova oznaka radi samo na HEP-ovim portalima. Otvori jedan, prijavi se i klikni je ponovno.'),
       gumb('Otvori Moju mrežu (HEP ODS)', () => { location.href = 'https://mojamreza.hep.hr/'; }),
       gumb('Otvori Moj račun (HEP Elektra)', () => { location.href = 'https://mojracun.hep.hr/elektra/'; }, true),
+      gumb('Otvori Moj Hepi račun (HEP Opskrba)', () => { location.href = 'https://mojracun.hep.hr/hepi/'; }, true),
     );
     return;
   }
 
   const ul = document.createElement('ul');
-  ul.innerHTML = location.origin === 'https://mojamreza.hep.hr'
-    ? '<li>mjerna mjesta (OMM, adresa, tarifa)</li><li>očitanja brojila</li><li>potrošnju po razdobljima</li>'
-    : '<li>kupca (OMM, adresa)</li><li>očitanja i potrošnju</li><li>promet (računi i uplate)</li>';
+  for (const c of izvor.cita) {
+    const li = document.createElement('li');
+    li.textContent = c;
+    ul.append(li);
+  }
   sadrzaj.append(
     odlomak(`<b>${izvor.ime}</b>: pročitat ćemo iz ove prijavljene sesije`),
     ul,
-    odlomak('i poslati na omm.domovina.ai. Ne čitamo OIB, lozinku ni kolačiće; prijava ostaje u ovom pregledniku.', 'blijedo'),
+    odlomak(izvor.racuni
+      ? 'i poslati na omm.domovina.ai. Ne čitamo OIB ni lozinku; token prijave koristimo samo na ovoj stranici i ne šaljemo ga nikamo.'
+      : 'i poslati na omm.domovina.ai. Ne čitamo OIB, lozinku ni kolačiće; prijava ostaje u ovom pregledniku.', 'blijedo'),
   );
   const uvezi = gumb('Uvezi', pokreni);
   sadrzaj.append(uvezi);
@@ -474,7 +643,8 @@
   const sazetak = (u) =>
     (u.mjesta || u.kupci || []).map((m) =>
       `${m.omm || `kupac ${m.kupac_id}`}: ${m.ocitanja.length} očitanja, ${m.potrosnja.length} razdoblja potrošnje` +
-      (m.promet ? `, ${m.promet.length} stavki prometa` : ''));
+      (m.promet ? `, ${m.promet.length} stavki prometa` : '') +
+      (m.racuni ? `, ${m.racuni.length} računa` : ''));
 
   const tijelo = (u) => ({ izvor: izvor.ommIzvor, omm: jediniOmm(u), uvoz: u, lokacija: null });
 
@@ -513,10 +683,39 @@
       });
       const j = await o.json().catch(() => ({}));
       if (o.status !== 200 && o.status !== 201) throw new Error(j.greska || `HTTP ${o.status}`);
-      gotovo(j.duplikat ? 'Isti uvoz je već bio na omm.domovina.ai ✓' : 'Spremljeno na omm.domovina.ai ✓');
+      const poruka = j.duplikat ? 'Isti uvoz je već bio na omm.domovina.ai ✓' : 'Spremljeno na omm.domovina.ai ✓';
+      if (izvor.racuni) await posaljiRacune(uvoz);
+      gotovo(poruka);
     } catch (e) {
       status(`Izravno slanje nije uspjelo (${e.message || e}).`, true);
       rezerva(uvoz);
+    }
+  }
+
+  // Hepi: PDF-ove računa koje server još nema šalje na /api/racun, gdje se
+  // pročitaju (isti parser kao za račune mailom) i odbace. Server vraća popis
+  // poziva na broj koje već ima, pa se ponovni uvoz svodi na nove račune.
+  async function posaljiRacune(uvoz) {
+    const auth = { Authorization: `Bearer ${KLJUC}` };
+    let imamo = [];
+    try {
+      const o = await fetch(`${SERVER}/api/racun`, { headers: auth, credentials: 'omit' });
+      if (o.ok) imamo = await o.json();
+    } catch {}
+    const novi = uvoz.kupci.flatMap((k) => k.racuni).filter((r) => r.link && r.poziv_na_broj && !imamo.includes(r.poziv_na_broj));
+    let procitano = 0;
+    for (const [i, r] of novi.entries()) {
+      status(`Račun ${i + 1}/${novi.length}…`);
+      try {
+        const pdf = await globalThis.hepiRacunPdf(r.link);
+        const o = await fetch(`${SERVER}/api/racun`, {
+          method: 'POST', headers: { ...auth, 'Content-Type': 'application/pdf' }, body: pdf, credentials: 'omit',
+        });
+        if (o.ok) procitano++;
+      } catch {}
+    }
+    if (novi.length) {
+      sadrzaj.append(odlomak(`Pročitano ${procitano} od ${novi.length} novih računa.`, procitano === novi.length ? 'blijedo' : 'greska'));
     }
   }
 

@@ -8,7 +8,7 @@ export async function zapisi(
   request: Request,
   d: {
     uredaj: string | null;
-    vrsta: "snimak" | "ocitaj" | "dostava" | "brisanje";
+    vrsta: "snimak" | "ocitaj" | "dostava" | "brisanje" | "racun";
     ishod: "novo" | "duplikat" | "greska" | "ok";
     snimakId?: string | null;
     otisak?: string | null;

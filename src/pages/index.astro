@@ -212,7 +212,8 @@
           const v = document.createElement("div"); v.className = "vrijednosti";
           v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže"
             : s.izvor === "hep-moj-racun" ? "Uvoz s Mojeg računa (HEP Elektra)"
-            : s.izvor === "hep-racun" ? `Račun HEP Elektre · 1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`
+            : s.izvor === "hep-hepi" ? "Uvoz s Mojeg Hepi računa (HEP Opskrba)"
+            : s.izvor === "hep-racun" ? `Račun HEP Opskrbe · 1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`
             : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
           const m = document.createElement("div"); m.className = "meta";
           m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`,

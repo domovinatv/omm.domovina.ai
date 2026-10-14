@@ -54,7 +54,7 @@
   <body>
     <main>
       <h1>Uvoz s HEP-a</h1>
-      <p class="uvod">Prenesi očitanja, potrošnju i račune s <b>Moje mreže</b> (HEP ODS) i <b>Mojeg računa</b> (HEP Elektra) na omm.domovina.ai. Ne treba ništa instalirati, a lozinku ne upisuješ kod nas.</p>
+      <p class="uvod">Prenesi očitanja, potrošnju i račune s <b>Moje mreže</b> (HEP ODS), <b>Mojeg računa</b> (HEP Elektra) ili <b>Mojeg Hepi računa</b> (HEP Opskrba) na omm.domovina.ai. Ne treba ništa instalirati, a lozinku ne upisuješ kod nas.</p>
 
       <section class="kartica" id="primi" hidden>
         <h2>Primam uvoz…</h2>
@@ -66,7 +66,7 @@
         <ol>
           <li><b>Povuci</b> zeleni gumb u traku s oznakama (ako je ne vidiš: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>,
             na Macu <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
-          <li>Otvori <a href="https://mojamreza.hep.hr/" target="_blank" rel="noopener">Moju mrežu</a> ili <a href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener">Moj račun</a> i prijavi se kao inače.</li>
+          <li>Otvori <a href="https://mojamreza.hep.hr/" target="_blank" rel="noopener">Moju mrežu</a> ili <a href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener">Moj račun</a> (HEP Elektra) ili <a href="https://mojracun.hep.hr/hepi/" target="_blank" rel="noopener">Moj Hepi račun</a> (HEP Opskrba) i prijavi se kao inače.</li>
           <li>Klikni oznaku. Pojavi se prozorčić koji kaže što će pročitati, a nakon klika na <b>Uvezi</b> podaci stižu ovamo.</li>
         </ol>
         <div class="oznaka-red">
@@ -98,7 +98,7 @@
 
       <section class="kartica">
         <h2>Računi mailom, jednom postaviš</h2>
-        <p class="blijedo">HEP Elektra (Hepi) šalje račun u PDF-u na tvoj mail. Ako ga proslijediš na adresu ispod, pročitamo
+        <p class="blijedo">HEP Opskrba (Hepi) šalje račun u PDF-u na tvoj mail. Ako ga proslijediš na adresu ispod, pročitamo
           iznos, potrošnju po tarifama, očitanja i zadnjih 12 mjeseci. Ne čuvamo PDF ni mail, samo pročitane brojeve (bez OIB-a).</p>
         <div class="adresa" id="adresa">…</div>
         <button id="kopiraj-adresu" type="button">Kopiraj adresu</button>
@@ -159,7 +159,8 @@
       const NAZIVI: Record<string, string> = {
         hep: "Moja mreža (HEP ODS)",
         "hep-moj-racun": "Moj račun (HEP Elektra)",
-        "hep-racun": "Račun HEP Elektre (mail)",
+        "hep-hepi": "Moj Hepi račun (HEP Opskrba)",
+        "hep-racun": "Pročitani račun (PDF)",
         foto: "Očitanje sa slike",
         rucno: "Ručno očitanje",
       };

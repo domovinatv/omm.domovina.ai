@@ -25,9 +25,10 @@ const broj = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 
 
 /**
  * `hep`: uvoz s Moje mreže (HEP ODS), `hep-moj-racun`: s Mojeg računa (HEP Elektra).
- * `hep-racun` (PDF račun primljen mailom) upisuje samo src/lib/mail.ts.
+ * `hep-hepi`: s Mojeg Hepi računa (HEP Opskrba). `hep-racun` (pročitani PDF
+ * račun) upisuje samo src/lib/racuni.ts, iz maila ili /api/racun.
  */
-const IZVORI = ["foto", "rucno", "hep", "hep-moj-racun"];
+const IZVORI = ["foto", "rucno", "hep", "hep-moj-racun", "hep-hepi"];
 
 /** POST JSON snimak (očitanje i/ili uvoz s HEP-a). */
 export const POST: APIRoute = async ({ request }) => {
@@ -38,7 +39,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const izvor = IZVORI.includes(b.izvor as string) ? (b.izvor as string) : null;
   if (!izvor) return greska(`izvor mora biti ${IZVORI.map((i) => `'${i}'`).join(", ")}`);
-  const uvozni = izvor === "hep" || izvor === "hep-moj-racun";
+  const uvozni = izvor === "hep" || izvor === "hep-moj-racun" || izvor === "hep-hepi";
   const omm = b.omm == null ? null : String(b.omm);
   if (omm !== null && !/^\d{10}$/.test(omm)) return greska("OMM ima 10 znamenki");
   const slike = (b.slike ?? []).filter((s) => typeof s === "string" && s.startsWith(`${kljuc}/`));
@@ -46,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
   const t2 = cijeli(b.t2);
   if (!uvozni && t1 === null) return greska("Nedostaje stanje 1.8.1 (t1)");
   if (uvozni && b.uvoz == null) return greska(`Izvor '${izvor}' traži uvoz`);
-  if (izvor === "hep-moj-racun" && !Array.isArray((b.uvoz as { kupci?: unknown })?.kupci)) {
+  if ((izvor === "hep-moj-racun" || izvor === "hep-hepi") && !Array.isArray((b.uvoz as { kupci?: unknown })?.kupci)) {
     return greska("Uvoz s Mojeg računa traži kupci[]");
   }
 

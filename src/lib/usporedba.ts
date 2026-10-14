@@ -13,7 +13,7 @@ export interface Zadnje {
   t1: number | null;
   t2: number | null;
   datum: string; // YYYY-MM-DD
-  izvor: string; // 'hep' (Moja mreža), 'hep-moj-racun' (Moj račun) ili 'dostava' (naše poslano očitanje)
+  izvor: string; // 'hep' (Moja mreža), 'hep-moj-racun' (Moj račun), 'hep-hepi' (Hepi) ili 'dostava' (naše poslano očitanje)
 }
 
 /** Najviše kWh dnevno po tarifi koje još smatramo uvjerljivim. */
@@ -29,7 +29,7 @@ export async function zadnjeStanje(uredaj: string, omm: string | null): Promise<
   const kandidati: Zadnje[] = [];
 
   // Zadnji uvoz iz svakog izvora: Moja mreža i Moj račun se ne sakrivaju.
-  for (const izvor of ["hep", "hep-moj-racun"]) {
+  for (const izvor of ["hep", "hep-moj-racun", "hep-hepi"]) {
     const hep = await env.DB.prepare(
       `SELECT uvoz FROM snimci WHERE uredaj = ? AND izvor = ? ORDER BY stvoren DESC LIMIT 1`,
     )
