@@ -36,7 +36,8 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 ## Baza: pročišćeno + sirovi dnevnik
 
 - **`snimci`** je pročišćena tablica: jedan redak po otisku sadržaja
-  (`UNIQUE (uredaj, otisak)`). Otisak uvoza s HEP-a je `uvoz` bez `dohvaceno`
+  (`UNIQUE (uredaj, otisak)`). Otisak uvoza s HEP-a je `uvoz` bez `dohvaceno` i bez datuma u
+  `kupci[].saldo.opis` (Moj račun tamo piše današnji datum; od 2026-10-14)
   (od 2026-10-13; prije je trenutak dohvata činio svaki uvoz novim), a otisak
   očitanja je OMM + t1 + t2 + dan (UTC). Ponovljeni
   `POST /api/snimak` vraća postojeći snimak (200, `duplikat: true`).

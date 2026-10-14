@@ -30,6 +30,24 @@ const broj = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 
  */
 const IZVORI = ["foto", "rucno", "hep", "hep-moj-racun", "hep-hepi"];
 
+/**
+ * Dio uvoza koji čini sadržaj za otisak: bez trenutka dohvata i bez datuma u
+ * opisu salda (Moj račun piše „Dospjeli dug na dan 14.10.2026:“, pa bi svaki
+ * dan bio „nov“ snimak iako se ništa nije promijenilo). Novo očitanje, račun
+ * ili uplata mijenjaju sadržaj i daju novi snimak.
+ */
+function sadrzajUvoza(uvoz: unknown): unknown {
+  const u = { ...(uvoz as Record<string, unknown>), dohvaceno: undefined };
+  if (Array.isArray(u.kupci)) {
+    u.kupci = u.kupci.map((k: { saldo?: { opis?: unknown } | null }) =>
+      k?.saldo && typeof k.saldo.opis === "string"
+        ? { ...k, saldo: { ...k.saldo, opis: k.saldo.opis.replace(/\d{1,2}\.\d{1,2}\.\d{4}\.?/g, "") } }
+        : k,
+    );
+  }
+  return u;
+}
+
 /** POST JSON snimak (očitanje i/ili uvoz s HEP-a). */
 export const POST: APIRoute = async ({ request }) => {
   const kljuc = uredaj(request);
@@ -58,7 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
   const otisak = await sha256(
     JSON.stringify(
       uvozni
-        ? { izvor, uvoz: { ...(b.uvoz as object), dohvaceno: undefined } }
+        ? { izvor, uvoz: sadrzajUvoza(b.uvoz) }
         : { izvor: "ocitanje", omm, t1, t2, dan: stvoren.slice(0, 10) },
     ),
   );
