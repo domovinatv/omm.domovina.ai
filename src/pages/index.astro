@@ -64,6 +64,7 @@
       @keyframes kursor { 0%, 60% { opacity: 1; } 70%, 100% { opacity: 0; } }
       @media (prefers-reduced-motion: reduce) { .demo-gumb, .demo-gumb::after, #pusti .strelica { animation: none; } }
       .portali { display: grid; gap: 8px; margin-top: 10px; }
+      .portali.mali .portal { padding: 8px 12px; }
       .portal { display: block; padding: 10px 14px; border: 1px solid var(--rub); border-radius: 12px; text-decoration: none; color: var(--tekst); }
       .portal b { display: block; } .portal span { font-size: .85rem; color: var(--blijedo); }
       .portal:hover { border-color: var(--akcent); }
@@ -90,6 +91,7 @@
         h1 { font-size: 2rem; }
         .uvod { margin-bottom: 18px; max-width: 760px; }
         .koraci { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 14px; align-items: stretch; }
+        .koraci:has(#korak2[hidden]) { grid-template-columns: 1.15fr 2fr; }
         .donje { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 14px; align-items: start; }
         .donje > :last-child { grid-column: span 2; }
         .koraci .kartica, .donje .kartica { margin-bottom: 14px; }
@@ -119,7 +121,12 @@
         <div id="postavljeno" hidden>
           <h2>Oznaka je u traci</h2>
           <p class="stanje istaknuto" id="stanje-postavljeno" style="text-align:left" hidden></p>
-          <p class="blijedo">Prijeđi na korak 2. Oznaka ti treba na HEP-ovoj stranici.</p>
+          <p class="blijedo">Sad se prijavi na HEP i tamo klikni oznaku:</p>
+          <div class="portali mali">
+            <a class="portal" href="https://mojamreza.hep.hr/" target="_blank" rel="noopener"><b>Moja mreža</b><span>HEP ODS</span></a>
+            <a class="portal" href="https://mojracun.hep.hr/hepi/" target="_blank" rel="noopener"><b>Moj Hepi račun</b><span>HEP Opskrba</span></a>
+            <a class="portal" href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener"><b>Moj račun</b><span>HEP Elektra</span></a>
+          </div>
           <p class="blijedo"><a href="#" id="ponovo">Nemam je više, postavi je ponovno</a></p>
         </div>
         <div id="postavljanje">
@@ -146,7 +153,7 @@
         </div>
       </section>
 
-      <section class="kartica korak">
+      <section class="kartica korak" id="korak2">
         <div class="broj">2</div>
         <div>
           <h2>Prijavi se na HEP kao inače</h2>
@@ -162,10 +169,10 @@
       </section>
 
       <section class="kartica korak">
-        <div class="broj">3</div>
+        <div class="broj" id="broj3">3</div>
         <div>
           <h2>Klikni oznaku, pa „Uvezi“</h2>
-          <p class="blijedo">Na HEP-ovoj stranici pojavi se prozorčić koji kaže što će pročitati. Nakon klika na <b>Uvezi</b> podaci stižu ovamo. Za više portala ponovi korake 2 i 3.</p>
+          <p class="blijedo">Na HEP-ovoj stranici pojavi se prozorčić koji kaže što će pročitati. Nakon klika na <b>Uvezi</b> podaci stižu ovamo. Za drugi portal ponovi prijavu i klik na oznaku.</p>
         </div>
       </section>
 
@@ -224,11 +231,20 @@
       // Uputa dok se gumb povlači; poslije podsjetnik da ga se provjeri klikom.
       const pusti = $("pusti");
       oznaka.addEventListener("dragstart", () => { pusti.hidden = false; });
-      oznaka.addEventListener("dragend", () => {
+      // Preglednik ne javlja da je oznaka dodana. dropEffect kaže samo je li gumb
+      // itko prihvatio: „none“ je sigurno promašaj (pušten na stranicu ili Esc),
+      // a sve drugo je vjerojatno traka, ali to potvrđuje tek klik na oznaku.
+      oznaka.addEventListener("dragend", (e) => {
         pusti.hidden = true;
         const s = $("stanje-oznaka");
-        s.textContent = "Ako je gumb sad u traci, klikni ga tamo da provjerimo radi li.";
-        s.className = "stanje istaknuto";
+        if (e.dataTransfer?.dropEffect === "none") {
+          const traka = document.querySelector(".ime-trake")?.textContent ?? "traku s oznakama";
+          s.textContent = `Gumb nije ostao u traci. Pusti ga točno u ${traka} pri vrhu prozora (ne vidiš je? ${$("precac").textContent}).`;
+          s.className = "stanje greska";
+        } else {
+          s.textContent = "Izgleda dobro! Sad klikni novu oznaku u traci, ovdje, da potvrdimo da radi.";
+          s.className = "stanje istaknuto";
+        }
       });
 
       // Klik na oznaku ovdje (hep-uvoz.js na našem originu) javlja „omm-oznaka“.
@@ -239,6 +255,9 @@
         $("postavljeno").hidden = !da;
         $("broj1").textContent = da ? "✓" : "1";
         $("broj1").classList.toggle("gotov", da);
+        // Portali su tada u kartici 1, pa korak 2 otpada i zadnji korak postaje drugi.
+        $("korak2").hidden = da;
+        $("broj3").textContent = da ? "2" : "3";
       };
       let zapamceno = false;
       try { zapamceno = localStorage.getItem(POSTAVLJENA) === "1"; } catch {}
