@@ -78,7 +78,7 @@
       details { margin-top: 10px; } summary { cursor: pointer; font-weight: 600; }
       ol { padding-left: 22px; margin: 8px 0; } ol li { margin: 6px 0; }
       ul.snimci { list-style: none; padding: 0; margin: 0; }
-      ul.snimci li { padding: 10px 0; border-top: 1px solid var(--rub); }
+      ul.snimci li { padding: 8px 0; border-top: 1px solid var(--rub); }
       ul.snimci li:first-child { border-top: 0; }
       ul.snimci .naslov { font-weight: 600; }
       ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
@@ -87,18 +87,20 @@
 
       /* Oznaka se povlači na računalu: tamo sve stane na jedan ekran, koraci jedan do drugog. */
       @media (min-width: 900px) {
-        main { max-width: 1120px; padding: 28px 24px 24px; }
+        main { max-width: 1240px; padding: 28px 24px 24px; }
         h1 { font-size: 2rem; }
         .uvod { margin-bottom: 18px; max-width: 760px; }
-        .koraci { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 14px; align-items: stretch; }
-        .koraci:has(#korak2[hidden]) { grid-template-columns: 1.15fr 2fr; }
-        .donje { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 14px; align-items: start; }
-        .donje > :last-child { grid-column: span 2; }
-        .koraci .kartica, .donje .kartica { margin-bottom: 14px; }
+        .koraci { display: grid; grid-template-columns: 1.15fr 1fr 1fr 1.1fr; gap: 14px; align-items: stretch; }
+        .koraci:has(#korak2[hidden]) { grid-template-columns: 1.15fr 1.5fr 1.1fr; }
+        .koraci .kartica { margin-bottom: 14px; }
+        /* Moji uvozi su četvrti stupac visok koliko i koraci: popis ne smije
+           sam rastegnuti red, pa je apsolutan u okviru i skrola se unutra. */
+        .uvozi { display: flex; flex-direction: column; }
+        .snimci-okvir { position: relative; flex: 1; min-height: 120px; }
+        .snimci-okvir ul.snimci { position: absolute; inset: 0; overflow-y: auto; }
         .kartica { padding: 16px; }
         .oznaka-red { padding: 18px 0 6px; }
         .oznaka { padding: 14px 26px; font-size: 1.1rem; }
-        ul.snimci { max-height: 168px; overflow-y: auto; }
         footer { margin-top: 4px; }
       }
     </style>
@@ -176,13 +178,12 @@
         </div>
       </section>
 
-      </div>
-
-      <div class="donje">
-      <section class="kartica">
+      <section class="kartica uvozi">
         <h2>Moji uvozi</h2>
-        <ul class="snimci" id="snimci"><li class="meta">Još nema uvoza.</li></ul>
+        <div class="snimci-okvir"><ul class="snimci" id="snimci"><li class="meta">Još nema uvoza.</li></ul></div>
       </section>
+
+      </div>
 
       <section class="kartica">
         <details>
@@ -196,8 +197,6 @@
           <p class="blijedo">Oznaka sadrži ključ ovog preglednika: tko ga ima, vidi tvoje uvoze. Ne dijeli je.</p>
         </details>
       </section>
-
-      </div>
 
       <footer>Rana verzija bez prijave: uvozi su vezani uz ovaj preglednik. · <a href="/ocitaj">Očitaj brojilo sa slike</a></footer>
     </main>
@@ -314,7 +313,14 @@
           const m = document.createElement("div"); m.className = "meta"; m.textContent = meta;
           li.append(n, m); ul.append(li);
         };
-        for (const s of uvozi) redak(NAZIVI[s.izvor], [vrijeme(s.stvoren), s.omm && `OMM ${s.omm}`].filter(Boolean).join(" · "));
+        // Jedan redak po portalu i OMM-u: zadnji uvoz (popis je od najnovijeg) i koliko ih je bilo.
+        const grupe = new Map<string, { s: Snimak; broj: number }>();
+        for (const s of uvozi) {
+          const g = grupe.get(`${s.izvor}|${s.omm}`);
+          if (g) g.broj++; else grupe.set(`${s.izvor}|${s.omm}`, { s, broj: 1 });
+        }
+        for (const { s, broj } of grupe.values())
+          redak(NAZIVI[s.izvor], [s.omm && `OMM ${s.omm}`, vrijeme(s.stvoren), broj > 1 && `${broj} uvoza`].filter(Boolean).join(" · "));
         // Pročitani PDF-ovi računa su jedan redak, ne dvadeset.
         if (racuni.length) redak(`Pročitani računi: ${racuni.length}`, `zadnji stigao ${vrijeme(racuni[0].stvoren)}`);
       }
