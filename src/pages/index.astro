@@ -82,6 +82,13 @@
       ul.snimci li:first-child { border-top: 0; }
       ul.snimci .naslov { font-weight: 600; }
       ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
+      /* Sigurnost nije korak: tiha poveznica ispod koraka, tekst u uskom stupcu po sredini. */
+      .sigurnost { max-width: 640px; margin: 8px auto 0; text-align: center; }
+      .sigurnost summary { display: inline-block; color: var(--akcent); padding: 6px 10px; border-radius: 999px; list-style: none; }
+      .sigurnost summary::-webkit-details-marker { display: none; }
+      .sigurnost summary:hover { background: var(--akcent-blago); }
+      .sigurnost details[open] summary { margin-bottom: 4px; }
+      .sigurnost p { text-align: left; }
       footer { margin-top: 24px; font-size: .85rem; color: var(--blijedo); text-align: center; }
       [hidden] { display: none !important; }
 
@@ -179,9 +186,9 @@
 
       </div>
 
-      <section class="kartica">
+      <section class="sigurnost">
         <details>
-          <summary>Kako to radi i zašto je sigurno</summary>
+          <summary>🔒 Kako to radi i zašto je sigurno</summary>
           <p class="blijedo">Oznaka na HEP-ovu stranicu na kojoj si prijavljen učita našu skriptu. Ona čita iste stranice koje i ti
             vidiš, a gotov sažetak šalje ovamo tek kad klikneš <b>Uvezi</b>. Ne čita OIB ni lozinku, ne šalje kolačiće ni
             token prijave, i nestane kad zatvoriš stranicu. PDF računa pročitamo i ne čuvamo.</p>
