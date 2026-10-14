@@ -1,0 +1,7 @@
+# Stranice uvijek provjeri na serveru, da se nova verzija vidi odmah nakon deploya.
+/
+  Cache-Control: no-cache
+/ocitaj
+  Cache-Control: no-cache
+/hep-uvoz.js
+  Cache-Control: no-cache
