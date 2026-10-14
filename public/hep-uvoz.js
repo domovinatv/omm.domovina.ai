@@ -321,7 +321,27 @@
       }
     }
 
-    const ids = MojRacunParser.kupacIds(performance.getEntriesByType('resource').map((e) => e.name));
+    const kupacIdsSada = () => MojRacunParser.kupacIds(performance.getEntriesByType('resource').map((e) => e.name));
+    let ids = kupacIdsSada();
+    if (ids.length === 0) {
+      // Naslovnica nakon prijave još nije tražila ništa s kupacId. Potrošnja
+      // hoće, pa se na nju prelazi Angularovim routerom, bez učitavanja
+      // stranice (učitavanje bi prekinulo ovaj kod): klik na poveznicu, a bez
+      // nje pushState + popstate, koji router također sluša.
+      napredak('Otvaram Potrošnju…');
+      const poveznica = [...document.querySelectorAll('a[href]')].find((a) => /\/potrosnja\/?$/.test(a.pathname));
+      if (poveznica) poveznica.click();
+      else {
+        history.pushState(null, '', '/elektra/potrosnja');
+        dispatchEvent(new PopStateEvent('popstate', { state: null }));
+      }
+      for (let i = 0; i < 40 && ids.length === 0; i++) {
+        await new Promise((ok) => setTimeout(ok, 250));
+        ids = kupacIdsSada();
+      }
+      // Zaglavlje „Kupac“ se iscrta tek nakon odgovora.
+      await new Promise((ok) => setTimeout(ok, 600));
+    }
     if (ids.length === 0) throw new MojRacunIznimka('nemaKupca');
     // Zaglavlje pokazuje kupca čiji su podaci zadnji učitani.
     const odabran = ids[ids.length - 1];
