@@ -1,228 +1,219 @@
 ---
-// Očitavač brojila u pregledniku: slika zaslona → OCR → potvrda → snimak.
-// Ista API ruta služi i mobilnoj aplikaciji (flutter_moja_mreza/example).
+// Naslovnica: uvoz s HEP-a oznakom (bookmarklet). To je jedini način uvoza koji
+// nudimo korisnicima: ništa se ne instalira, prijava ostaje na HEP-u.
+// Kod oznake je public/hep-uvoz.js, generiran iz flutter_moja_mreza/extension.
 ---
 <!doctype html>
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Očitaj brojilo</title>
-    <meta name="description" content="Uslikaj zaslon brojila, provjeri 1.8.1 i 1.8.2 i spremi očitanje." />
-    <style>
+    <title>Uvoz s HEP-a</title>
+    <meta name="description" content="Očitanja, potrošnja i računi s Moje mreže, Mojeg računa i Hepija u dva klika, bez instaliranja ičega." />
+    <style is:global>
       :root {
         --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
-        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --upozorenje: #9a5b00; --greska: #b3261e;
+        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --akcent-blago: #e3f1e6; --greska: #b3261e;
       }
       @media (prefers-color-scheme: dark) {
         :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
-          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --upozorenje: #f0b45a; --greska: #ff8a80; }
+          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --akcent-blago: #1d3324; --greska: #ff8a80; }
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--tekst);
         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-      main { max-width: 560px; margin: 0 auto; padding: 24px 16px 64px; }
-      h1 { font-size: 1.6rem; margin: 0 0 4px; }
-      h2 { font-size: 1.1rem; margin: 0 0 12px; }
-      p.uvod { color: var(--blijedo); margin: 0 0 20px; }
-      .kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-      label { display: block; font-size: .9rem; color: var(--blijedo); margin: 12px 0 4px; }
-      input[type=number], input[type=text] { width: 100%; font-size: 1.4rem; padding: 10px 12px; border-radius: 10px;
-        border: 1px solid var(--rub); background: var(--bg); color: var(--tekst); font-variant-numeric: tabular-nums; }
-      button, .gumb { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-        min-height: 48px; border: 0; border-radius: 12px; font: inherit; font-weight: 600; cursor: pointer;
-        background: var(--akcent); color: var(--akcent-tekst); margin-top: 12px; }
-      button.sporedni, .gumb.sporedni { background: transparent; color: var(--tekst); border: 1px solid var(--rub); }
-      button:disabled { opacity: .5; cursor: default; }
-      input[type=file] { display: none; }
-      .slike { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-      .slike img { width: 88px; height: 88px; object-fit: cover; border-radius: 10px; border: 1px solid var(--rub); }
-      .stanje { font-size: .9rem; color: var(--blijedo); min-height: 1.5em; margin-top: 8px; }
-      .stanje.greska { color: var(--greska); } .stanje.upozorenje { color: var(--upozorenje); }
-      .red { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      main { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
+      a { color: var(--akcent); }
+      h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 8px; }
+      h2 { font-size: 1.1rem; margin: 0 0 8px; }
+      p { margin: 8px 0; }
+      .uvod { color: var(--blijedo); margin: 0 0 24px; }
+      .kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+      .korak { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; }
+      .broj { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
+        background: var(--akcent-blago); color: var(--akcent); }
+      .oznaka-red { text-align: center; padding: 14px 0 4px; }
+      .oznaka { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px;
+        background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; font-size: 1.05rem; text-decoration: none;
+        cursor: grab; box-shadow: 0 2px 10px rgba(31,122,58,.25); }
+      .oznaka:active { cursor: grabbing; }
+      .portali { display: grid; gap: 8px; margin-top: 10px; }
+      .portal { display: block; padding: 10px 14px; border: 1px solid var(--rub); border-radius: 12px; text-decoration: none; color: var(--tekst); }
+      .portal b { display: block; } .portal span { font-size: .85rem; color: var(--blijedo); }
+      .portal:hover { border-color: var(--akcent); }
+      button { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px;
+        border: 1px solid var(--rub); border-radius: 12px; font: inherit; font-weight: 600; cursor: pointer;
+        background: transparent; color: var(--tekst); margin-top: 8px; }
+      .stanje { font-size: .9rem; color: var(--blijedo); min-height: 1.4em; margin-top: 6px; text-align: center; }
+      .stanje.greska { color: var(--greska); }
+      .blijedo { color: var(--blijedo); font-size: .9rem; }
+      kbd { font: .85em ui-monospace, monospace; border: 1px solid var(--rub); border-radius: 4px; padding: 1px 5px; }
+      details { margin-top: 10px; } summary { cursor: pointer; font-weight: 600; }
+      ol { padding-left: 22px; margin: 8px 0; } ol li { margin: 6px 0; }
       ul.snimci { list-style: none; padding: 0; margin: 0; }
-      ul.snimci li { padding: 10px 0; border-top: 1px solid var(--rub); display: flex; gap: 12px; align-items: center; }
+      ul.snimci li { padding: 10px 0; border-top: 1px solid var(--rub); }
       ul.snimci li:first-child { border-top: 0; }
-      ul.snimci img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
-      ul.snimci .vrijednosti { font-variant-numeric: tabular-nums; font-weight: 600; }
+      ul.snimci .naslov { font-weight: 600; }
       ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
-      details { font-size: .85rem; color: var(--blijedo); margin-top: 8px; }
-      pre { white-space: pre-wrap; word-break: break-word; }
+      footer { margin-top: 24px; font-size: .85rem; color: var(--blijedo); text-align: center; }
+      [hidden] { display: none !important; }
     </style>
   </head>
   <body>
     <main>
-      <h1>Očitaj brojilo</h1>
-      <p class="uvod">Uslikaj zaslon brojila dok pokazuje <b>1.8.1</b>, pa dok pokazuje <b>1.8.2</b>.
-        Brojeve pročitamo automatski, a ti ih provjeriš prije spremanja.</p>
-      <p class="uvod"><a href="/uvoz">Uvezi očitanja i račune s HEP-a →</a></p>
+      <h1>Tvoji podaci s HEP-a, u dva klika</h1>
+      <p class="uvod">Očitanja, potrošnja i računi s <b>Moje mreže</b>, <b>Mojeg računa</b> i <b>Hepija</b>.
+        Ništa ne instaliraš, a lozinku upisuješ samo HEP-u.</p>
 
-      <section class="kartica">
-        <h2>1. Slike zaslona</h2>
-        <label class="gumb" for="kamera">📷 Uslikaj zaslon</label>
-        <input id="kamera" type="file" accept="image/*" capture="environment" />
-        <label class="gumb sporedni" for="galerija">Odaberi iz galerije</label>
-        <input id="galerija" type="file" accept="image/*" multiple />
-        <div class="slike" id="slike"></div>
-        <div class="stanje" id="stanje-ocr"></div>
+      <section class="kartica" id="primi" hidden>
+        <h2>Primam uvoz…</h2>
+        <div class="stanje" id="stanje-primi">Čekam podatke s HEP-ove kartice.</div>
       </section>
 
-      <section class="kartica">
-        <h2>2. Provjeri brojeve</h2>
-        <div class="red">
-          <div><label for="t1">1.8.1 (viša tarifa), kWh</label><input id="t1" type="number" inputmode="numeric" min="0" step="1" /></div>
-          <div><label for="t2">1.8.2 (niža tarifa), kWh</label><input id="t2" type="number" inputmode="numeric" min="0" step="1" /></div>
+      <section class="kartica korak">
+        <div class="broj">1</div>
+        <div>
+          <h2>Povuci gumb u traku s oznakama</h2>
+          <p class="blijedo" id="traka">Ako traku ne vidiš: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (na Macu <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>). Ovo radiš samo jednom.</p>
+          <div class="oznaka-red">
+            <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama">⚡ Uvezi iz HEP-a</a>
+          </div>
+          <div class="stanje" id="stanje-oznaka"></div>
+          <details id="mobitel">
+            <summary>Na mobitelu</summary>
+            <ol>
+              <li><button id="kopiraj" type="button">Kopiraj kod oznake</button></li>
+              <li>Dodaj ovu stranicu u oznake, uredi tu oznaku, nazovi je <b>Uvezi iz HEP-a</b> i umjesto adrese zalijepi kod.</li>
+              <li>Na prijavljenom portalu: u Chromeu upiši <i>Uvezi iz HEP-a</i> u adresnu traku i odaberi oznaku;
+                u Safariju otvori Oznake i dodirni je.</li>
+            </ol>
+          </details>
         </div>
-        <label for="omm">OMM (10 znamenki, nije obavezno)</label>
-        <input id="omm" type="text" inputmode="numeric" maxlength="10" pattern="\d{10}" />
-        <button class="sporedni" id="lokacija" type="button">📍 Dodaj lokaciju</button>
-        <div class="stanje" id="stanje-lokacija"></div>
-        <button id="spremi" type="button" disabled>Spremi očitanje</button>
-        <div class="stanje" id="stanje-spremi"></div>
-        <details><summary>Što je pročitao model</summary><pre id="sirovo"></pre></details>
+      </section>
+
+      <section class="kartica korak">
+        <div class="broj">2</div>
+        <div>
+          <h2>Prijavi se na HEP kao inače</h2>
+          <div class="portali">
+            <a class="portal" href="https://mojamreza.hep.hr/" target="_blank" rel="noopener">
+              <b>Moja mreža</b><span>HEP ODS · očitanja brojila i potrošnja · prijava e-Građanima</span></a>
+            <a class="portal" href="https://mojracun.hep.hr/hepi/" target="_blank" rel="noopener">
+              <b>Moj Hepi račun</b><span>HEP Opskrba · računi s PDF-om, uplate, potrošnja</span></a>
+            <a class="portal" href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener">
+              <b>Moj račun</b><span>HEP Elektra · računi, uplate, potrošnja</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="kartica korak">
+        <div class="broj">3</div>
+        <div>
+          <h2>Klikni oznaku, pa „Uvezi“</h2>
+          <p class="blijedo">Na HEP-ovoj stranici pojavi se prozorčić koji kaže što će pročitati. Nakon klika na <b>Uvezi</b> podaci stižu ovamo. Za više portala ponovi korake 2 i 3.</p>
+        </div>
       </section>
 
       <section class="kartica">
-        <h2>Moja očitanja</h2>
-        <ul class="snimci" id="snimci"><li class="meta">Još nema očitanja.</li></ul>
+        <h2>Moji uvozi</h2>
+        <ul class="snimci" id="snimci"><li class="meta">Još nema uvoza.</li></ul>
       </section>
-      <p class="stanje">Ovo je rana verzija bez prijave: očitanja su vezana uz ovaj preglednik.</p>
+
+      <section class="kartica">
+        <details>
+          <summary>Kako to radi i zašto je sigurno</summary>
+          <p class="blijedo">Oznaka na HEP-ovu stranicu na kojoj si prijavljen učita našu skriptu. Ona čita iste stranice koje i ti
+            vidiš, a gotov sažetak šalje ovamo tek kad klikneš <b>Uvezi</b>. Ne čita OIB ni lozinku, ne šalje kolačiće ni
+            token prijave, i nestane kad zatvoriš stranicu. PDF računa pročitamo i ne čuvamo.</p>
+          <p class="blijedo">Svaki zahtjev je popisan u
+            <a href="https://github.com/stepanic/flutter_moja_mreza/blob/main/docs/kako-citamo-podatke.md" target="_blank" rel="noopener">kako čitamo podatke</a>,
+            a kod koji se izvršava vidiš na <a href="/hep-uvoz.js" target="_blank">/hep-uvoz.js</a>.</p>
+          <p class="blijedo">Oznaka sadrži ključ ovog preglednika: tko ga ima, vidi tvoje uvoze. Ne dijeli je.</p>
+        </details>
+      </section>
+
+      <footer>Rana verzija bez prijave: uvozi su vezani uz ovaj preglednik. · <a href="/ocitaj">Očitaj brojilo sa slike</a></footer>
     </main>
 
     <script>
       import { kljuc } from "../lib/kljuc-klijent";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+      const k = kljuc();
+      const auth = { Authorization: `Bearer ${k}` };
+      const HEP = ["https://mojamreza.hep.hr", "https://mojracun.hep.hr"];
 
-      const auth = { Authorization: `Bearer ${kljuc()}` };
-
-      const stanje = (id: string, tekst: string, vrsta = "") => {
-        const el = $(id); el.textContent = tekst; el.className = `stanje ${vrsta}`;
+      // Mali loader; sav kod je u /hep-uvoz.js da se parser može popraviti bez
+      // ponovnog povlačenja oznake. ?v= zaobilazi predmemoriju.
+      const kod = `javascript:(()=>{var s=document.createElement('script');s.src='${location.origin}/hep-uvoz.js?k=${k}&v='+Date.now();document.body.appendChild(s)})()`;
+      const oznaka = $<HTMLAnchorElement>("oznaka");
+      oznaka.href = kod;
+      oznaka.onclick = (e) => {
+        e.preventDefault();
+        const s = $("stanje-oznaka");
+        s.textContent = "Ne klikaj ovdje: povuci gumb u traku s oznakama, pa ga klikni na HEP-ovoj stranici.";
+        s.className = "stanje greska";
       };
-
-      // Smanji sliku prije slanja: brže i dovoljno za zaslon brojila.
-      async function smanji(f: File): Promise<Blob> {
-        const bmp = await createImageBitmap(f);
-        const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
-        c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
-        return new Promise((ok) => c.toBlob((b) => ok(b!), "image/jpeg", 0.85));
+      $("kopiraj").onclick = async () => {
+        await navigator.clipboard.writeText(kod);
+        $("kopiraj").textContent = "Kopirano ✓";
+      };
+      // Na dodirnom zaslonu nema povlačenja: upute za mobitel su odmah otvorene.
+      if (matchMedia("(pointer: coarse)").matches) {
+        $<HTMLDetailsElement>("mobitel").open = true;
+        $("traka").textContent = "Na mobitelu oznaku dodaješ ručno, jednom:";
       }
 
-      const slike: string[] = [];
-      const ocr: unknown[] = [];
-      let lokacija: { lat: number; lon: number; tocnost_m: number } | null = null;
-
-      function osvjeziGumb() {
-        $<HTMLButtonElement>("spremi").disabled = !$<HTMLInputElement>("t1").value;
-      }
-
-      async function obradi(datoteke: FileList | null) {
-        for (const f of Array.from(datoteke ?? [])) {
-          stanje("stanje-ocr", "Čitam brojeve…");
-          const img = document.createElement("img");
-          img.src = URL.createObjectURL(f);
-          $("slike").append(img);
-          try {
-            const fd = new FormData();
-            fd.append("slika", await smanji(f), "brojilo.jpg");
-            const omm = $<HTMLInputElement>("omm").value.trim();
-            if (/^\d{10}$/.test(omm)) fd.append("omm", omm);
-            const r = await fetch("/api/ocitaj", { method: "POST", headers: auth, body: fd });
-            const d = await r.json();
-            if (d.slika) slike.push(d.slika);
-            ocr.push(d);
-            $("sirovo").textContent += `${d.model ?? ""}\n${d.sirovo ?? d.greska ?? ""}\n\n`;
-            if (!r.ok) { stanje("stanje-ocr", d.greska ?? "Čitanje nije uspjelo", "greska"); continue; }
-            if (d.t1 != null) $<HTMLInputElement>("t1").value = String(d.t1);
-            if (d.t2 != null) $<HTMLInputElement>("t2").value = String(d.t2);
-            if (d.t1 == null && d.t2 == null && d.neodredeno != null) {
-              const t1 = $<HTMLInputElement>("t1");
-              const polje = t1.value ? $<HTMLInputElement>("t2") : t1;
-              polje.value = String(d.neodredeno);
-              stanje("stanje-ocr", `Pročitano ${d.neodredeno}, ali oznaka tarife nije sigurna: upisano u ${polje.id === "t1" ? "1.8.1" : "1.8.2"}. Provjeri.`, "upozorenje");
-              osvjeziGumb();
-              continue;
-            }
-            const nasao = [d.t1 != null && "1.8.1", d.t2 != null && "1.8.2"].filter(Boolean).join(" i ");
-            const dodatno = (d.upozorenja ?? []).join(" ");
-            if (d.zadnje) stanje("stanje-lokacija", `Zadnje stanje (${d.zadnje.datum}): 1.8.1 ${d.zadnje.t1 ?? "–"} · 1.8.2 ${d.zadnje.t2 ?? "–"}`);
-            if (nasao && dodatno) { stanje("stanje-ocr", `Pročitano: ${nasao}. ${dodatno} Provjeri brojeve.`, "upozorenje"); osvjeziGumb(); continue; }
-            stanje("stanje-ocr", nasao ? `Pročitano: ${nasao}. Provjeri brojeve.` :
-              `Nisam našao 1.8.1 ni 1.8.2${d.napomena ? ` (${d.napomena})` : ""}. Probaj opet ili upiši ručno.`,
-              nasao ? "" : "upozorenje");
-          } catch (e) {
-            stanje("stanje-ocr", `Greška: ${e}`, "greska");
-          }
-          osvjeziGumb();
-        }
-      }
-      $<HTMLInputElement>("kamera").onchange = (e) => obradi((e.target as HTMLInputElement).files);
-      $<HTMLInputElement>("galerija").onchange = (e) => obradi((e.target as HTMLInputElement).files);
-      $("t1").oninput = osvjeziGumb;
-
-      $("lokacija").onclick = () => {
-        if (!navigator.geolocation) return stanje("stanje-lokacija", "Preglednik ne daje lokaciju", "greska");
-        stanje("stanje-lokacija", "Tražim lokaciju…");
-        navigator.geolocation.getCurrentPosition(
-          (p) => {
-            lokacija = { lat: p.coords.latitude, lon: p.coords.longitude, tocnost_m: p.coords.accuracy };
-            stanje("stanje-lokacija", `📍 ${lokacija.lat.toFixed(5)}, ${lokacija.lon.toFixed(5)} (±${Math.round(lokacija.tocnost_m)} m)`);
-          },
-          (e) => stanje("stanje-lokacija", `Lokacija nije dostupna: ${e.message}`, "greska"),
-          { enableHighAccuracy: true, timeout: 15000 },
-        );
+      const NAZIVI: Record<string, string> = {
+        hep: "Moja mreža (HEP ODS)",
+        "hep-hepi": "Moj Hepi račun (HEP Opskrba)",
+        "hep-moj-racun": "Moj račun (HEP Elektra)",
       };
-
-      $("spremi").onclick = async () => {
-        const t1 = parseInt($<HTMLInputElement>("t1").value, 10);
-        const t2v = $<HTMLInputElement>("t2").value;
-        const omm = $<HTMLInputElement>("omm").value.trim();
-        if (omm && !/^\d{10}$/.test(omm)) return stanje("stanje-spremi", "OMM ima 10 znamenki", "greska");
-        const r = await fetch("/api/snimak", {
-          method: "POST",
-          headers: { ...auth, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            izvor: slike.length ? "foto" : "rucno", t1, t2: t2v ? parseInt(t2v, 10) : null,
-            omm: omm || null, slike, ocr, lokacija,
-          }),
-        });
-        const d = await r.json();
-        if (!r.ok) return stanje("stanje-spremi", d.greska ?? "Spremanje nije uspjelo", "greska");
-        stanje("stanje-spremi", "Spremljeno ✓");
-        slike.length = 0; ocr.length = 0; $("slike").innerHTML = ""; $("sirovo").textContent = "";
-        ucitaj();
-      };
+      type Snimak = { izvor: string; stvoren: string; omm: string | null };
+      const vrijeme = (s: string) => new Date(s).toLocaleString("hr-HR");
 
       async function ucitaj() {
         const r = await fetch("/api/snimak", { headers: auth });
         if (!r.ok) return;
-        const lista = await r.json();
+        const lista = (await r.json()) as Snimak[];
+        const uvozi = lista.filter((s) => s.izvor in NAZIVI);
+        const racuni = lista.filter((s) => s.izvor === "hep-racun");
+        if (!uvozi.length && !racuni.length) return;
         const ul = $("snimci");
-        if (!lista.length) return;
-        ul.innerHTML = "";
-        for (const s of lista) {
+        ul.replaceChildren();
+        const redak = (naslov: string, meta: string) => {
           const li = document.createElement("li");
-          if (s.slike[0]) {
-            const img = document.createElement("img");
-            img.src = `/api/slika/${s.slike[0]}`; img.alt = "";
-            li.append(img);
-          }
-          const div = document.createElement("div");
-          const v = document.createElement("div"); v.className = "vrijednosti";
-          v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže"
-            : s.izvor === "hep-moj-racun" ? "Uvoz s Mojeg računa (HEP Elektra)"
-            : s.izvor === "hep-hepi" ? "Uvoz s Mojeg Hepi računa (HEP Opskrba)"
-            : s.izvor === "hep-racun" ? `Račun HEP Opskrbe · 1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`
-            : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
-          const m = document.createElement("div"); m.className = "meta";
-          m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`,
-            s.lat != null && "📍", s.hep_dostava && (s.hep_dostava.Status === 1 ? "poslano HEP-u ✓" : "HEP: " + (s.hep_dostava.Opis ?? "?"))]
-            .filter(Boolean).join(" · ");
-          div.append(v, m); li.append(div); ul.append(li);
-        }
+          const n = document.createElement("div"); n.className = "naslov"; n.textContent = naslov;
+          const m = document.createElement("div"); m.className = "meta"; m.textContent = meta;
+          li.append(n, m); ul.append(li);
+        };
+        for (const s of uvozi) redak(NAZIVI[s.izvor], [vrijeme(s.stvoren), s.omm && `OMM ${s.omm}`].filter(Boolean).join(" · "));
+        // Pročitani PDF-ovi računa su jedan redak, ne dvadeset.
+        if (racuni.length) redak(`Pročitani računi: ${racuni.length}`, `zadnji stigao ${vrijeme(racuni[0].stvoren)}`);
       }
       ucitaj();
+      // Povratak s HEP-ove kartice osvježi popis.
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) ucitaj(); });
+
+      // Rezerva kad HEP ne pusti izravan fetch: oznaka otvori /?primi=1 i pošalje
+      // tijelo snimka preko postMessage. Prima se samo s HEP-ovih portala.
+      if (new URLSearchParams(location.search).has("primi") && window.opener) {
+        $("primi").hidden = false;
+        const stanje = $("stanje-primi");
+        window.addEventListener("message", async (e) => {
+          if (!HEP.includes(e.origin) || e.source !== window.opener || e.data?.omm !== "uvoz") return;
+          stanje.textContent = "Spremam…";
+          const r = await fetch("/api/snimak", {
+            method: "POST",
+            headers: { ...auth, "Content-Type": "application/json" },
+            body: JSON.stringify(e.data.tijelo),
+          });
+          const d = await r.json().catch(() => ({}));
+          stanje.textContent = r.ok ? (d.duplikat ? "Isti uvoz je već bio ovdje ✓" : "Spremljeno ✓") : (d.greska ?? `Greška ${r.status}`);
+          stanje.className = r.ok ? "stanje" : "stanje greska";
+          ucitaj();
+        });
+        for (const o of HEP) window.opener.postMessage({ omm: "spreman" }, o);
+      }
     </script>
   </body>
 </html>

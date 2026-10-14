@@ -517,7 +517,7 @@
 //
 // Zašto radi: nijedan portal nema CSP koji ograničava script-src ili
 // connect-src (provjereno 2026-10-14), a /api/snimak ima CORS *. Ako se to
-// promijeni, rezerva je nova kartica omm.domovina.ai/uvoz i postMessage.
+// promijeni, rezerva je nova kartica omm.domovina.ai/?primi=1 i postMessage.
 
 (() => {
   const skripta = document.currentScript;
@@ -605,7 +605,7 @@
   const sadrzaj = $('sadrzaj');
 
   if (!KLJUC || !/^[A-Za-z0-9_-]{22,64}$/.test(KLJUC)) {
-    sadrzaj.append(odlomak(`Oznaka nema ključ. Napravi je ponovno na <a href="${SERVER}/uvoz" target="_blank">${SERVER.replace('https://', '')}/uvoz</a>.`, 'greska'));
+    sadrzaj.append(odlomak(`Oznaka nema ključ. Napravi je ponovno na <a href="${SERVER}/" target="_blank">${SERVER.replace('https://', '')}</a>.`, 'greska'));
     return;
   }
   if (!izvor) {
@@ -723,17 +723,19 @@
     status('');
     sadrzaj.append(
       odlomak(`<b>${poruka}</b>`),
-      gumb('Otvori omm.domovina.ai', () => window.open(`${SERVER}/uvoz`, '_blank')),
+      // ?k= prenosi ključ oznake: stranica ga preuzme i pokaže uvoze i kad je
+      // oznaka napravljena u drugom pregledniku ili profilu.
+      gumb('Otvori omm.domovina.ai', () => window.open(`${SERVER}/?k=${encodeURIComponent(KLJUC)}`, '_blank')),
     );
   }
 
   // Ako HEP jednom uvede CSP ili WAF koji priječi fetch prema nama: nova
-  // kartica omm.domovina.ai/uvoz javi „spreman“, dobije JSON preko
+  // kartica omm.domovina.ai/?primi=1 javi „spreman“, dobije JSON preko
   // postMessage (provjerava event.origin) i sama ga spremi.
   function rezerva(uvoz) {
     sadrzaj.append(
       gumb('Pošalji preko nove kartice', () => {
-        const prozor = window.open(`${SERVER}/uvoz?primi=1`, '_blank');
+        const prozor = window.open(`${SERVER}/?primi=1`, '_blank');
         if (!prozor) return status('Preglednik je blokirao novu karticu.', true);
         const slusaj = (e) => {
           if (e.origin !== SERVER || e.source !== prozor || !e.data || e.data.omm !== 'spreman') return;

@@ -58,7 +58,9 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `GET /api/racun` | pozivi na broj računa koje ključ već ima (bookmarklet na Hepiju šalje samo nove) |
 | `POST /api/racun` | tijelo je PDF računa HEP Opskrbe → pročita se kao mail i spremi kao `hep-racun` (201, 200 duplikat, 422 nije račun) |
 | `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
-| `/uvoz` | uvoz bez instalacije: bookmarklet „Uvezi iz HEP-a“ i adresa za račune mailom |
+| `/` | naslovnica: uvoz oznakom (bookmarklet) „Uvezi iz HEP-a“, jedini put uvoza za korisnike; `?primi=1` je rezerva preko postMessage |
+| `/ocitaj` | očitanje brojila sa slike (sporedno) |
+| `/uvoz` | 301 na `/` (stara adresa) |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
 
 ## Računi mailom
