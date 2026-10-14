@@ -563,6 +563,13 @@
     mreza: 'Mreža ili preglednik javili su grešku.',
   };
 
+  // Klik na oznaku na samom omm.domovina.ai je provjera da je oznaka u traci:
+  // naslovnica sluša ovaj događaj, potvrdi i zapamti. Prozorčić se ne otvara.
+  if (location.origin === SERVER) {
+    window.dispatchEvent(new CustomEvent('omm-oznaka', { detail: { kljuc: KLJUC } }));
+    return;
+  }
+
   // Drugi klik na oznaku samo vrati postojeći prozorčić.
   const postojeci = document.getElementById('omm-domovina-uvoz');
   if (postojeci) {

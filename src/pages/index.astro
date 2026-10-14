@@ -37,6 +37,32 @@
         background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; font-size: 1.05rem; text-decoration: none;
         cursor: grab; box-shadow: 0 2px 10px rgba(31,122,58,.25); }
       .oznaka:active { cursor: grabbing; }
+      .stanje.istaknuto { color: var(--akcent); font-weight: 600; }
+      .broj.gotov { background: var(--akcent); color: var(--akcent-tekst); }
+      /* Dok se gumb povlači: traka s oznakama je iznad stranice, pa strelica pokazuje gore. */
+      #pusti { position: fixed; top: 0; left: 0; right: 0; z-index: 10; pointer-events: none; text-align: center;
+        padding: 10px 16px; background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; }
+      #pusti .strelica { display: inline-block; animation: gore 0.8s ease-in-out infinite alternate; }
+      @keyframes gore { from { transform: translateY(3px); } to { transform: translateY(-3px); } }
+      /* Mala animacija povlačenja: gumb putuje u traku nacrtanog preglednika. */
+      .demo { position: relative; width: 220px; height: 74px; margin: 10px auto 0; border: 1px solid var(--rub);
+        border-radius: 8px; overflow: hidden; background: var(--bg); }
+      .demo-traka { height: 18px; border-bottom: 1px solid var(--rub); display: flex; align-items: center; gap: 4px; padding: 0 6px;
+        background: var(--kartica); }
+      .demo-traka i { width: 26px; height: 6px; border-radius: 3px; background: var(--rub); }
+      .demo-gumb { position: absolute; left: 50%; top: 44px; transform: translateX(-50%); white-space: nowrap;
+        padding: 3px 9px; border-radius: 999px; background: var(--akcent); color: var(--akcent-tekst);
+        font-size: 10px; font-weight: 700; animation: povuci 3.6s ease-in-out infinite; }
+      .demo-gumb::after { content: ""; position: absolute; right: -6px; bottom: -8px; width: 0; height: 0;
+        border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 10px solid var(--tekst);
+        transform: rotate(-30deg); animation: kursor 3.6s infinite; }
+      @keyframes povuci {
+        0%, 15% { top: 44px; left: 50%; transform: translateX(-50%) scale(1); }
+        55%, 92% { top: 3px; left: 104px; transform: translateX(0) scale(.85); }
+        100% { top: 44px; left: 50%; transform: translateX(-50%) scale(1); opacity: 0; }
+      }
+      @keyframes kursor { 0%, 60% { opacity: 1; } 70%, 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .demo-gumb, .demo-gumb::after, #pusti .strelica { animation: none; } }
       .portali { display: grid; gap: 8px; margin-top: 10px; }
       .portal { display: block; padding: 10px 14px; border: 1px solid var(--rub); border-radius: 12px; text-decoration: none; color: var(--tekst); }
       .portal b { display: block; } .portal span { font-size: .85rem; color: var(--blijedo); }
@@ -76,6 +102,7 @@
     </style>
   </head>
   <body>
+    <div id="pusti" hidden><span class="strelica">↑</span> Pusti ga gore, u <span class="ime-trake">traku s oznakama</span> <span class="strelica">↑</span></div>
     <main>
       <h1>Tvoji podaci s HEP-a, u dva klika</h1>
       <p class="uvod">Očitanja, potrošnja i računi s <b>Moje mreže</b>, <b>Mojeg računa</b> i <b>Hepija</b>.
@@ -88,14 +115,24 @@
 
       <div class="koraci">
       <section class="kartica korak">
-        <div class="broj">1</div>
-        <div>
-          <h2>Povuci gumb u traku s oznakama</h2>
-          <p class="blijedo" id="traka">Ako traku ne vidiš: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (na Macu <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>). Ovo radiš samo jednom.</p>
+        <div class="broj" id="broj1">1</div>
+        <div id="postavljeno" hidden>
+          <h2>Oznaka je u traci</h2>
+          <p class="stanje istaknuto" id="stanje-postavljeno" style="text-align:left" hidden></p>
+          <p class="blijedo">Prijeđi na korak 2. Oznaka ti treba na HEP-ovoj stranici.</p>
+          <p class="blijedo"><a href="#" id="ponovo">Nemam je više, postavi je ponovno</a></p>
+        </div>
+        <div id="postavljanje">
+          <h2>Povuci gumb u <span class="ime-trake">traku s oznakama</span></h2>
+          <p class="blijedo" id="traka">Traku ne vidiš? Pritisni <span id="precac"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></span>. Ovo radiš samo jednom.</p>
           <div class="oznaka-red">
             <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama">⚡ Uvezi iz HEP-a</a>
           </div>
-          <div class="stanje" id="stanje-oznaka"></div>
+          <div class="demo" id="demo" aria-hidden="true">
+            <div class="demo-traka"><i></i><i></i><i></i></div>
+            <div class="demo-gumb">⚡ Uvezi iz HEP-a</div>
+          </div>
+          <div class="stanje" id="stanje-oznaka">Kad je gumb u traci, klikni ga tamo, na ovoj stranici, da provjerimo radi li.</div>
           <details id="mobitel">
             <summary>Na mobitelu</summary>
             <ol>
@@ -103,6 +140,7 @@
               <li>Dodaj ovu stranicu u oznake, uredi tu oznaku, nazovi je <b>Uvezi iz HEP-a</b> i umjesto adrese zalijepi kod.</li>
               <li>Na prijavljenom portalu: u Chromeu upiši <i>Uvezi iz HEP-a</i> u adresnu traku i odaberi oznaku;
                 u Safariju otvori Oznake i dodirni je.</li>
+              <li>Provjera: otvori oznaku isto tako, ali dok si još na ovoj stranici.</li>
             </ol>
           </details>
         </div>
@@ -175,6 +213,53 @@
         s.textContent = "Ne klikaj ovdje: povuci gumb u traku s oznakama, pa ga klikni na HEP-ovoj stranici.";
         s.className = "stanje greska";
       };
+      // Prečac i ime trake samo za ovaj preglednik. ⌘/Ctrl+Shift+B uključuje traku
+      // u Chromeu, Braveu, Edgeu, Firefoxu i Safariju (tamo se zove Favoriti).
+      const ua = navigator.userAgent;
+      const mac = /Mac|iPhone|iPad/.test(navigator.platform || ua);
+      const safari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Android/.test(ua);
+      $("precac").innerHTML = mac ? "<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>" : "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>";
+      if (safari) for (const el of document.querySelectorAll(".ime-trake")) el.textContent = "traku Favoriti";
+
+      // Uputa dok se gumb povlači; poslije podsjetnik da ga se provjeri klikom.
+      const pusti = $("pusti");
+      oznaka.addEventListener("dragstart", () => { pusti.hidden = false; });
+      oznaka.addEventListener("dragend", () => {
+        pusti.hidden = true;
+        const s = $("stanje-oznaka");
+        s.textContent = "Ako je gumb sad u traci, klikni ga tamo da provjerimo radi li.";
+        s.className = "stanje istaknuto";
+      });
+
+      // Klik na oznaku ovdje (hep-uvoz.js na našem originu) javlja „omm-oznaka“.
+      // Zapamtimo da je postavljena, pa sljedeći put korak 1 samo kaže da je gotov.
+      const POSTAVLJENA = "omm-oznaka";
+      const prikaziPostavljeno = (da: boolean) => {
+        $("postavljanje").hidden = da;
+        $("postavljeno").hidden = !da;
+        $("broj1").textContent = da ? "✓" : "1";
+        $("broj1").classList.toggle("gotov", da);
+      };
+      let zapamceno = false;
+      try { zapamceno = localStorage.getItem(POSTAVLJENA) === "1"; } catch {}
+      prikaziPostavljeno(zapamceno);
+      window.addEventListener("omm-oznaka", (e) => {
+        try { localStorage.setItem(POSTAVLJENA, "1"); } catch {}
+        // Starija oznaka ili oznaka iz drugog profila nosi svoj ključ: uvozi idu na
+        // njega, pa ga stranica preuzme da bi ih pokazala (isto kao /?k= iz oznake).
+        const kljucOznake = (e as CustomEvent).detail?.kljuc;
+        if (kljucOznake && kljucOznake !== k) { location.href = `/?k=${encodeURIComponent(kljucOznake)}`; return; }
+        prikaziPostavljeno(true);
+        const s = $("stanje-postavljeno");
+        s.hidden = false;
+        s.textContent = "Radi ✓";
+      });
+      $("ponovo").onclick = (e) => {
+        e.preventDefault();
+        try { localStorage.removeItem(POSTAVLJENA); } catch {}
+        prikaziPostavljeno(false);
+      };
+
       $("kopiraj").onclick = async () => {
         await navigator.clipboard.writeText(kod);
         $("kopiraj").textContent = "Kopirano ✓";
@@ -182,6 +267,8 @@
       // Na dodirnom zaslonu nema povlačenja: upute za mobitel su odmah otvorene.
       if (matchMedia("(pointer: coarse)").matches) {
         $<HTMLDetailsElement>("mobitel").open = true;
+        $("demo").hidden = true;
+        $("stanje-oznaka").textContent = "";
         $("traka").textContent = "Na mobitelu oznaku dodaješ ručno, jednom:";
       }
 
