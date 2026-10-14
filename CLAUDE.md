@@ -55,6 +55,20 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `PATCH /api/snimak/:id` | `{hep_dostava, omm?}` nakon slanja HEP-u |
 | `DELETE /api/snimak/:id` | briše snimak i slike |
 | `GET /api/slika/<ključ>/<uuid>.jpg` | slika |
+| `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
+| `/uvoz` | uvoz bez instalacije: bookmarklet „Uvezi iz HEP-a“ i adresa za račune mailom |
+| `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
+
+## Računi mailom
+
+`racuni+<ključ>@omm.domovina.ai` (Email Routing poddomena `omm`, subaddressing,
+pravilo `racuni@` → ovaj Worker). Zato je `main` u `wrangler.jsonc`
+`src/worker.ts` (Astro `handle` + `email()`), ne adapterov ulaz.
+`src/lib/mail.ts` parsira PDF prilog (`src/lib/hep-racun.ts`, unpdf; prijepis
+`~/git/stepanic/rezije/scripts/parse-hep-racune.py`) i sprema snimak
+`hep-racun`; svaki mail ide u tablicu `mailovi`. PDF ni mail se ne čuvaju (OIB).
+Lokalni test: `wrangler dev`, pa
+`curl -X POST "localhost:8787/cdn-cgi/handler/email?from=a@b.hr&to=racuni%2B<ključ>@omm.domovina.ai" --data-binary @racun.eml`.
 
 **Usporedba sa zadnjim stanjem** (`src/lib/usporedba.ts`): zadnje stanje je
 najnovije od (a) zadnjeg očitanja u zadnjem uvozu s Moje mreže (`hep`, `mjesta[]`)

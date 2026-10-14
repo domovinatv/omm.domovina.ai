@@ -55,6 +55,7 @@
       <h1>Očitaj brojilo</h1>
       <p class="uvod">Uslikaj zaslon brojila dok pokazuje <b>1.8.1</b>, pa dok pokazuje <b>1.8.2</b>.
         Brojeve pročitamo automatski, a ti ih provjeriš prije spremanja.</p>
+      <p class="uvod"><a href="/uvoz">Uvezi očitanja i račune s HEP-a →</a></p>
 
       <section class="kartica">
         <h2>1. Slike zaslona</h2>
@@ -89,26 +90,9 @@
     </main>
 
     <script>
+      import { kljuc } from "../lib/kljuc-klijent";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-      // Ključ uređaja umjesto prijave (privremeno).
-      function kljuc(): string {
-        let k: string | null = null;
-        // ?k=<ključ> iz aplikacije: preuzmi ključ uređaja i makni ga iz adrese.
-        const izAdrese = new URLSearchParams(location.search).get("k");
-        if (izAdrese && /^[A-Za-z0-9_-]{22,64}$/.test(izAdrese)) {
-          try { localStorage.setItem("omm-kljuc", izAdrese); } catch {}
-          history.replaceState(null, "", location.pathname);
-          return izAdrese;
-        }
-        try { k = localStorage.getItem("omm-kljuc"); } catch {}
-        if (!k) {
-          const b = crypto.getRandomValues(new Uint8Array(18));
-          k = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-          try { localStorage.setItem("omm-kljuc", k); } catch {}
-        }
-        return k;
-      }
       const auth = { Authorization: `Bearer ${kljuc()}` };
 
       const stanje = (id: string, tekst: string, vrsta = "") => {
@@ -228,6 +212,7 @@
           const v = document.createElement("div"); v.className = "vrijednosti";
           v.textContent = s.izvor === "hep" ? "Uvoz s Moje mreže"
             : s.izvor === "hep-moj-racun" ? "Uvoz s Mojeg računa (HEP Elektra)"
+            : s.izvor === "hep-racun" ? `Račun HEP Elektre · 1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`
             : `1.8.1: ${s.t1 ?? "–"}  ·  1.8.2: ${s.t2 ?? "–"}`;
           const m = document.createElement("div"); m.className = "meta";
           m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`,

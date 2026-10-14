@@ -23,7 +23,10 @@ async function sha256(tekst: string): Promise<string> {
 const cijeli = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null);
 const broj = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-/** `hep`: uvoz s Moje mreže (HEP ODS), `hep-moj-racun`: s Mojeg računa (HEP Elektra). */
+/**
+ * `hep`: uvoz s Moje mreže (HEP ODS), `hep-moj-racun`: s Mojeg računa (HEP Elektra).
+ * `hep-racun` (PDF račun primljen mailom) upisuje samo src/lib/mail.ts.
+ */
 const IZVORI = ["foto", "rucno", "hep", "hep-moj-racun"];
 
 /** POST JSON snimak (očitanje i/ili uvoz s HEP-a). */

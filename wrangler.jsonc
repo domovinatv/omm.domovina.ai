@@ -1,7 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "omm-domovina-ai",
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  // Vlastiti ulaz: Astro fetch + email() za račune poslane mailom.
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   // D.O.M. račun — isti kao podcast.domovina.ai i glazba.domovina.ai.

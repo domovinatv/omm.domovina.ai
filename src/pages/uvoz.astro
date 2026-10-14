@@ -1,0 +1,247 @@
+---
+// Uvoz s HEP-a bez instalacije: bookmarklet (public/hep-uvoz.js, generiran iz
+// flutter_moja_mreza/extension) koji se izvršava na prijavljenom portalu.
+---
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Uvoz s HEP-a</title>
+    <meta name="description" content="Prenesi očitanja, potrošnju i račune s Moje mreže i Mojeg računa bez instaliranja ičega." />
+    <style is:global>
+      :root {
+        --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
+        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --upozorenje: #9a5b00; --greska: #b3261e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
+          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --upozorenje: #f0b45a; --greska: #ff8a80; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--tekst);
+        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 600px; margin: 0 auto; padding: 24px 16px 64px; }
+      a { color: var(--akcent); }
+      h1 { font-size: 1.6rem; margin: 0 0 4px; }
+      h2 { font-size: 1.1rem; margin: 0 0 12px; }
+      p.uvod { color: var(--blijedo); margin: 0 0 20px; }
+      .kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+      ol { padding-left: 22px; margin: 8px 0; } ol li { margin: 6px 0; }
+      .oznaka { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px;
+        background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; text-decoration: none; cursor: grab;
+        border: 2px dashed transparent; }
+      .oznaka:active { cursor: grabbing; }
+      .oznaka-red { text-align: center; padding: 16px 0 8px; }
+      button { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px;
+        border: 1px solid var(--rub); border-radius: 12px; font: inherit; font-weight: 600; cursor: pointer;
+        background: transparent; color: var(--tekst); margin-top: 8px; }
+      .stanje { font-size: .9rem; color: var(--blijedo); min-height: 1.5em; margin-top: 8px; }
+      .stanje.greska { color: var(--greska); }
+      .blijedo { color: var(--blijedo); font-size: .9rem; }
+      .adresa { font: .95rem ui-monospace, monospace; word-break: break-all; padding: 10px 12px; border-radius: 10px;
+        background: var(--bg); border: 1px solid var(--rub); }
+      .kod { font: 700 1.4rem ui-monospace, monospace; letter-spacing: .05em; }
+      kbd { font: .85em ui-monospace, monospace; border: 1px solid var(--rub); border-radius: 4px; padding: 1px 5px; }
+      details { margin-top: 12px; } summary { cursor: pointer; font-weight: 600; }
+      ul.snimci { list-style: none; padding: 0; margin: 0; }
+      ul.snimci li { padding: 10px 0; border-top: 1px solid var(--rub); }
+      ul.snimci li:first-child { border-top: 0; }
+      ul.snimci .naslov { font-weight: 600; }
+      ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Uvoz s HEP-a</h1>
+      <p class="uvod">Prenesi očitanja, potrošnju i račune s <b>Moje mreže</b> (HEP ODS) i <b>Mojeg računa</b> (HEP Elektra) na omm.domovina.ai. Ne treba ništa instalirati, a lozinku ne upisuješ kod nas.</p>
+
+      <section class="kartica" id="primi" hidden>
+        <h2>Primam uvoz…</h2>
+        <div class="stanje" id="stanje-primi">Čekam podatke s HEP-ove kartice.</div>
+      </section>
+
+      <section class="kartica">
+        <h2>Oznaka „Uvezi iz HEP-a“</h2>
+        <ol>
+          <li><b>Povuci</b> zeleni gumb u traku s oznakama (ako je ne vidiš: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>,
+            na Macu <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
+          <li>Otvori <a href="https://mojamreza.hep.hr/" target="_blank" rel="noopener">Moju mrežu</a> ili <a href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener">Moj račun</a> i prijavi se kao inače.</li>
+          <li>Klikni oznaku. Pojavi se prozorčić koji kaže što će pročitati, a nakon klika na <b>Uvezi</b> podaci stižu ovamo.</li>
+        </ol>
+        <div class="oznaka-red">
+          <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama">⚡ Uvezi iz HEP-a</a>
+        </div>
+        <div class="stanje" id="stanje-oznaka"></div>
+
+        <details>
+          <summary>Na mobitelu</summary>
+          <ol>
+            <li>Kopiraj kod oznake: <button id="kopiraj" type="button">Kopiraj kod oznake</button></li>
+            <li>Dodaj ovu stranicu u oznake, uredi tu oznaku, nazovi je <b>Uvezi iz HEP-a</b> i umjesto adrese zalijepi kod.</li>
+            <li>Na prijavljenom HEP-ovom portalu: u Chromeu upiši <i>Uvezi iz HEP-a</i> u adresnu traku i odaberi oznaku;
+              u Safariju otvori Oznake i dodirni je.</li>
+          </ol>
+          <p class="blijedo">Na mobitelu je jednostavnija aplikacija Domovina Energy, koja radi isto bez oznaka.</p>
+        </details>
+
+        <details>
+          <summary>Što oznaka radi i zašto je sigurna</summary>
+          <p class="blijedo">Oznaka na stranicu HEP-a na kojoj si prijavljen učita skriptu s omm.domovina.ai. Skripta čita iste
+            stranice koje i ti vidiš (mjerna mjesta, očitanja, potrošnju, promet) i šalje gotov sažetak ovamo tek kad klikneš
+            <b>Uvezi</b>. Ne čita OIB, lozinku ni kolačiće, i ne ostaje na stranici nakon što je zatvoriš. Popis svih zahtjeva:
+            <a href="https://github.com/stepanic/flutter_moja_mreza/blob/main/docs/kako-citamo-podatke.md" target="_blank" rel="noopener">kako čitamo podatke</a>.</p>
+          <p class="blijedo">Oznaka sadrži tvoj ključ ovog preglednika: tko ga ima, vidi tvoje snimke. Ne dijeli je.</p>
+        </details>
+      </section>
+
+
+      <section class="kartica">
+        <h2>Računi mailom, jednom postaviš</h2>
+        <p class="blijedo">HEP Elektra (Hepi) šalje račun u PDF-u na tvoj mail. Ako ga proslijediš na adresu ispod, pročitamo
+          iznos, potrošnju po tarifama, očitanja i zadnjih 12 mjeseci. Ne čuvamo PDF ni mail, samo pročitane brojeve (bez OIB-a).</p>
+        <div class="adresa" id="adresa">…</div>
+        <button id="kopiraj-adresu" type="button">Kopiraj adresu</button>
+        <details>
+          <summary>Gmail: automatsko prosljeđivanje</summary>
+          <ol>
+            <li><a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" rel="noopener">Postavke → Prosljeđivanje</a>
+              → <b>Dodaj adresu za prosljeđivanje</b> → zalijepi adresu.</li>
+            <li>Gmail na tu adresu pošalje kod potvrde. Pojavit će se ovdje ispod za koju sekundu; upiši ga u Gmail (ili otvori poveznicu).</li>
+            <li><a href="https://mail.google.com/mail/u/0/#create-filter/from=hepi%40hep.hr" target="_blank" rel="noopener">Napravi filtar</a>
+              za <b>hepi@hep.hr</b> → <b>Proslijedi na</b> ovu adresu. Stare račune možeš proslijediti i ručno.</li>
+          </ol>
+        </details>
+        <ul class="snimci" id="mailovi"><li class="meta">Još nije stigao nijedan mail.</li></ul>
+      </section>
+
+      <section class="kartica">
+        <h2>Moji uvozi</h2>
+        <ul class="snimci" id="snimci"><li class="meta">Još nema uvoza.</li></ul>
+      </section>
+      <p class="blijedo"><a href="/">← Očitaj brojilo</a> · Rana verzija bez prijave: uvozi su vezani uz ovaj preglednik.</p>
+    </main>
+
+    <script>
+      import { kljuc } from "../lib/kljuc-klijent";
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+      const k = kljuc();
+      const auth = { Authorization: `Bearer ${k}` };
+      const HEP = ["https://mojamreza.hep.hr", "https://mojracun.hep.hr"];
+
+      // Mali loader; sav kod je u /hep-uvoz.js da se parser može popraviti bez
+      // ponovnog povlačenja oznake. ?v= zaobilazi predmemoriju.
+      const kod = `javascript:(()=>{var s=document.createElement('script');s.src='${location.origin}/hep-uvoz.js?k=${k}&v='+Date.now();document.body.appendChild(s)})()`;
+      const oznaka = $<HTMLAnchorElement>("oznaka");
+      oznaka.href = kod;
+      oznaka.onclick = (e) => {
+        e.preventDefault();
+        $("stanje-oznaka").textContent = "Ne klikaj ovdje: povuci gumb u traku s oznakama, pa ga klikni na HEP-ovoj stranici.";
+      };
+      $("kopiraj").onclick = async () => {
+        await navigator.clipboard.writeText(kod);
+        $("kopiraj").textContent = "Kopirano ✓";
+      };
+
+      const NAZIVI: Record<string, string> = {
+        hep: "Moja mreža (HEP ODS)",
+        "hep-moj-racun": "Moj račun (HEP Elektra)",
+        "hep-racun": "Račun HEP Elektre (mail)",
+        foto: "Očitanje sa slike",
+        rucno: "Ručno očitanje",
+      };
+
+      async function ucitaj() {
+        const r = await fetch("/api/snimak", { headers: auth });
+        if (!r.ok) return;
+        const lista = (await r.json()).filter((s: { izvor: string }) => s.izvor !== "foto" && s.izvor !== "rucno");
+        if (!lista.length) return;
+        const ul = $("snimci");
+        ul.replaceChildren();
+        for (const s of lista) {
+          const li = document.createElement("li");
+          const n = document.createElement("div"); n.className = "naslov";
+          n.textContent = NAZIVI[s.izvor] ?? s.izvor;
+          const m = document.createElement("div"); m.className = "meta";
+          m.textContent = [new Date(s.stvoren).toLocaleString("hr-HR"), s.omm && `OMM ${s.omm}`].filter(Boolean).join(" · ");
+          li.append(n, m); ul.append(li);
+        }
+      }
+      ucitaj();
+
+      const adresa = `racuni+${k}@omm.domovina.ai`;
+      $("adresa").textContent = adresa;
+      $("kopiraj-adresu").onclick = async () => {
+        await navigator.clipboard.writeText(adresa);
+        $("kopiraj-adresu").textContent = "Kopirano ✓";
+      };
+
+      const eur = (v: number | null) => (v == null ? "–" : `${v.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} €`);
+      let zadnjiMail = "";
+      async function ucitajMailove() {
+        const r = await fetch("/api/mail", { headers: auth });
+        if (!r.ok) return;
+        const lista = await r.json();
+        if (!lista.length || lista[0].primljen === zadnjiMail) return;
+        const novi = zadnjiMail !== "";
+        zadnjiMail = lista[0].primljen;
+        const ul = $("mailovi");
+        ul.replaceChildren();
+        for (const m of lista.slice(0, 12)) {
+          const li = document.createElement("li");
+          const n = document.createElement("div"); n.className = "naslov";
+          const d = document.createElement("div"); d.className = "meta";
+          d.textContent = `${new Date(m.primljen).toLocaleString("hr-HR")} · ${m.od ?? ""}`;
+          if (m.vrsta === "gmail-potvrda") {
+            n.textContent = "Gmail traži potvrdu prosljeđivanja";
+            if (m.poruka?.kod) {
+              const kod = document.createElement("div"); kod.className = "kod"; kod.textContent = m.poruka.kod;
+              li.append(n, kod);
+            } else li.append(n);
+            if (m.poruka?.poveznica) {
+              const a = document.createElement("a"); a.href = m.poruka.poveznica; a.target = "_blank"; a.rel = "noopener";
+              a.textContent = "ili potvrdi poveznicom";
+              li.append(a);
+            }
+          } else if (m.vrsta === "racun") {
+            const p = m.poruka ?? {};
+            n.textContent = `Račun ${p.za_mjesec ?? ""}: ${eur(p.iznos)}${m.ishod === "duplikat" ? " (već primljen)" : ""}`;
+            li.append(n);
+          } else {
+            n.textContent = m.ishod === "greska" ? `Greška pri čitanju: ${m.naslov ?? ""}` : `Nije HEP-ov račun: ${m.naslov ?? ""}`;
+            li.append(n);
+          }
+          li.append(d); ul.append(li);
+        }
+        if (novi) ucitaj();
+      }
+      ucitajMailove();
+      // Gmailov kod stiže par sekundi nakon dodavanja adrese; dok je stranica otvorena, provjeravaj.
+      setInterval(() => { if (!document.hidden) ucitajMailove(); }, 8000);
+
+      // Povratak s HEP-ove kartice osvježi popis.
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) ucitaj(); });
+
+      // Rezerva kad HEP ne pusti izravan fetch: oznaka otvori ?primi=1 i pošalje
+      // tijelo snimka preko postMessage. Prima se samo s HEP-ovih portala.
+      if (new URLSearchParams(location.search).has("primi") && window.opener) {
+        $("primi").hidden = false;
+        const stanje = $("stanje-primi");
+        window.addEventListener("message", async (e) => {
+          if (!HEP.includes(e.origin) || e.source !== window.opener || e.data?.omm !== "uvoz") return;
+          stanje.textContent = "Spremam…";
+          const r = await fetch("/api/snimak", {
+            method: "POST",
+            headers: { ...auth, "Content-Type": "application/json" },
+            body: JSON.stringify(e.data.tijelo),
+          });
+          const d = await r.json().catch(() => ({}));
+          stanje.textContent = r.ok ? (d.duplikat ? "Isti uvoz je već bio ovdje ✓" : "Spremljeno ✓") : (d.greska ?? `Greška ${r.status}`);
+          stanje.className = r.ok ? "stanje" : "stanje greska";
+          ucitaj();
+        });
+        for (const o of HEP) window.opener.postMessage({ omm: "spreman" }, o);
+      }
+    </script>
+  </body>
+</html>
