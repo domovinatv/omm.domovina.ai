@@ -5,3 +5,5 @@
   Cache-Control: no-cache
 /hep-uvoz.js
   Cache-Control: no-cache
+/ikone/*
+  Cache-Control: no-cache

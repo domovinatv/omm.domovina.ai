@@ -11,7 +11,7 @@ const preglednik = (ua: string | null) =>
   !ua ? "—" : /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : ua.slice(0, 40);
 ---
 <AdminOkvir naslov={omm} siroko>
-  <p><a href="/admin">← Pregled</a></p>
+  <p><a href="/admin"><i class="i i-arrow_back" aria-hidden="true"></i> Pregled</a></p>
   <h1 class="mono" style="font-size:1.5rem">{omm}</h1>
   <p>{o.adresa ?? "—"}{o.ime && <span class="blijedo"> · {o.ime}</span>}</p>
   <p>{o.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</p>

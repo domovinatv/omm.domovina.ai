@@ -1,26 +1,29 @@
 ---
 // Očitavač brojila u pregledniku: slika zaslona → OCR → potvrda → snimak.
 // Sporedna stranica; glavni ulaz je uvoz oznakom na /.
+import Ikone from "../components/Ikone.astro";
+import Marka from "../components/Marka.astro";
 ---
 <!doctype html>
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Očitaj brojilo · Domovina Energy</title>
+    <title>OMM · Očitaj brojilo</title>
+    <Ikone />
     <meta name="description" content="Uslikaj zaslon brojila, provjeri 1.8.1 i 1.8.2 i spremi očitanje." />
     <style is:global>
       :root {
-        --bg: #f6f7f4;
-        --kartica: #ffffff;
-        --tekst: #1b1f1a;
-        --blijedo: #5d665b;
-        --vrlo-blijedo: #879284;
-        --rub: #dfe3db;
-        --rub-fokus: #1f7a3a;
-        --akcent: #1f7a3a;
-        --akcent-tekst: #ffffff;
-        --akcent-blago: #e8f4ec;
+        --bg: #f5f7fb;
+        --kartica: #fff;
+        --tekst: #0e1a2e;
+        --blijedo: #55617a;
+        --vrlo-blijedo: #8592a8;
+        --rub: #dde3ee;
+        --rub-fokus: #002F6C;
+        --akcent: #002F6C;
+        --akcent-tekst: #fff;
+        --akcent-blago: #e6ecf5;
         --upozorenje: #9a5b00;
         --upozorenje-bg: #fff8e8;
         --greska: #b3261e;
@@ -32,16 +35,16 @@
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #121512;
-          --kartica: #1b1f1b;
-          --tekst: #e7ebe4;
-          --blijedo: #9ba697;
-          --vrlo-blijedo: #6f786c;
-          --rub: #2e352d;
-          --rub-fokus: #5cc97a;
-          --akcent: #5cc97a;
-          --akcent-tekst: #0b1a0f;
-          --akcent-blago: #193322;
+          --bg: #001a3d;
+          --kartica: #002452;
+          --tekst: #eef2f8;
+          --blijedo: #9fb0c9;
+          --vrlo-blijedo: #6f82a0;
+          --rub: #1d3a66;
+          --rub-fokus: #E3AF35;
+          --akcent: #E3AF35;
+          --akcent-tekst: #001a3d;
+          --akcent-blago: #0d2d58;
           --upozorenje: #f0b45a;
           --upozorenje-bg: #2d2210;
           --greska: #ff8a80;
@@ -71,18 +74,6 @@
         padding: 14px 20px;
         border-bottom: 1px solid var(--rub);
         background: var(--kartica);
-      }
-      .natrag-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--tekst);
-      }
-      .natrag-link:hover {
-        color: var(--akcent);
-        text-decoration: none;
       }
       .znacka-status {
         display: inline-flex;
@@ -214,11 +205,11 @@
       .gumb-glavni {
         background: var(--akcent);
         color: var(--akcent-tekst);
-        box-shadow: 0 2px 8px rgba(31, 122, 58, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 47, 108, 0.2);
       }
       .gumb-glavni:hover:not(:disabled) {
         filter: brightness(1.06);
-        box-shadow: 0 4px 12px rgba(31, 122, 58, 0.28);
+        box-shadow: 0 4px 12px rgba(0, 47, 108, 0.28);
       }
       .gumb-sporedni {
         background: var(--kartica);
@@ -567,11 +558,9 @@
   </head>
   <body>
     <header class="gornja-traka">
-      <a href="/" class="natrag-link">
-        <span aria-hidden="true">←</span> Uvoz s HEP-a (oznaka)
-      </a>
+      <Marka dodatak="očitanje" />
       <div class="znacka-status">
-        <span class="tocka"></span> OMM · OCR Asistent
+        <span class="tocka"></span> OCR asistent
       </div>
     </header>
 
@@ -595,16 +584,16 @@
         </div>
 
         <div class="dropzona" id="dropzona">
-          <span class="ikona-dropzona">📷</span>
+          <span class="ikona-dropzona"><i class="i i-photo_camera" aria-hidden="true"></i></span>
           <div><b>Fotografiraj brojilo</b> ili povuci sliku ovdje</div>
           <div class="akcije-slikanja">
             <label class="gumb gumb-glavni" for="kamera">
-              📸 Uslikaj kamerom
+              <i class="i i-photo_camera" aria-hidden="true"></i> Uslikaj kamerom
             </label>
             <input id="kamera" type="file" accept="image/*" capture="environment" />
 
             <label class="gumb gumb-sporedni" for="galerija">
-              🖼️ Odaberi iz datoteka
+              <i class="i i-image" aria-hidden="true"></i> Odaberi iz datoteka
             </label>
             <input id="galerija" type="file" accept="image/*" multiple />
           </div>
@@ -616,7 +605,7 @@
         <div class="slike-mreza" id="slike"></div>
 
         <div class="obavijest" id="obavijest-ocr">
-          <span class="obavijest-ikona">ℹ️</span>
+          <span class="obavijest-ikona"><i class="i i-info" aria-hidden="true"></i></span>
           <span class="obavijest-tekst" id="tekst-ocr"></span>
         </div>
       </section>
@@ -633,14 +622,14 @@
 
         <!-- Traka sa zadnjim stanjem ako postoji -->
         <div class="zadnje-stanje-traka" id="zadnje-stanje">
-          <span>📌</span>
+          <span><i class="i i-push_pin" aria-hidden="true"></i></span>
           <div id="zadnje-stanje-tekst"></div>
         </div>
 
         <div class="mreza-tarifa">
           <div class="tarifa-kutija">
             <div class="tarifa-zaglavlje">
-              <span class="tarifa-oznaka">☀️ 1.8.1 (VT)</span>
+              <span class="tarifa-oznaka"><i class="i i-light_mode" aria-hidden="true"></i> 1.8.1 (VT)</span>
               <span class="tarifa-podnaslov">Viša tarifa</span>
             </div>
             <div class="polje-s-jedinicom">
@@ -651,7 +640,7 @@
 
           <div class="tarifa-kutija">
             <div class="tarifa-zaglavlje">
-              <span class="tarifa-oznaka">🌙 1.8.2 (NT)</span>
+              <span class="tarifa-oznaka"><i class="i i-dark_mode" aria-hidden="true"></i> 1.8.2 (NT)</span>
               <span class="tarifa-podnaslov">Niža tarifa</span>
             </div>
             <div class="polje-s-jedinicom">
@@ -669,7 +658,7 @@
 
           <div class="lokacija-gumb-red">
             <button class="gumb gumb-sporedni" id="lokacija" type="button">
-              📍 Dodaj lokaciju
+              <i class="i i-location_on" aria-hidden="true"></i> Dodaj lokaciju
             </button>
             <div class="lokacija-status" id="stanje-lokacija"></div>
           </div>
@@ -677,16 +666,16 @@
 
         <div class="spremi-blok">
           <button class="gumb gumb-glavni" id="spremi" type="button" disabled>
-            💾 Spremi očitanje
+            <i class="i i-save" aria-hidden="true"></i> Spremi očitanje
           </button>
           <div class="obavijest" id="obavijest-spremi">
-            <span class="obavijest-ikona">✓</span>
+            <span class="obavijest-ikona"><i class="i i-check" aria-hidden="true"></i></span>
             <span class="obavijest-tekst" id="tekst-spremi"></span>
           </div>
         </div>
 
         <details class="inspektor">
-          <summary>🔍 Tehnički detalji modela i sirovi OCR</summary>
+          <summary><i class="i i-search" aria-hidden="true"></i> Tehnički detalji modela i sirovi OCR</summary>
           <pre class="kod-ispis" id="sirovo"></pre>
         </details>
       </section>
@@ -703,6 +692,14 @@
     </main>
 
     <script>
+      // Ikona iz fonta (public/ikone, scripts/ikone.mjs). Ime se piše cijelo („i-check“)
+      // da ga skripta za tree shaking nađe u izvoru.
+      const ikona = (ime: string) => {
+        const i = document.createElement("i");
+        i.className = `i ${ime}`;
+        i.setAttribute("aria-hidden", "true");
+        return i;
+      };
       import { kljuc } from "../lib/kljuc-klijent";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -717,9 +714,9 @@
         }
         txt.textContent = poruka;
         wrap.className = `obavijest vidljiva ${vrsta}`;
-        const ikona = wrap.querySelector(".obavijest-ikona");
-        if (ikona) {
-          ikona.textContent = vrsta === "greska" ? "❌" : vrsta === "upozorenje" ? "⚠️" : vrsta === "uspjeh" ? "✓" : "⏳";
+        const mjesto = wrap.querySelector(".obavijest-ikona");
+        if (mjesto) {
+          mjesto.replaceChildren(ikona(vrsta === "greska" ? "i-error" : vrsta === "upozorenje" ? "i-warning" : vrsta === "uspjeh" ? "i-check" : "i-hourglass_empty"));
         }
       }
 
@@ -777,7 +774,7 @@
               continue;
             }
 
-            oznaka.textContent = "Pročitano ✓";
+            oznaka.replaceChildren("Pročitano ", ikona("i-check"));
 
             if (d.t1 != null) $<HTMLInputElement>("t1").value = String(d.t1);
             if (d.t2 != null) $<HTMLInputElement>("t2").value = String(d.t2);
@@ -863,9 +860,9 @@
         navigator.geolocation.getCurrentPosition(
           (p) => {
             lokacija = { lat: p.coords.latitude, lon: p.coords.longitude, tocnost_m: p.coords.accuracy };
-            statusEl.textContent = `📍 ${lokacija.lat.toFixed(4)}, ${lokacija.lon.toFixed(4)} (±${Math.round(lokacija.tocnost_m)} m)`;
+            statusEl.replaceChildren(ikona("i-location_on"), ` ${lokacija.lat.toFixed(4)}, ${lokacija.lon.toFixed(4)} (±${Math.round(lokacija.tocnost_m)} m)`);
             statusEl.style.color = "var(--akcent)";
-            $("lokacija").textContent = "📍 Lokacija dodana ✓";
+            $("lokacija").replaceChildren(ikona("i-location_on"), " Lokacija dodana ", ikona("i-check"));
           },
           (e) => {
             statusEl.textContent = `Lokacija nije dostupna: ${e.message}`;
@@ -907,11 +904,11 @@
           if (!r.ok) {
             postaviObavijest("obavijest-spremi", "tekst-spremi", d.greska ?? "Spremanje nije uspjelo", "greska");
             spremiGumb.disabled = false;
-            spremiGumb.textContent = "💾 Spremi očitanje";
+            spremiGumb.replaceChildren(ikona("i-save"), " Spremi očitanje");
             return;
           }
 
-          postaviObavijest("obavijest-spremi", "tekst-spremi", "Očitanje uspješno spremljeno! ✓", "uspjeh");
+          postaviObavijest("obavijest-spremi", "tekst-spremi", "Očitanje je spremljeno.", "uspjeh");
           slike.length = 0;
           ocr.length = 0;
           $("slike").innerHTML = "";
@@ -919,13 +916,13 @@
           postaviObavijest("obavijest-ocr", "tekst-ocr", "");
           $<HTMLInputElement>("t1").value = "";
           $<HTMLInputElement>("t2").value = "";
-          spremiGumb.textContent = "💾 Spremi očitanje";
+          spremiGumb.replaceChildren(ikona("i-save"), " Spremi očitanje");
           osvjeziGumb();
           ucitaj();
         } catch (e) {
           postaviObavijest("obavijest-spremi", "tekst-spremi", `Greška: ${e}`, "greska");
           spremiGumb.disabled = false;
-          spremiGumb.textContent = "💾 Spremi očitanje";
+          spremiGumb.replaceChildren(ikona("i-save"), " Spremi očitanje");
         }
       };
 
@@ -970,7 +967,7 @@
             } else if (s.izvor === "hep-racun") {
               tarife.innerHTML = `<span>VT: ${s.t1 ?? "–"} kWh</span> <span>NT: ${s.t2 ?? "–"} kWh</span>`;
             } else {
-              tarife.innerHTML = `<span>☀️ ${s.t1 ?? "–"}</span> <span>🌙 ${s.t2 ?? "–"} kWh</span>`;
+              tarife.innerHTML = `<span><i class="i i-light_mode" aria-hidden="true"></i> ${s.t1 ?? "–"}</span> <span><i class="i i-dark_mode" aria-hidden="true"></i> ${s.t2 ?? "–"} kWh</span>`;
             }
 
             const meta = document.createElement("div");
@@ -978,7 +975,7 @@
 
             const izvorZnacka = document.createElement("span");
             izvorZnacka.className = `znacka-izvora ${s.izvor === "foto" ? "foto" : ""}`;
-            izvorZnacka.textContent = s.izvor === "foto" ? "📷 Foto" : s.izvor === "rucno" ? "✍️ Ručno" : "⚡ HEP";
+            izvorZnacka.replaceChildren(...(s.izvor === "foto" ? [ikona("i-photo_camera"), " Foto"] : s.izvor === "rucno" ? [ikona("i-edit_note"), " Ručno"] : [ikona("i-bolt"), " HEP"]));
             meta.append(izvorZnacka);
 
             const datumTekst = document.createElement("span");
@@ -993,14 +990,15 @@
 
             if (s.lat != null) {
               const lokacijaTekst = document.createElement("span");
-              lokacijaTekst.textContent = "· 📍";
+              lokacijaTekst.replaceChildren("· ", ikona("i-location_on"));
               meta.append(lokacijaTekst);
             }
 
             if (s.hep_dostava) {
               const dostavaTekst = document.createElement("span");
               dostavaTekst.style.color = s.hep_dostava.Status === 1 ? "var(--akcent)" : "var(--greska)";
-              dostavaTekst.textContent = s.hep_dostava.Status === 1 ? "· HEP ✓" : `· HEP: ${s.hep_dostava.Opis ?? "Greska"}`;
+              if (s.hep_dostava.Status === 1) dostavaTekst.replaceChildren("· HEP ", ikona("i-check"));
+              else dostavaTekst.textContent = `· HEP: ${s.hep_dostava.Opis ?? "Greska"}`;
               meta.append(dostavaTekst);
             }
 

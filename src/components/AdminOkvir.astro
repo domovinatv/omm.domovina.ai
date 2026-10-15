@@ -3,6 +3,8 @@
 interface Props { naslov: string; siroko?: boolean }
 const { naslov, siroko = false } = Astro.props;
 const admin = Astro.locals.admin;
+import Ikone from "./Ikone.astro";
+import Marka from "./Marka.astro";
 ---
 <!doctype html>
 <html lang="hr">
@@ -11,20 +13,21 @@ const admin = Astro.locals.admin;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>{naslov} · OMM admin</title>
+    <Ikone />
     <style is:global>
       :root {
-        --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
-        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --akcent-blago: #e3f1e6; --greska: #b3261e;
+        --bg: #f5f7fb; --kartica: #fff; --tekst: #0e1a2e; --blijedo: #55617a;
+        --rub: #dde3ee; --akcent: #002F6C; --akcent-tekst: #fff; --akcent-blago: #e6ecf5; --greska: #b3261e;
       }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
-          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --akcent-blago: #1d3324; --greska: #ff8a80; }
+        :root { --bg: #001a3d; --kartica: #002452; --tekst: #eef2f8; --blijedo: #9fb0c9; --rub: #1d3a66;
+          --akcent: #E3AF35; --akcent-tekst: #001a3d; --akcent-blago: #0d2d58; --greska: #ff8a80; }
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--tekst); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
       header { border-bottom: 1px solid var(--rub); background: var(--kartica); }
       header .unutra { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 10px 16px; margin: 0 auto; max-width: 1200px; }
-      header b { margin-right: auto; }
+      header .admin-marka { margin-right: auto; }
       header a { color: var(--tekst); text-decoration: none; font-weight: 600; }
       header a:hover { color: var(--akcent); }
       header form { margin: 0; }
@@ -64,7 +67,7 @@ const admin = Astro.locals.admin;
     {admin && (
       <header>
         <div class="unutra">
-          <b>OMM admin</b>
+          <span class="admin-marka"><Marka dodatak="admin" /></span>
           <a href="/admin">Pregled</a>
           <a href="/admin/passkeys">Passkeyi</a>
           <span class="blijedo">{admin.email}</span>

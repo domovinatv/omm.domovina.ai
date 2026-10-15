@@ -36,6 +36,19 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 (`--form-string`, jer `-F model=@cf/…` curl čita kao datoteku). Testne slike u
 `data/` (gitignored).
 
+## Izgled: znak, paleta, ikone
+
+- **Znak** je pločica (tamnoplava, bijeli O, zlatna munja), opcija B iz 2026-10-15. Opcija A
+  (D okvir s O i munjom) vidi se s `?znak=a` dok se ne odluči. Datoteke: `public/logo*.svg`,
+  `public/a/`, komponente `Marka.astro` (zaglavlje) i `Ikone.astro` (favicon, CSS ikona).
+  Svijetla stranica nosi `logo.svg`, tamna `logo-noc.svg`.
+- **Paleta**: svijetli mod bijel s akcentom `#002F6C`, tamni mod tamnoplav (`#001a3d`) sa
+  zlatnim akcentom `#E3AF35`. Tokeni su po stranici (`index`, `ocitaj`, `AdminOkvir`).
+- **Bez emojija.** Ikone su font Material Symbols Sharp (`ikone/`, cijeli font u gitu):
+  `<i class="i i-bolt" aria-hidden="true"></i>`, u skripti `ikona("i-check")`, uvijek cijelim
+  imenom. `npm run dev` koristi cijeli font, `npm run build` u `dist/client/ikone` zapiše
+  samo korištene ikone (`scripts/ikone.mjs`, ~2 kB).
+
 ## Baza: pročišćeno + sirovi dnevnik
 
 - **`snimci`** je pročišćena tablica: jedan redak po otisku sadržaja

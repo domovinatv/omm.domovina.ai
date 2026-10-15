@@ -2,28 +2,32 @@
 // Naslovnica: uvoz s HEP-a oznakom (bookmarklet). To je jedini način uvoza koji
 // nudimo korisnicima: ništa se ne instalira, prijava ostaje na HEP-u.
 // Kod oznake je public/hep-uvoz.js, generiran iz flutter_moja_mreza/extension.
+import Ikone from "../components/Ikone.astro";
+import Marka from "../components/Marka.astro";
 ---
 <!doctype html>
 <html lang="hr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Uvoz s HEP-a</title>
+    <title>OMM · Uvoz s HEP-a</title>
+    <Ikone />
     <meta name="description" content="Očitanja, potrošnja i računi s Moje mreže, Mojeg računa i Hepija u dva klika, bez instaliranja ičega." />
     <style is:global>
       :root {
-        --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
-        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --akcent-blago: #e3f1e6; --greska: #b3261e;
+        --bg: #f5f7fb; --kartica: #fff; --tekst: #0e1a2e; --blijedo: #55617a;
+        --rub: #dde3ee; --akcent: #002F6C; --akcent-tekst: #fff; --akcent-blago: #e6ecf5; --greska: #b3261e;
       }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
-          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --akcent-blago: #1d3324; --greska: #ff8a80; }
+        :root { --bg: #001a3d; --kartica: #002452; --tekst: #eef2f8; --blijedo: #9fb0c9; --rub: #1d3a66;
+          --akcent: #E3AF35; --akcent-tekst: #001a3d; --akcent-blago: #0d2d58; --greska: #ff8a80; }
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--tekst);
         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
       main { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
       a { color: var(--akcent); }
+      .zaglavlje { margin: 0 0 28px; }
       h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 8px; }
       h2 { font-size: 1.1rem; margin: 0 0 8px; }
       p { margin: 8px 0; }
@@ -35,7 +39,7 @@
       .oznaka-red { text-align: center; padding: 14px 0 4px; }
       .oznaka { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px;
         background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; font-size: 1.05rem; text-decoration: none;
-        cursor: grab; box-shadow: 0 2px 10px rgba(31,122,58,.25); }
+        cursor: grab; box-shadow: 0 2px 10px rgba(0,47,108,.25); }
       .oznaka:active { cursor: grabbing; }
       .stanje.istaknuto { color: var(--akcent); font-weight: 600; }
       .broj.gotov { background: var(--akcent); color: var(--akcent-tekst); }
@@ -126,8 +130,9 @@
     </style>
   </head>
   <body>
-    <div id="pusti" hidden><span class="strelica">↑</span> Pusti ga gore, u <span class="ime-trake">traku s oznakama</span> <span class="strelica">↑</span></div>
+    <div id="pusti" hidden><span class="strelica"><i class="i i-arrow_upward" aria-hidden="true"></i></span> Pusti ga gore, u <span class="ime-trake">traku s oznakama</span> <span class="strelica"><i class="i i-arrow_upward" aria-hidden="true"></i></span></div>
     <main>
+      <header class="zaglavlje"><Marka dodatak="domovina.ai" /></header>
       <h1>Tvoji podaci s HEP-a, u dva klika</h1>
       <p class="uvod">Očitanja, potrošnja i računi s <b>Moje mreže</b>, <b>Mojeg računa</b> i <b>Hepija</b>.
         Ništa ne instaliraš, a lozinku upisuješ samo HEP-u. Radi na računalu.</p>
@@ -149,18 +154,18 @@
         <div id="postavljeno" hidden>
           <h2>Oznaka je u traci</h2>
           <p class="stanje istaknuto" id="stanje-postavljeno" style="text-align:left" hidden></p>
-          <p class="blijedo">Gumb <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span> je u <span class="ime-trake-u">traci s oznakama</span>. Nastavi s korakom 2.</p>
+          <p class="blijedo">Gumb <span class="mala-oznaka"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</span> je u <span class="ime-trake-u">traci s oznakama</span>. Nastavi s korakom 2.</p>
           <p class="blijedo"><a href="#" id="ponovo">Nemam je više, postavi je ponovno</a></p>
         </div>
         <div id="postavljanje">
           <h2>Povuci gumb u <span class="ime-trake">traku s oznakama</span></h2>
           <p class="blijedo" id="traka">Traku ne vidiš? Pritisni <span id="precac"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></span>. Ovo radiš samo jednom.</p>
           <div class="oznaka-red">
-            <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama">⚡ Uvezi iz HEP-a</a>
+            <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</a>
           </div>
           <div class="demo" id="demo" aria-hidden="true">
             <div class="demo-traka"><i></i><i></i><i></i></div>
-            <div class="demo-gumb">⚡ Uvezi iz HEP-a</div>
+            <div class="demo-gumb"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</div>
           </div>
           <div class="stanje" id="stanje-oznaka">Kad je gumb u traci, klikni ga tamo, na ovoj stranici, da provjerimo radi li.</div>
         </div>
@@ -173,7 +178,7 @@
           <p class="prije">Pročitaj prije nego otvoriš portal:</p>
           <ol>
             <li>Prijavi se kao inače.</li>
-            <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span>
+            <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</span>
               u <span class="ime-trake-u">traci s oznakama</span>, pri vrhu prozora.</li>
             <li>U prozorčiću koji se pojavi klikni <b>Uvezi</b>. Podaci stižu ovamo, pod „Moji uvozi“.</li>
           </ol>
@@ -193,7 +198,7 @@
 
       <section class="sigurnost">
         <details>
-          <summary>🔒 Kako to radi i zašto je sigurno</summary>
+          <summary><i class="i i-lock" aria-hidden="true"></i> Kako to radi i zašto je sigurno</summary>
           <p class="blijedo">Oznaka na HEP-ovu stranicu na kojoj si prijavljen učita našu skriptu. Ona čita iste stranice koje i ti
             vidiš, a gotov sažetak šalje ovamo tek kad klikneš <b>Uvezi</b>. Ne čita OIB ni lozinku, ne šalje kolačiće ni
             token prijave, i nestane kad zatvoriš stranicu. PDF računa pročitamo i ne čuvamo.</p>
@@ -218,6 +223,14 @@
     </main>
 
     <script>
+      // Ikona iz fonta (public/ikone, scripts/ikone.mjs). Ime se piše cijelo („i-check“)
+      // da ga skripta za tree shaking nađe u izvoru.
+      const ikona = (ime: string) => {
+        const i = document.createElement("i");
+        i.className = `i ${ime}`;
+        i.setAttribute("aria-hidden", "true");
+        return i;
+      };
       import { kljuc } from "../lib/kljuc-klijent";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
       const k = kljuc();
@@ -240,7 +253,7 @@
       const ua = navigator.userAgent;
       const mac = /Mac|iPhone|iPad/.test(navigator.platform || ua);
       const safari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Android/.test(ua);
-      $("precac").innerHTML = mac ? "<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>" : "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>";
+      $("precac").innerHTML = mac ? '<kbd><i class="i i-keyboard_command_key" aria-label="Cmd"></i></kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>' : "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>";
       if (safari) for (const el of document.querySelectorAll(".ime-trake")) el.textContent = "traku Favoriti";
       if (safari) for (const el of document.querySelectorAll(".ime-trake-u")) el.textContent = "traci Favoriti";
 
@@ -269,7 +282,7 @@
       const prikaziPostavljeno = (da: boolean) => {
         $("postavljanje").hidden = da;
         $("postavljeno").hidden = !da;
-        $("broj1").textContent = da ? "✓" : "1";
+        if (da) $("broj1").replaceChildren(ikona("i-check")); else $("broj1").textContent = "1";
         $("broj1").classList.toggle("gotov", da);
       };
       let zapamceno = false;
@@ -284,7 +297,7 @@
         prikaziPostavljeno(true);
         const s = $("stanje-postavljeno");
         s.hidden = false;
-        s.textContent = "Radi ✓";
+        s.replaceChildren("Radi ", ikona("i-check"));
       });
       $("ponovo").onclick = (e) => {
         e.preventDefault();
@@ -367,7 +380,7 @@
           a.href = URL.createObjectURL(await r.blob()); a.download = ime;
           document.body.append(a); a.click(); a.remove();
           setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
-          stanje.textContent = anonimno ? "Preuzeto ✓ Bez imena, brojila i adrese, može se dijeliti." : "Preuzeto ✓";
+          stanje.replaceChildren("Preuzeto ", ikona("i-check"), anonimno ? " Bez imena, brojila i adrese, može se dijeliti." : "");
         } catch (e) {
           stanje.className = "stanje greska"; stanje.textContent = (e as Error).message;
         } finally {
@@ -389,7 +402,8 @@
             body: JSON.stringify(e.data.tijelo),
           });
           const d = await r.json().catch(() => ({}));
-          stanje.textContent = r.ok ? (d.duplikat ? "Isti uvoz je već bio ovdje ✓" : "Spremljeno ✓") : (d.greska ?? `Greška ${r.status}`);
+          if (r.ok) stanje.replaceChildren(d.duplikat ? "Isti uvoz je već bio ovdje " : "Spremljeno ", ikona("i-check"));
+          else stanje.textContent = d.greska ?? `Greška ${r.status}`;
           stanje.className = r.ok ? "stanje" : "stanje greska";
           ucitaj();
         });

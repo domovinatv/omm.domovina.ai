@@ -5,13 +5,14 @@
   "version": "0.1.0",
   "description": "omm.domovina.ai — snimci HEP OMM-ova i očitanja brojila (slika → 1.8.1/1.8.2) za ponudu za sunčanu elektranu",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro build && wrangler dev",
+    "dev": "npm run ikone && astro dev",
+    "build": "astro build && node scripts/ikone.mjs dist/client/ikone",
+    "preview": "npm run build && wrangler dev",
     "db:migrate": "wrangler d1 migrations apply omm-domovina-ai --remote",
     "db:migrate:local": "wrangler d1 migrations apply omm-domovina-ai --local",
-    "deploy": "astro build && wrangler deploy",
-    "types": "wrangler types"
+    "deploy": "npm run build && wrangler deploy",
+    "types": "wrangler types",
+    "ikone": "node scripts/ikone.mjs --puno"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.4",
@@ -24,6 +25,7 @@
     "unpdf": "^1.8.1"
   },
   "devDependencies": {
+    "subset-font": "^2.9.0",
     "typescript": "^7.0.2",
     "wrangler": "^4.149.0"
   }

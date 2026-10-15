@@ -1,0 +1,22 @@
+---
+// Znak + ime u zaglavlju. Svijetla stranica nosi tamnu varijantu znaka, tamna svijetlu.
+interface Props { dodatak?: string }
+const { dodatak } = Astro.props;
+const a = Astro.url.searchParams.get("znak") === "a";
+const p = a ? "/a" : "";
+---
+<a class="marka" href={a ? "/?znak=a" : "/"}>
+  <picture>
+    <source srcset={`${p}/logo-noc.svg`} media="(prefers-color-scheme: dark)" />
+    <img src={`${p}/logo.svg`} width="32" height="32" alt="" />
+  </picture>
+  <span><b>OMM</b>{dodatak && <span class="marka-dodatak"> {dodatak}</span>}</span>
+</a>
+<style is:global>
+  .marka { display: inline-flex; align-items: center; gap: 10px; color: var(--tekst); text-decoration: none;
+    font-size: 1.05rem; letter-spacing: .02em; }
+  .marka:hover { text-decoration: none; }
+  .marka img { display: block; width: 32px; height: 32px; }
+  .marka b { font-weight: 800; }
+  .marka-dodatak { color: var(--blijedo); font-weight: 500; }
+</style>
