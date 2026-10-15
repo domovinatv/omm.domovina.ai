@@ -95,6 +95,16 @@
       .sigurnost details[open] summary { margin-bottom: 4px; }
       .sigurnost p { text-align: left; }
       footer { margin-top: 24px; font-size: .85rem; color: var(--blijedo); text-align: center; }
+      .mala-oznaka { display: inline-block; padding: 0 8px; margin: 0 2px; border-radius: 999px; background: var(--akcent);
+        color: var(--akcent-tekst); font-weight: 700; font-size: .85em; white-space: nowrap; }
+      .prije { font-weight: 600; margin-top: 0; }
+      /* Oznaku se ne može povući na dodirnom zaslonu, a ručno dodavanje na mobitelu
+         samo zbunjuje: tamo stranica kaže da se uvoz radi na računalu. */
+      .samo-mobitel { display: none; }
+      @media (hover: none) and (pointer: coarse) {
+        .samo-mobitel { display: block; }
+        .koraci { display: none; }
+      }
       [hidden] { display: none !important; }
 
       /* Oznaka se povlači na računalu: tamo sve stane na jedan ekran, koraci jedan do drugog. */
@@ -102,8 +112,7 @@
         main { max-width: 1240px; padding: 28px 24px 24px; }
         h1 { font-size: 2rem; }
         .uvod { margin-bottom: 18px; max-width: 760px; }
-        .koraci { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 14px; align-items: stretch; }
-        .koraci:has(#korak2[hidden]) { grid-template-columns: 1.15fr 2fr; }
+        .koraci { display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; align-items: stretch; }
         .koraci .kartica { margin-bottom: 14px; }
         /* Moji uvozi su desni stupac od vrha do dna prozora; skrola se sam. */
         body { padding-right: 320px; }
@@ -121,7 +130,13 @@
     <main>
       <h1>Tvoji podaci s HEP-a, u dva klika</h1>
       <p class="uvod">Očitanja, potrošnja i računi s <b>Moje mreže</b>, <b>Mojeg računa</b> i <b>Hepija</b>.
-        Ništa ne instaliraš, a lozinku upisuješ samo HEP-u.</p>
+        Ništa ne instaliraš, a lozinku upisuješ samo HEP-u. Radi na računalu.</p>
+
+      <section class="kartica samo-mobitel">
+        <h2>Otvori ovu stranicu na računalu</h2>
+        <p>Uvoz radi gumb koji se povuče u traku s oznakama preglednika, a to na mobitelu ne ide.
+          Na računalu (Chrome, Edge, Brave, Firefox ili Safari) otvori <b>omm.domovina.ai</b> i slijedi dva koraka.</p>
+      </section>
 
       <section class="kartica" id="primi" hidden>
         <h2>Primam uvoz…</h2>
@@ -134,12 +149,7 @@
         <div id="postavljeno" hidden>
           <h2>Oznaka je u traci</h2>
           <p class="stanje istaknuto" id="stanje-postavljeno" style="text-align:left" hidden></p>
-          <p class="blijedo">Sad se prijavi na HEP i tamo klikni oznaku:</p>
-          <div class="portali mali">
-            <a class="portal" href="https://mojamreza.hep.hr/" target="_blank" rel="noopener"><b>Moja mreža</b><span>HEP ODS</span></a>
-            <a class="portal" href="https://mojracun.hep.hr/hepi/" target="_blank" rel="noopener"><b>Moj Hepi račun</b><span>HEP Opskrba</span></a>
-            <a class="portal" href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener"><b>Moj račun</b><span>HEP Elektra</span></a>
-          </div>
+          <p class="blijedo">Gumb <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span> je u <span class="ime-trake-u">traci s oznakama</span>. Nastavi s korakom 2.</p>
           <p class="blijedo"><a href="#" id="ponovo">Nemam je više, postavi je ponovno</a></p>
         </div>
         <div id="postavljanje">
@@ -153,23 +163,20 @@
             <div class="demo-gumb">⚡ Uvezi iz HEP-a</div>
           </div>
           <div class="stanje" id="stanje-oznaka">Kad je gumb u traci, klikni ga tamo, na ovoj stranici, da provjerimo radi li.</div>
-          <details id="mobitel">
-            <summary>Na mobitelu</summary>
-            <ol>
-              <li><button id="kopiraj" type="button">Kopiraj kod oznake</button></li>
-              <li>Dodaj ovu stranicu u oznake, uredi tu oznaku, nazovi je <b>Uvezi iz HEP-a</b> i umjesto adrese zalijepi kod.</li>
-              <li>Na prijavljenom portalu: u Chromeu upiši <i>Uvezi iz HEP-a</i> u adresnu traku i odaberi oznaku;
-                u Safariju otvori Oznake i dodirni je.</li>
-              <li>Provjera: otvori oznaku isto tako, ali dok si još na ovoj stranici.</li>
-            </ol>
-          </details>
         </div>
       </section>
 
       <section class="kartica korak" id="korak2">
         <div class="broj">2</div>
         <div>
-          <h2>Prijavi se na HEP kao inače</h2>
+          <h2>Prijavi se na HEP i klikni gumb u traci</h2>
+          <p class="prije">Pročitaj prije nego otvoriš portal:</p>
+          <ol>
+            <li>Prijavi se kao inače.</li>
+            <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span>
+              u <span class="ime-trake-u">traci s oznakama</span>, pri vrhu prozora.</li>
+            <li>U prozorčiću koji se pojavi klikni <b>Uvezi</b>. Podaci stižu ovamo, pod „Moji uvozi“.</li>
+          </ol>
           <div class="portali">
             <a class="portal" href="https://mojamreza.hep.hr/" target="_blank" rel="noopener">
               <b>Moja mreža</b><span>HEP ODS · očitanja brojila i potrošnja · prijava e-Građanima</span></a>
@@ -178,14 +185,7 @@
             <a class="portal" href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener">
               <b>Moj račun</b><span>HEP Elektra · računi, uplate, potrošnja</span></a>
           </div>
-        </div>
-      </section>
-
-      <section class="kartica korak">
-        <div class="broj" id="broj3">3</div>
-        <div>
-          <h2>Klikni oznaku, pa „Uvezi“</h2>
-          <p class="blijedo">Na HEP-ovoj stranici pojavi se prozorčić koji kaže što će pročitati. Nakon klika na <b>Uvezi</b> podaci stižu ovamo. Za drugi portal ponovi prijavu i klik na oznaku.</p>
+          <p class="blijedo">Za drugi portal ponovi: prijava, pa klik na gumb u traci.</p>
         </div>
       </section>
 
@@ -242,6 +242,7 @@
       const safari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|FxiOS|Android/.test(ua);
       $("precac").innerHTML = mac ? "<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>" : "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>";
       if (safari) for (const el of document.querySelectorAll(".ime-trake")) el.textContent = "traku Favoriti";
+      if (safari) for (const el of document.querySelectorAll(".ime-trake-u")) el.textContent = "traci Favoriti";
 
       // Uputa dok se gumb povlači; poslije podsjetnik da ga se provjeri klikom.
       const pusti = $("pusti");
@@ -270,9 +271,6 @@
         $("postavljeno").hidden = !da;
         $("broj1").textContent = da ? "✓" : "1";
         $("broj1").classList.toggle("gotov", da);
-        // Portali su tada u kartici 1, pa korak 2 otpada i zadnji korak postaje drugi.
-        $("korak2").hidden = da;
-        $("broj3").textContent = da ? "2" : "3";
       };
       let zapamceno = false;
       try { zapamceno = localStorage.getItem(POSTAVLJENA) === "1"; } catch {}
@@ -293,18 +291,6 @@
         try { localStorage.removeItem(POSTAVLJENA); } catch {}
         prikaziPostavljeno(false);
       };
-
-      $("kopiraj").onclick = async () => {
-        await navigator.clipboard.writeText(kod);
-        $("kopiraj").textContent = "Kopirano ✓";
-      };
-      // Na dodirnom zaslonu nema povlačenja: upute za mobitel su odmah otvorene.
-      if (matchMedia("(pointer: coarse)").matches) {
-        $<HTMLDetailsElement>("mobitel").open = true;
-        $("demo").hidden = true;
-        $("stanje-oznaka").textContent = "";
-        $("traka").textContent = "Na mobitelu oznaku dodaješ ručno, jednom:";
-      }
 
       const NAZIVI: Record<string, string> = {
         hep: "Moja mreža (HEP ODS)",
