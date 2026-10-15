@@ -21,6 +21,8 @@
   // Slike brojila, ključ <uređaj>/<id>.jpg. Čuvamo ih da se OCR može provjeriti.
   "r2_buckets": [{ "binding": "SLIKE", "bucket_name": "omm-domovina-ai-slike" }],
   "ai": { "binding": "AI" },
+  // Browser Rendering: PDF izvještaja iz HTML stranice (src/pages/api/izvjestaj).
+  "browser": { "binding": "BROWSER" },
 
   "vars": {
     // Vision model za čitanje zaslona brojila. Usporedba 2026-10-12 na slici

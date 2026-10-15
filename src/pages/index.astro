@@ -82,6 +82,11 @@
       ul.snimci li:first-child { border-top: 0; }
       ul.snimci .naslov { font-weight: 600; }
       ul.snimci .meta { font-size: .85rem; color: var(--blijedo); }
+      .izvjestaji { margin-top: 18px; }
+      .izvjestaji .gumbi { display: flex; gap: 6px; margin-top: 6px; }
+      .izvjestaji .gumbi button { margin: 0; min-height: 36px; font-size: .9rem; }
+      .izvjestaji .gumbi button.glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
+      .izvjestaji .stanje { text-align: left; }
       /* Sigurnost nije korak: tiha poveznica ispod koraka, tekst u uskom stupcu po sredini. */
       .sigurnost { max-width: 640px; margin: 8px auto 0; text-align: center; }
       .sigurnost summary { display: inline-block; color: var(--akcent); padding: 6px 10px; border-radius: 999px; list-style: none; }
@@ -202,6 +207,11 @@
       <aside class="kartica bocno">
         <h2>Moji uvozi</h2>
         <ul class="snimci" id="snimci"><li class="meta">Još nema uvoza.</li></ul>
+        <div class="izvjestaji" id="izvjestaji" hidden>
+          <h2>Izvještaj potrošnje</h2>
+          <p class="blijedo">Zadnjih 12 mjeseci s troškom, iz svih tvojih uvoza i očitanja. Radi se iznova kod svakog preuzimanja, pa uključuje i zadnje očitanje.</p>
+          <ul class="snimci" id="izvjestaji-popis"></ul>
+        </div>
       </aside>
 
       <footer>Rana verzija bez prijave: uvozi su vezani uz ovaj preglednik. · <a href="/ocitaj">Očitaj brojilo sa slike</a></footer>
@@ -331,8 +341,53 @@
         if (racuni.length) redak(`Pročitani računi: ${racuni.length}`, `zadnji stigao ${vrijeme(racuni[0].stvoren)}`);
       }
       ucitaj();
+      ucitajIzvjestaje();
       // Povratak s HEP-ove kartice osvježi popis.
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) ucitaj(); });
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { ucitaj(); ucitajIzvjestaje(); } });
+
+      // Izvještaj po OMM-u: PDF se računa na serveru iz svih snimaka ovog ključa.
+      type Omm = { omm: string; adresa: string | null };
+      async function ucitajIzvjestaje() {
+        const r = await fetch("/api/izvjestaj", { headers: auth });
+        if (!r.ok) return;
+        const popis = (await r.json()) as Omm[];
+        $("izvjestaji").hidden = !popis.length;
+        const ul = $("izvjestaji-popis");
+        ul.replaceChildren(...popis.map((o) => {
+          const li = document.createElement("li");
+          const n = document.createElement("div"); n.className = "naslov"; n.textContent = `OMM ${o.omm}`;
+          const m = document.createElement("div"); m.className = "meta"; m.textContent = o.adresa ?? "";
+          const gumbi = document.createElement("div"); gumbi.className = "gumbi";
+          const stanje = document.createElement("div"); stanje.className = "stanje";
+          const gumb = (tekst: string, anonimno: boolean) => {
+            const b = document.createElement("button"); b.type = "button"; b.textContent = tekst;
+            if (!anonimno) b.className = "glavni";
+            b.onclick = () => preuzmi(o.omm, anonimno, b, stanje);
+            return b;
+          };
+          gumbi.append(gumb("Preuzmi PDF", false), gumb("Za dijeljenje", true));
+          li.append(n, m, gumbi, stanje);
+          return li;
+        }));
+      }
+      async function preuzmi(omm: string, anonimno: boolean, b: HTMLButtonElement, stanje: HTMLElement) {
+        b.disabled = true;
+        stanje.className = "stanje"; stanje.textContent = "Radim izvještaj…";
+        try {
+          const r = await fetch(`/api/izvjestaj/${omm}${anonimno ? "?anonimno=1" : ""}`, { headers: auth });
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).greska ?? `Greška ${r.status}`);
+          const ime = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") ?? "")?.[1] ?? `Potrosnja-${omm}.pdf`;
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(await r.blob()); a.download = ime;
+          document.body.append(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+          stanje.textContent = anonimno ? "Preuzeto ✓ Bez imena, brojila i adrese, može se dijeliti." : "Preuzeto ✓";
+        } catch (e) {
+          stanje.className = "stanje greska"; stanje.textContent = (e as Error).message;
+        } finally {
+          b.disabled = false;
+        }
+      }
 
       // Rezerva kad HEP ne pusti izravan fetch: oznaka otvori /?primi=1 i pošalje
       // tijelo snimka preko postMessage. Prima se samo s HEP-ovih portala.

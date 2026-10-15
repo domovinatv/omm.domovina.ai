@@ -20,7 +20,7 @@ example app, Chrome ekstenzija). Plan i odgođena sigurnost:
 ## Stack
 
 Astro 7 SSR + `@astrojs/cloudflare` 14, D1 `omm-domovina-ai` (`migrations/`),
-R2 `omm-domovina-ai-slike` (slike `<ključ>/<uuid>.jpg`), Workers AI (`OCR_MODEL`
+R2 `omm-domovina-ai-slike` (slike `<ključ>/<uuid>.jpg`), Browser Rendering (PDF izvještaja), Workers AI (`OCR_MODEL`
 u `wrangler.jsonc`, usporedba modela je u komentaru). Bindingi se čitaju s
 `import { env } from "cloudflare:workers"`.
 
@@ -59,10 +59,24 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `GET /api/racun` | pozivi na broj računa koje ključ već ima (bookmarklet na Hepiju šalje samo nove) |
 | `POST /api/racun` | tijelo je PDF računa HEP Opskrbe → pročita se kao mail i spremi kao `hep-racun` (201, 200 duplikat, 422 nije račun) |
 | `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
-| `/` | naslovnica: uvoz oznakom (bookmarklet) „Uvezi iz HEP-a“, jedini put uvoza za korisnike; `?primi=1` je rezerva preko postMessage |
+| `GET /api/izvjestaj` | OMM-ovi ovog ključa za koje se može napraviti izvještaj |
+| `GET /api/izvjestaj/:omm` | godišnji izvještaj potrošnje, `?oblik=pdf` (zadano) \| `html` \| `json`, `?anonimno=1`; 422 kad nema podataka |
+| `/` | naslovnica: uvoz oznakom (bookmarklet) „Uvezi iz HEP-a“, jedini put uvoza za korisnike; u bočnom stupcu „Izvještaj potrošnje“ po OMM-u (PDF i anonimni za dijeljenje); `?primi=1` je rezerva preko postMessage |
 | `/ocitaj` | očitanje brojila sa slike (sporedno) |
 | `/uvoz` | 301 na `/` (stara adresa) |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
+
+## Izvještaj potrošnje
+
+`src/lib/izvjestaj/`: `izracun.ts` je prijepis `flutter_moja_mreza/tools/izvjestaj/izvjestaj.py`,
+`html.ts` prijepis `predlozak.html.j2` (DOMOVINA brend, logo iz mediakita u `logo.svg`).
+**Promjenu računice ili izgleda napravi u oba.** Računa se pri svakom zahtjevu iz svih
+uvoza i vlastitih očitanja (`rucno`, `foto`) ključa, pa nema regeneriranja: novo očitanje
+je u sljedećem preuzimanju. Očitanja iz svih uvoza se spajaju; Hepi očitanja (sva
+„Elektra“, procjene se ne razlikuju) samo kad drugog izvora nema. Cijene: javni cjenik
+HEP Elektre (`fetch` s `cacheTtl` dan). PDF slaže Browser Rendering (`BROWSER`,
+`@cloudflare/puppeteer`, ~4 s): Inter se ugrađuje kao data: URL jer vanjske fontove ne
+učita, a podnožje ide kroz `footerTemplate` jer `@page` rubne okvire ne crta.
 
 ## Računi mailom
 
