@@ -29,6 +29,9 @@ npm run deploy          # astro build && wrangler deploy
 npm run db:migrate      # D1 migracije (remote)
 ```
 
+`wrangler d1 execute … --remote` zna jednom vratiti 7403 („account is not valid“) iako
+je prijava ispravna; ponovi naredbu (2026-10-15).
+
 Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@cf/…"`
 (`--form-string`, jer `-F model=@cf/…` curl čita kao datoteku). Testne slike u
 `data/` (gitignored).
