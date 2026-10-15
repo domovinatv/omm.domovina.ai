@@ -1,0 +1,41 @@
+---
+import { env } from "cloudflare:workers";
+import AdminOkvir from "../../components/AdminOkvir.astro";
+import { kad } from "../../lib/admin/pregled";
+
+const { email } = Astro.locals.admin!;
+if (Astro.request.method === "POST") {
+  const forma = await Astro.request.formData();
+  await env.DB.prepare("DELETE FROM admin_passkeys WHERE id = ? AND email = ?").bind(String(forma.get("id")), email).run();
+  return Astro.redirect("/admin/passkeys", 303);
+}
+const { results: kljucevi } = await env.DB.prepare(
+  "SELECT id, label, created_at, last_used_at FROM admin_passkeys WHERE email = ? ORDER BY created_at",
+).bind(email).all<{ id: string; label: string; created_at: string; last_used_at: string | null }>();
+---
+<AdminOkvir naslov="Passkeyi">
+  <h1>Passkeyi</h1>
+  <p class="blijedo">Za <b>{email}</b>. Dodavanje traži prijavu mlađu od 10 minuta.</p>
+  {kljucevi.length ? (
+    <div class="tablica">
+      <table>
+        <thead><tr><th>Oznaka</th><th>Dodan</th><th>Zadnje korišten</th><th></th></tr></thead>
+        <tbody>
+          {kljucevi.map((k) => (
+            <tr>
+              <td>{k.label}</td><td>{kad(k.created_at)}</td><td>{kad(k.last_used_at)}</td>
+              <td><form method="post"><input type="hidden" name="id" value={k.id} /><button class="mali" type="submit">Obriši</button></form></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : <p>Još nema passkeya.</p>}
+  <form id="passkey-register" class="kartica" style="margin-top:16px">
+    <h2 style="margin-top:0">Dodaj passkey</h2>
+    <input type="text" name="label" placeholder="Oznaka, npr. MacBook" maxlength="80" style="width:100%" />
+    <button class="glavni puno" type="submit">Dodaj passkey</button>
+    <p id="msg" hidden></p>
+  </form>
+</AdminOkvir>
+<script>import "../../lib/admin/klijent";</script>

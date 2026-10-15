@@ -1,0 +1,20 @@
+---
+import AdminOkvir from "../../components/AdminOkvir.astro";
+import { accessConfigured, getSession, safeNext } from "../../lib/admin/sesija";
+
+const next = safeNext(Astro.url.searchParams.get("next"));
+if (await getSession(Astro.request.headers.get("cookie"))) return Astro.redirect(next, 302);
+const greska = Astro.url.searchParams.get("error") === "access" ? "Access prijava nije prihvaćena za ovaj admin." : null;
+const access = accessConfigured();
+---
+<AdminOkvir naslov="Prijava">
+  <h1>OMM admin</h1>
+  <p class="blijedo">Pregled uvoza po OMM-u i izvještaji potrošnje.</p>
+  <div class="kartica">
+    <button id="passkey-login" class="glavni puno" type="button" data-next={next}>Prijava passkeyem</button>
+    {access && <a class="gumb puno" href={`/admin/sso?next=${encodeURIComponent(next)}`}>Prijava preko Cloudflare Accessa (kod na e-mail)</a>}
+    <p id="msg" hidden={!greska}>{greska}</p>
+  </div>
+  <p class="blijedo">Prvi put: uđi preko Accessa, pa u „Passkeyi“ dodaj passkey.</p>
+</AdminOkvir>
+<script>import "../../lib/admin/klijent";</script>

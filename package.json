@@ -16,7 +16,9 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.4",
     "@cloudflare/puppeteer": "^1.4.0",
+    "@simplewebauthn/server": "^14.0.3",
     "astro": "^7.3.8",
+    "jose": "^5.10.0",
     "postal-mime": "^4.0.6",
     "qrcode-generator": "^2.0.4",
     "unpdf": "^1.8.1"

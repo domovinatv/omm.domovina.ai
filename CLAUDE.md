@@ -67,6 +67,7 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `/` | naslovnica: uvoz oznakom (bookmarklet) „Uvezi iz HEP-a“, jedini put uvoza za korisnike; u bočnom stupcu „Izvještaj potrošnje“ po OMM-u (PDF i anonimni za dijeljenje); `?primi=1` je rezerva preko postMessage |
 | `/ocitaj` | očitanje brojila sa slike (sporedno) |
 | `/uvoz` | 301 na `/` (stara adresa) |
+| `/admin` | admin (Access OTP ili passkey): korisnici po OMM-u, izvještaj za bilo koji OMM; `docs/admin.md` |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
 
 ## Izvještaj potrošnje

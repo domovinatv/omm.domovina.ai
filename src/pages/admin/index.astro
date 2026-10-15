@@ -1,0 +1,63 @@
+---
+import AdminOkvir from "../../components/AdminOkvir.astro";
+import { IZVORI, kad, kratko, pregledOmm } from "../../lib/admin/pregled";
+
+const omm = await pregledOmm();
+const korisnika = new Set(omm.flatMap((o) => o.korisnici.map((k) => k.uredaj))).size;
+const tjedan = new Date(Date.now() - 7 * 86_400_000).toISOString();
+const aktivnih = new Set(omm.flatMap((o) => o.korisnici.filter((k) => k.zadnji > tjedan).map((k) => k.uredaj))).size;
+const uvoza = omm.reduce((s, o) => s + o.uvoza, 0);
+const izv = (o: string) => `/admin/izvjestaj/${o}`;
+---
+<AdminOkvir naslov="Pregled" siroko>
+  <h1>Pregled uvoza</h1>
+  <div class="plocice">
+    <div class="plocica"><b>{omm.length}</b><span>OMM-ova</span></div>
+    <div class="plocica"><b>{korisnika}</b><span>korisnika (ključeva)</span></div>
+    <div class="plocica"><b>{aktivnih}</b><span>aktivnih u 7 dana</span></div>
+    <div class="plocica"><b>{uvoza}</b><span>OMM-uvoza ukupno</span></div>
+  </div>
+  <p><input id="filtar" type="search" placeholder="Traži OMM, adresu, ime ili ključ" style="width:min(420px,100%)" /></p>
+  <div class="tablica">
+    <table>
+      <thead>
+        <tr><th>OMM</th><th>Adresa / kupac</th><th>Korisnici</th><th>Izvori</th><th>Uvoza</th><th>Očitanja</th><th>Zadnje</th><th>Izvještaj</th></tr>
+      </thead>
+      <tbody>
+        {omm.map((o) => (
+          <tr data-trazi={[o.omm, o.adresa, o.ime, ...o.korisnici.map((k) => k.uredaj)].join(" ").toLowerCase()}>
+            <td><a class="mono" href={`/admin/omm/${o.omm}`}>{o.omm}</a></td>
+            <td>{o.adresa ?? "—"}<br /><span class="blijedo">{o.ime ?? ""}</span></td>
+            <td>
+              <b>{o.korisnici.length}</b>{" "}
+              <span class="blijedo mono">{o.korisnici.slice(0, 3).map((k) => kratko(k.uredaj)).join(", ")}{o.korisnici.length > 3 ? " …" : ""}</span>
+            </td>
+            <td>{o.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</td>
+            <td class="broj">{o.uvoza}</td>
+            <td class="broj">{o.ocitanja}{o.racuna ? ` + ${o.racuna} rač.` : ""}</td>
+            <td style="white-space:nowrap">{kad(o.zadnji)}</td>
+            <td>
+              {o.uvoza > 0 ? (
+                <div class="akcije">
+                  <a class="gumb mali" href={izv(o.omm)}>PDF</a>
+                  <a class="gumb mali" href={`${izv(o.omm)}?oblik=html`} target="_blank">HTML</a>
+                  <a class="gumb mali" href={`${izv(o.omm)}?anonimno=1`}>Anonimno</a>
+                </div>
+              ) : <span class="blijedo">nema uvoza</span>}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <p class="blijedo">„Korisnik“ je ključ uređaja iz preglednika ili aplikacije (prijave za korisnike nema). Izvještaj spaja uvoze i očitanja svih korisnika tog OMM-a; po korisniku je u detalju OMM-a.</p>
+</AdminOkvir>
+<script>
+  const filtar = document.getElementById("filtar") as HTMLInputElement;
+  filtar.addEventListener("input", () => {
+    const q = filtar.value.trim().toLowerCase();
+    document.querySelectorAll<HTMLTableRowElement>("tr[data-trazi]").forEach((r) => {
+      r.hidden = !!q && !r.dataset.trazi!.includes(q);
+    });
+  });
+</script>

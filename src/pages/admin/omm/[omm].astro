@@ -1,0 +1,63 @@
+---
+import AdminOkvir from "../../../components/AdminOkvir.astro";
+import { IZVORI, kad, pregledOmm, uredaji } from "../../../lib/admin/pregled";
+
+const omm = Astro.params.omm ?? "";
+const o = /^\d{10}$/.test(omm) ? (await pregledOmm()).find((x) => x.omm === omm) : undefined;
+if (!o) return new Response("Nema tog OMM-a", { status: 404 });
+const dnevnik = await uredaji(o.korisnici.map((k) => k.uredaj));
+const izv = `/admin/izvjestaj/${omm}`;
+const preglednik = (ua: string | null) =>
+  !ua ? "—" : /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : ua.slice(0, 40);
+---
+<AdminOkvir naslov={omm} siroko>
+  <p><a href="/admin">← Pregled</a></p>
+  <h1 class="mono" style="font-size:1.5rem">{omm}</h1>
+  <p>{o.adresa ?? "—"}{o.ime && <span class="blijedo"> · {o.ime}</span>}</p>
+  <p>{o.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</p>
+
+  <div class="kartica">
+    <h2 style="margin-top:0">Izvještaj iz svih uvoza</h2>
+    {o.uvoza > 0 ? (
+      <div class="akcije">
+        <a class="gumb glavni" href={izv}>PDF</a>
+        <a class="gumb" href={`${izv}?oblik=html`} target="_blank">HTML</a>
+        <a class="gumb" href={`${izv}?anonimno=1`}>Anonimni PDF</a>
+        <a class="gumb" href={`${izv}?oblik=json`} target="_blank">JSON</a>
+      </div>
+    ) : <p class="blijedo">Nema uvoza s HEP-a, pa nema ni izvještaja (samo očitanja ili računi mailom).</p>}
+  </div>
+
+  <h2>Korisnici ({o.korisnici.length})</h2>
+  <div class="tablica">
+    <table>
+      <thead>
+        <tr><th>Ključ</th><th>Izvori</th><th>Uvoza</th><th>Očitanja</th><th>Prvi</th><th>Zadnji</th><th>Uređaj</th><th>Izvještaj</th></tr>
+      </thead>
+      <tbody>
+        {o.korisnici.map((k) => {
+          const d = dnevnik.get(k.uredaj);
+          return (
+            <tr>
+              <td class="mono" title={k.uredaj}>{k.uredaj}</td>
+              <td>{k.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</td>
+              <td class="broj">{k.uvoza}</td>
+              <td class="broj">{k.ocitanja}{k.racuna ? ` + ${k.racuna} rač.` : ""}</td>
+              <td style="white-space:nowrap">{kad(k.prvi)}</td>
+              <td style="white-space:nowrap">{kad(k.zadnji)}</td>
+              <td title={d?.user_agent ?? ""}>{preglednik(d?.user_agent ?? null)}{d?.drzava ? ` · ${d.drzava}` : ""}</td>
+              <td>
+                {k.uvoza > 0 ? (
+                  <div class="akcije">
+                    <a class="gumb mali" href={`${izv}?kljuc=${encodeURIComponent(k.uredaj)}`}>PDF</a>
+                    <a class="gumb mali" href={`${izv}?kljuc=${encodeURIComponent(k.uredaj)}&oblik=html`} target="_blank">HTML</a>
+                  </div>
+                ) : <span class="blijedo">—</span>}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</AdminOkvir>

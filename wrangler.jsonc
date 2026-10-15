@@ -28,7 +28,14 @@
     // Vision model za čitanje zaslona brojila. Usporedba 2026-10-12 na slici
     // Iskra MT171: llama-4-scout točno za 2 s (oznaku registra zna izmisliti),
     // kimi-k2.6 točno za 30 s, gemma-4 prazan odgovor, mistral-small greška.
-    "OCR_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct"
+    "OCR_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct",
+    // /admin (docs/admin.md): Cloudflare Access na /admin/sso ili passkey.
+    // ADMIN_EMAILS se provjerava pri svakom zahtjevu; micanje iz popisa odmah gasi sesije.
+    "ADMIN_EMAILS": "stepanic.matija@gmail.com,ms@ff.hr",
+    "ADMIN_HOST": "omm.domovina.ai",
+    "ACCESS_TEAM_DOMAIN": "domovina.cloudflareaccess.com",
+    // AUD Access aplikacije „OMM admin (sso)“ koja štiti omm.domovina.ai/admin/sso.
+    "ACCESS_AUD": "4f2cae64004e536c0f5d2bc669ac9c3852e96b9ec99481c03c87b28a6bc9f929"
   },
 
   "routes": [{ "pattern": "omm.domovina.ai", "custom_domain": true }],

@@ -1,0 +1,77 @@
+---
+// Okvir admin stranica: isti tokeni boja kao naslovnica, širi raspored za tablice.
+interface Props { naslov: string; siroko?: boolean }
+const { naslov, siroko = false } = Astro.props;
+const admin = Astro.locals.admin;
+---
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{naslov} · OMM admin</title>
+    <style is:global>
+      :root {
+        --bg: #f6f7f4; --kartica: #fff; --tekst: #1b1f1a; --blijedo: #5d665b;
+        --rub: #dfe3db; --akcent: #1f7a3a; --akcent-tekst: #fff; --akcent-blago: #e3f1e6; --greska: #b3261e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #121512; --kartica: #1b1f1b; --tekst: #e7ebe4; --blijedo: #9ba697; --rub: #2e352d;
+          --akcent: #5cc97a; --akcent-tekst: #0b1a0f; --akcent-blago: #1d3324; --greska: #ff8a80; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--tekst); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      header { border-bottom: 1px solid var(--rub); background: var(--kartica); }
+      header .unutra { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 10px 16px; margin: 0 auto; max-width: 1200px; }
+      header b { margin-right: auto; }
+      header a { color: var(--tekst); text-decoration: none; font-weight: 600; }
+      header a:hover { color: var(--akcent); }
+      header form { margin: 0; }
+      main { margin: 0 auto; padding: 24px 16px 64px; max-width: 520px; }
+      main.siroko { max-width: 1200px; }
+      a { color: var(--akcent); }
+      h1 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 12px; }
+      h2 { font-size: 1.1rem; margin: 24px 0 8px; }
+      .blijedo { color: var(--blijedo); font-size: .9rem; }
+      .kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+      button, .gumb { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px;
+        border: 1px solid var(--rub); border-radius: 10px; font: inherit; font-weight: 600; cursor: pointer;
+        background: transparent; color: var(--tekst); text-decoration: none; }
+      .glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
+      .mali { min-height: 30px; padding: 0 10px; font-size: .85rem; border-radius: 8px; }
+      .puno { width: 100%; margin-top: 10px; }
+      input[type=text], input[type=search] { font: inherit; padding: 8px 12px; border: 1px solid var(--rub); border-radius: 10px;
+        background: var(--kartica); color: var(--tekst); min-height: 40px; }
+      #msg { color: var(--greska); margin-top: 10px; }
+      .plocice { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+      .plocica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 12px; padding: 12px 14px; }
+      .plocica b { display: block; font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+      .plocica span { color: var(--blijedo); font-size: .85rem; }
+      .tablica { overflow-x: auto; background: var(--kartica); border: 1px solid var(--rub); border-radius: 12px; }
+      table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+      th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rub); vertical-align: top; }
+      th { color: var(--blijedo); font-weight: 600; font-size: .8rem; white-space: nowrap; }
+      tr:last-child td { border-bottom: 0; }
+      td.broj { text-align: right; font-variant-numeric: tabular-nums; }
+      .mono { font-family: ui-monospace, monospace; font-size: .85rem; }
+      .oznaka { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--akcent-blago); color: var(--akcent);
+        font-size: .75rem; font-weight: 600; margin: 0 4px 2px 0; white-space: nowrap; }
+      .akcije { display: flex; gap: 6px; flex-wrap: wrap; }
+    </style>
+  </head>
+  <body>
+    {admin && (
+      <header>
+        <div class="unutra">
+          <b>OMM admin</b>
+          <a href="/admin">Pregled</a>
+          <a href="/admin/passkeys">Passkeyi</a>
+          <span class="blijedo">{admin.email}</span>
+          <form method="post" action="/admin/logout"><button class="mali" type="submit">Odjava</button></form>
+        </div>
+      </header>
+    )}
+    <main class:list={{ siroko }}><slot /></main>
+  </body>
+</html>
