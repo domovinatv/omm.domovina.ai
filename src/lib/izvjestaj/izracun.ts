@@ -246,13 +246,20 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
   const opskrbljivac = najnoviji("hep-hepi") ? "HEP Opskrba (Hepi)" : najnoviji("hep-moj-racun") ? "HEP Elektra" : null;
   const lok = rucna.find((r) => r.lat != null && r.lon != null);
 
-  // Zadnjih 12 punih mjeseci prije zadnjeg podatka (uvoza ili ručnog očitanja).
+  // Zadnjih 12 punih mjeseci prije zadnjeg podatka (uvoza ili ručnog očitanja); kad
+  // povijest ne seže toliko unatrag, od prvog punog mjeseca za koji postoji očitanje.
   const dohvaceno = Math.max(...mjesta.map((x) => x.m.dohvaceno).filter(Number.isFinite), ...rucna.map((r) => r.t));
-  const od = prvi(godina(dohvaceno) - 1, mjesec(dohvaceno));
-  const doo = prvi(godina(od) + 1, mjesec(od));
+  const doo = prvi(godina(dohvaceno), mjesec(dohvaceno));
+  const sveTocke = [...m.ocitanja.filter((o) => o.t1_kwh != null).map((o) => datum(o.datum)), ...rucna.map((r) => r.t)];
+  const najranije = Math.min(...sveTocke);
+  const prviPuni = (t: number) => (t === prvi(godina(t), mjesec(t)) ? t : prvi(godina(t), mjesec(t) + 1));
+  const od = Math.max(prvi(godina(doo) - 1, mjesec(doo)), prviPuni(najranije));
+  const brojMj = (a: number, b: number) => (godina(b) - godina(a)) * 12 + mjesec(b) - mjesec(a);
+  const n = brojMj(od, doo);
+  if (n < 1) throw new NemaPodataka("Premalo očitanja: izvještaj treba barem jedan puni mjesec između dva očitanja");
 
   const pts = tocke(m.ocitanja, rucna, od, doo);
-  const mj = mjeseci(pts, od);
+  const mj = mjeseci(pts, od, n);
   const tm = (m.tarifni_model ?? "").toLowerCase();
   const model = tm.includes("bijeli") ? "bijeli" : "plavi";
   trosak(mj, model, c).forEach((t, i) => Object.assign(mj[i], t));
@@ -260,8 +267,46 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
   const zbroj = (xs: Mj[], k: keyof Mj) => xs.reduce((s, x) => s + (x[k] as number), 0);
   const kwh = zbroj(mj, "kwh"), eur = zbroj(mj, "ukupno"), t2 = zbroj(mj, "t2");
   const dvoregistarsko = t2 > kwh * 0.01;
-  const zima = zbroj(mj.slice(0, 6), "kwh"), ljeto = zbroj(mj.slice(6), "kwh");
+  const zimski = (x: Mj) => mjesec(x.od) >= 10 || mjesec(x.od) <= 3;
+  const mjZima = mj.filter(zimski), mjLjeto = mj.filter((x) => !zimski(x));
   const preko = zbroj(mj, "preko");
+  const cijelaGodina = n === 12;
+  const brojDana = (x: Mj) => dana(x.od, prvi(godina(x.od), mjesec(x.od) + 1));
+  const poDanu = (xs: Mj[]) => zbroj(xs, "kwh") / xs.reduce((s, x) => s + brojDana(x), 0);
+
+  // ---- usporedba s istim mjesecima godinu ranije, koliko povijest seže (barem 3 mjeseca)
+  let usporedba = null;
+  const odPrije = Math.max(prvi(godina(od) - 1, mjesec(od)), prviPuni(najranije));
+  const nPrije = brojMj(odPrije, od);
+  if (nPrije >= 3) {
+    try {
+      const mjPrije = mjeseci(tocke(m.ocitanja, rucna, odPrije, od), odPrije, nPrije);
+      trosak(mjPrije, model, c).forEach((t, i) => Object.assign(mjPrije[i], t));
+      // Isti kalendarski mjesec godinu kasnije.
+      const sada = new Map(mj.map((x) => [ym(x.od), x]));
+      const parovi = mjPrije.flatMap((p) => {
+        const s = sada.get(ym(prvi(godina(p.od) + 1, mjesec(p.od))));
+        return s ? [{ prije: p, sada: s }] : [];
+      });
+      if (parovi.length >= 3) {
+        const [kp, ks] = [parovi.reduce((s, x) => s + x.prije.kwh, 0), parovi.reduce((s, x) => s + x.sada.kwh, 0)];
+        const [ep, es] = [parovi.reduce((s, x) => s + x.prije.ukupno, 0), parovi.reduce((s, x) => s + x.sada.ukupno, 0)];
+        const a = parovi[0].prije.od, b = parovi[parovi.length - 1].prije.od;
+        usporedba = {
+          razdoblje: `${MJD[mjesec(a) - 1]} ${godina(a)}. – ${MJD[mjesec(b) - 1]} ${godina(b)}.`,
+          broj_mjeseci: parovi.length, kwh_prije: kp, kwh_sada: ks, eur_prije: ep, eur_sada: es,
+          promjena: kp ? (ks - kp) / kp * 100 : 0,
+          raspodijeljeno_prije: parovi.filter((x) => x.prije.raspodijeljeno).length,
+          mjeseci: parovi.map((x) => ({
+            oznaka: MJ[mjesec(x.sada.od) - 1], kwh_prije: x.prije.kwh, kwh_sada: x.sada.kwh,
+            raspodijeljeno_prije: x.prije.raspodijeljeno, raspodijeljeno_sada: x.sada.raspodijeljeno,
+          })),
+        };
+      }
+    } catch (e) {
+      if (!(e instanceof NemaPodataka)) throw e;
+    }
+  }
 
   // ---- tekst objašnjenja, iz podataka
   const biljeske = ["Mjesečna potrošnja je razlika stanja brojila na prvi dan mjeseca, linearno interpolirana " +
@@ -296,7 +341,7 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
     const eur2 = trosak(mj, drugi, c).reduce((s, t) => s + t.ukupno, 0);
     const razlika = eur2 - eur;
     const ime: Record<string, string> = { bijeli: "Bijelom", plavi: "Plavom" };
-    let s = `NT je ${hr(t2 / kwh * 100)} % potrošnje. Na ${ime[drugi]} bi ista godina koštala ${hr(eur2, 2)} € ` +
+    let s = `NT je ${hr(t2 / kwh * 100)} % potrošnje. Na ${ime[drugi]} bi ${cijelaGodina ? "ista godina" : "isto razdoblje"} koštala ${hr(eur2, 2)} € ` +
       `umjesto ${hr(eur, 2)} €`;
     if (Math.abs(razlika) < 10) s += ": tarifni modeli izađu praktički isto.";
     else if (razlika > 0) s += `, dakle sadašnji model štedi oko ${hr(razlika)} € godišnje.`;
@@ -342,7 +387,7 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
     const dan = (t: number) => DANI[(new Date(t).getUTCDay() + 6) % 7];
     rucno = {
       od: hrDatum(r0.t), do: hrDatum(rn.t), kwh: uk, dana: n, po_danu: uk / n,
-      mj30: uk / n * 30 * poKwh + zadnji.fiksno, ljeto_po_danu: zbroj(mj.slice(-3), "kwh") / 92,
+      mj30: uk / n * 30 * poKwh + zadnji.fiksno, ljeto_po_danu: poDanu(mj.slice(-3)),
       intervali: ruc.slice(1).map((b, i) => {
         const a = ruc[i], k = (b.t1 + b.t2) - (a.t1 + a.t2);
         return { oznaka: `${dm(a.t)} → ${dm(b.t)}`, dani: `${dan(a.t)}–${dan(b.t)}`, kwh: k, po_danu: k / dana(a.t, b.t) };
@@ -369,11 +414,13 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
   // Mreža je 4 stupca: višak (ugovorni račun) gura „Izvor podataka“ van.
   if (zaglavlje.length > 8) zaglavlje = zaglavlje.filter(([o]) => o !== "Izvor podataka");
 
-  const brojDana = (x: Mj) => dana(x.od, prvi(godina(x.od), mjesec(x.od) + 1));
-  const poDanu = (xs: Mj[]) => zbroj(xs, "kwh") / xs.reduce((s, x) => s + brojDana(x), 0);
   const vrh = mj.reduce((a, b) => (b.kwh > a.kwh ? b : a));
-  const sazetak = `Zima (lis–ožu) ${hr(zima)} kWh, oko ${hr(poDanu(mj.slice(0, 6)), 1)} kWh/dan · ljeto (tra–ruj) ${hr(ljeto)} kWh, ` +
-    `oko ${hr(poDanu(mj.slice(6)), 1)} kWh/dan. Najviši mjesec: ${MJD[mjesec(vrh.od) - 1]} ${godina(vrh.od)}. (${hr(vrh.kwh)} kWh). ` +
+  const sezona = (ime: string, xs: Mj[]) => xs.length
+    ? `${ime} ${hr(zbroj(xs, "kwh"))} kWh${xs.length < 6 ? ` (${xs.length} mj.)` : ""}, oko ${hr(poDanu(xs), 1)} kWh/dan` : null;
+  const sezone = [sezona("zima (lis–ožu)", mjZima), sezona("ljeto (tra–ruj)", mjLjeto)].filter(Boolean).join(" · ");
+  const sazetak = (cijelaGodina ? "" : `Prvo očitanje je ${hrDatum(najranije)}, pa izvještaj pokriva ${n} punih mjeseci umjesto 12. `) +
+    sezone.charAt(0).toUpperCase() + sezone.slice(1) +
+    `. Najviši mjesec: ${MJD[mjesec(vrh.od) - 1]} ${godina(vrh.od)}. (${hr(vrh.kwh)} kWh). ` +
     (preko ? `Prag od ${hr(PRAG)} kWh po polugodištu je probijen, pa je ${hr(preko)} kWh plaćeno s energijom skupljom za 35 %.`
       : `Prag od ${hr(PRAG)} kWh po polugodištu nije probijen, pa nema uvećanja od 35 %.`);
 
@@ -391,7 +438,7 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
     zaglavlje: zaglavlje.map(([oznaka, vrijednost]) => ({ oznaka, vrijednost })),
     opskrbljivac: opskrbljivac ?? "cjenik HEP Elektre", dvotarifno: dvoregistarsko,
     ukupno: { kwh, eur, energija: zbroj(mj, "energija"), mreza: zbroj(mj, "mreza"), fiksno: zbroj(mj, "fiksno") },
-    sazetak, biljeske, rucno,
+    sazetak, biljeske, rucno, usporedba, broj_mjeseci: n,
     mjeseci: mj.map((x) => ({
       oznaka: `${MJ[mjesec(x.od) - 1]} ${String(godina(x.od)).slice(2)}`, mjesec: `${MJD[mjesec(x.od) - 1]} ${godina(x.od)}`,
       kwh: x.kwh, t1: x.t1, t2: x.t2, energija: x.energija, mreza: x.mreza, fiksno: x.fiksno, ukupno: x.ukupno,

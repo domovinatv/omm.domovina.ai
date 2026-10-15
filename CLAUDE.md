@@ -72,7 +72,11 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 `html.ts` prijepis `predlozak.html.j2` (DOMOVINA brend, logo iz mediakita u `logo.svg`).
 **Promjenu računice ili izgleda napravi u oba.** Računa se pri svakom zahtjevu iz svih
 uvoza i vlastitih očitanja (`rucno`, `foto`) ključa, pa nema regeneriranja: novo očitanje
-je u sljedećem preuzimanju. Očitanja iz svih uvoza se spajaju; Hepi očitanja (sva
+je u sljedećem preuzimanju. Razdoblje je 12 punih mjeseci prije zadnjeg podatka, a kad
+povijest ne seže toliko, od prvog punog mjeseca nakon prvog očitanja (greška 422 tek ispod
+jednog mjeseca). Kad postoje očitanja godinu ranije (barem 3 usporediva mjeseca), dodaje se
+usporedba po mjesecima s troškom obiju godina po današnjim cijenama. Oboje postoji samo
+ovdje, ne u Python skripti. Očitanja iz svih uvoza se spajaju; Hepi očitanja (sva
 „Elektra“, procjene se ne razlikuju) samo kad drugog izvora nema. Cijene: javni cjenik
 HEP Elektre (`fetch` s `cacheTtl` dan). PDF slaže Browser Rendering (`BROWSER`,
 `@cloudflare/puppeteer`, ~4 s): Inter se ugrađuje kao data: URL jer vanjske fontove ne

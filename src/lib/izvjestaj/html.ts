@@ -71,13 +71,52 @@ export const PODNOZJE = `<div style="font:7.5px Inter,sans-serif;color:#8a8984;w
 <span>DOMOVINA Energy · omm.domovina.ai · izvještaj potrošnje struje</span>
 <span style="margin-left:auto"><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`;
 
+/** Par stupaca po mjesecu: godinu ranije (svijetlo) i sada (tamnoplavo). */
+function parovi(mjeseci: { oznaka: string; kwh_prije: number; kwh_sada: number;
+  raspodijeljeno_prije: boolean; raspodijeljeno_sada: boolean }[]): string {
+  const [W, H, L, R, T, B] = [680, 190, 46, 10, 18, 22];
+  const [maxv, korak] = zaokruziGore(Math.max(...mjeseci.flatMap((x) => [x.kwh_prije, x.kwh_sada])) * 1.1);
+  const y = (v: number) => T + (H - T - B) * (1 - v / maxv);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+  for (let v = 0; v <= maxv + 1e-9; v += korak) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/>` +
+      `<text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" class="ax" text-anchor="end">${hr(v)}</text>`;
+  }
+  const slot = (W - L - R) / mjeseci.length, bw = slot * 0.34;
+  mjeseci.forEach((x, i) => {
+    const cx = L + slot * i + slot / 2;
+    const stupac = (v: number, lijevo: boolean, cls: string) => {
+      const h = (H - T - B) * v / maxv, x0 = lijevo ? cx - bw - 1 : cx + 1;
+      return `<path d="${putStupca(x0, H - B - h, bw, h, 3)}" class="${cls}"/>` +
+        `<text x="${(x0 + bw / 2).toFixed(1)}" y="${(H - B - h - 4).toFixed(1)}" class="val sitno" text-anchor="middle">${hr(v)}</text>`;
+    };
+    s += stupac(x.kwh_prije, true, x.raspodijeljeno_prije ? "s3 est" : "s3");
+    s += stupac(x.kwh_sada, false, x.raspodijeljeno_sada ? "s1 est" : "s1");
+    s += `<text x="${cx.toFixed(1)}" y="${H - B + 15}" class="ax" text-anchor="middle">${e(x.oznaka)}</text>`;
+  });
+  return s + `<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="base"/></svg>`;
+}
+
 /** fontovi: URL-ovi Intera po težini; za PDF data: URL-ovi, jer Browser Rendering ne učita vanjske. */
 export function html(p: Podaci, fontovi: Record<400 | 600 | 700, string>): string {
   const mj = p.mjeseci, u = p.ukupno, kod = qr(p.url);
+  const n = p.broj_mjeseci, godisnje = n === 12;
   const kpi: [string, string][] = [
-    [`${hr(u.kwh)} kWh`, "godišnja potrošnja"], [`${hr(u.eur)} €`, "godišnji trošak s PDV-om"],
-    [`${hr(u.eur / 12)} €`, "prosječno mjesečno"], [`${hr(u.eur / u.kwh * 100, 1)} c`, "po kWh, sve uključeno"],
+    [`${hr(u.kwh)} kWh`, godisnje ? "godišnja potrošnja" : `potrošnja u ${n} mj.`],
+    [`${hr(u.eur)} €`, godisnje ? "godišnji trošak s PDV-om" : `trošak u ${n} mj. s PDV-om`],
+    [`${hr(u.eur / n)} €`, "prosječno mjesečno"], [`${hr(u.eur / u.kwh * 100, 1)} c`, "po kWh, sve uključeno"],
   ];
+  const us = p.usporedba;
+  const usporedba = us ? `
+<h2 style="margin-top:18px">Usporedba s godinom ranije (kWh)</h2>
+<p class="note" style="margin-bottom:4px">Isti mjeseci godinu ranije (${e(us.razdoblje)}). Trošak je za obje godine po današnjim cijenama, pa razlika pokazuje promjenu potrošnje, a ne cijene.${us.raspodijeljeno_prije > us.broj_mjeseci / 2 ? ` Godinu ranije je ${us.raspodijeljeno_prije} od ${us.broj_mjeseci} mjeseci raspodijeljeno između rijetkih očitanja, pa je usporedba po mjesecima gruba, a zbroj pouzdaniji.` : ""}</p>
+<div class="leg"><span><i style="background:var(--s3)"></i>godinu ranije</span><span><i style="background:var(--s1)"></i>ovo razdoblje</span><span><i style="background:repeating-linear-gradient(45deg,#002F6C 0 2px,#c9d3e3 2px 5px)"></i>raspodijeljeno ravnomjerno</span></div>
+${parovi(us.mjeseci)}
+<div class="kpi" style="grid-template-columns:repeat(3,1fr)">
+<div><b>${us.promjena > 0 ? "+" : ""}${hr(us.promjena, 1)} %</b><span>potrošnja u ${us.broj_mjeseci} usporedivih mj.</span></div>
+<div><b>${us.kwh_sada >= us.kwh_prije ? "+" : "−"}${hr(Math.abs(us.kwh_sada - us.kwh_prije))} kWh</b><span>${hr(us.kwh_prije)} → ${hr(us.kwh_sada)} kWh</span></div>
+<div><b>${us.eur_sada >= us.eur_prije ? "+" : "−"}${hr(Math.abs(us.eur_sada - us.eur_prije))} €</b><span>razlika u trošku (${hr(us.eur_prije)} → ${hr(us.eur_sada)} €)</span></div>
+</div>` : "";
   const r = p.rucno;
   const rucno = r ? `
 <div class="pb"></div>
@@ -132,6 +171,7 @@ h2{font-size:12pt;margin:12px 0 4px}
 .grid{stroke:var(--grid);stroke-width:1}.base{stroke:#b8b7b2;stroke-width:1}
 .prosjek{stroke:#52514e;stroke-width:1.5;stroke-dasharray:4 3}
 .ax{font-size:9px;fill:var(--ink2)}.val{font-size:9px;fill:var(--ink);font-variant-numeric:tabular-nums}
+.sitno{font-size:7px}.s3.est{fill:url(#srafura3)}
 .s1{fill:var(--s1)}.s2{fill:var(--s2)}.s3{fill:var(--s3)}.est{fill:url(#srafura)}
 .leg{display:flex;gap:16px;font-size:8.5pt;color:var(--ink2);margin:2px 0 4px}
 .leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
@@ -151,7 +191,7 @@ ul{padding-left:16px;margin:4px 0}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute"><defs><pattern id="srafura" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#c9d3e3"/><line x1="0" y1="0" x2="0" y2="6" stroke="#002F6C" stroke-width="2.5"/></pattern></defs></svg>
+<svg width="0" height="0" style="position:absolute"><defs><pattern id="srafura" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#c9d3e3"/><line x1="0" y1="0" x2="0" y2="6" stroke="#002F6C" stroke-width="2.5"/></pattern><pattern id="srafura3" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e3e8f0"/><line x1="0" y1="0" x2="0" y2="6" stroke="#9AAAC2" stroke-width="2.5"/></pattern></defs></svg>
 
 <div class="traka">
   <svg class="logo" viewBox="0 0 512 512" role="img" aria-label="DOMOVINA Energy">${logo}</svg>
@@ -178,6 +218,8 @@ ${stupci(mj.map((x) => [[x.kwh, x.raspodijeljeno ? "s1 est" : "s1"]]), mj.map((x
 <div class="leg"><span><i style="background:var(--s1)"></i>energija (${e(p.opskrbljivac)})</span><span><i style="background:var(--s2)"></i>mrežarina + naknada za OIE</span><span><i style="background:var(--s3)"></i>fiksno (opskrba + mjerno mjesto)</span></div>
 ${stupci(mj.map((x) => [[x.fiksno, "s3"], [x.mreza, "s2"], [x.energija, "s1"]]), mj.map((x) => x.oznaka), hr)}
 ${rucno}
+
+${usporedba}
 
 <h2 style="margin-top:18px">Tablica po mjesecima</h2>
 <table><tr><th>Mjesec</th><th>kWh</th><th>Energija €</th><th>Mreža + OIE €</th><th>Fiksno €</th><th>Ukupno €</th></tr>
