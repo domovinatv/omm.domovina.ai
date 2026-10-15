@@ -1,0 +1,83 @@
+---
+// Podnožje svih javnih stranica, po uzoru na mpt-landing: znak s jednom rečenicom,
+// stupci poveznica, pa napomena, impresum i ©. Impresum doslovno kao
+// energy.domovina.ai/lib/brand.ts (OPERATOR) i mpt-landing; ne prepisivati po sjećanju.
+import Marka from "./Marka.astro";
+
+const GITHUB = "https://github.com/stepanic/flutter_moja_mreza";
+const stupci = [
+  {
+    naslov: "HEP-ovi portali",
+    poveznice: [
+      { tekst: "Moja mreža (HEP ODS)", href: "https://mojamreza.hep.hr/" },
+      { tekst: "Moj Hepi račun (HEP Opskrba)", href: "https://mojracun.hep.hr/hepi/" },
+      { tekst: "Moj račun (HEP Elektra)", href: "https://mojracun.hep.hr/elektra/" },
+    ],
+  },
+  {
+    naslov: "Alati i kod",
+    poveznice: [
+      { tekst: "Očitaj brojilo sa slike", href: "/ocitaj" },
+      { tekst: "Kako čitamo podatke", href: `${GITHUB}/blob/main/docs/kako-citamo-podatke.md` },
+      { tekst: "Kod oznake (hep-uvoz.js)", href: "/hep-uvoz.js" },
+      { tekst: "GitHub", href: GITHUB },
+    ],
+  },
+  {
+    naslov: "Kontakt",
+    poveznice: [
+      { tekst: "ms@domovina.ai", href: "mailto:ms@domovina.ai" },
+      { tekst: "domovina.ai", href: "https://domovina.ai" },
+      { tekst: "ITalk d.o.o.", href: "https://italk.hr" },
+    ],
+  },
+];
+const vanjska = (href: string) => href.startsWith("http");
+---
+<footer class="podnozje">
+  <div class="podnozje-gore">
+    <div class="podnozje-marka">
+      <Marka dodatak="domovina.ai" />
+      <p>Očitanja, potrošnja i računi sa svih HEP-ovih portala na jednom mjestu, s izvještajem potrošnje po mjernom mjestu.</p>
+    </div>
+    <nav class="podnozje-stupci" aria-label="Podnožje">
+      {stupci.map((s) => (
+        <div>
+          <p class="podnozje-naslov">{s.naslov}</p>
+          <ul>
+            {s.poveznice.map((p) => (
+              <li><a href={p.href} {...(vanjska(p.href) ? { target: "_blank", rel: "noopener" } : {})}>{p.tekst}</a></li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  </div>
+  <div class="podnozje-dolje">
+    <p>Napomena: OMM nije usluga HEP-a niti je s HEP-om povezan. Podatke čita iz tvoje prijave na HEP-ovim portalima,
+      samo kad klikneš oznaku. Rana verzija bez korisničkog računa: uvozi su vezani uz ključ ovog preglednika.
+      Troškovi u izvještaju su procjena po javnom cjeniku, a ne račun.</p>
+    <p><b>OMM (omm.domovina.ai)</b> je proizvod tvrtke ITalk d.o.o. za informacijske tehnologije · IX. Južna obala 20,
+      10000 Zagreb, Hrvatska · OIB: 54872935051 · MBS: 081042440 · EUID: HRSR.081042440 · Trgovački sud u Zagrebu ·
+      direktor: Matija Stepanić</p>
+    <p>© {new Date().getFullYear()} OMM / ITalk d.o.o.</p>
+  </div>
+</footer>
+<style is:global>
+  .podnozje { margin-top: 48px; border-top: 1px solid var(--rub); padding: 32px 0 8px; font-size: .9rem; color: var(--blijedo);
+    text-align: left; }
+  .podnozje a { color: var(--blijedo); text-decoration: none; }
+  .podnozje a:hover { color: var(--akcent); text-decoration: underline; }
+  .podnozje-gore { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 32px; }
+  .podnozje-marka { max-width: 300px; }
+  .podnozje-marka .marka, .podnozje-marka .marka:hover { color: var(--tekst); text-decoration: none; }
+  .podnozje-marka p { margin: 12px 0 0; line-height: 1.5; }
+  .podnozje-stupci { display: flex; flex-wrap: wrap; gap: 28px 48px; }
+  .podnozje-stupci > div { min-width: 150px; }
+  .podnozje-naslov { margin: 0 0 8px; font-weight: 600; color: var(--tekst); }
+  .podnozje ul { list-style: none; margin: 0; padding: 0; }
+  .podnozje li { margin: 0 0 6px; }
+  .podnozje-dolje { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--rub); font-size: .8rem; line-height: 1.6; }
+  .podnozje-dolje p { margin: 0 0 10px; max-width: 900px; }
+  .podnozje-dolje b { color: var(--tekst); font-weight: 600; }
+</style>

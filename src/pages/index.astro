@@ -6,6 +6,7 @@ import Ikone from "../components/Ikone.astro";
 import Tema from "../components/Tema.astro";
 import PrekidacTeme from "../components/PrekidacTeme.astro";
 import Marka from "../components/Marka.astro";
+import Podnozje from "../components/Podnozje.astro";
 ---
 <!doctype html>
 <html lang="hr">
@@ -86,14 +87,17 @@ import Marka from "../components/Marka.astro";
       .izvjestaji .gumbi button { margin: 0; min-height: 36px; font-size: .9rem; }
       .izvjestaji .gumbi button.glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
       .izvjestaji .stanje { text-align: left; }
-      /* Sigurnost nije korak: tiha poveznica ispod koraka, tekst u uskom stupcu po sredini. */
-      .sigurnost { max-width: 640px; margin: 8px auto 0; text-align: center; }
-      .sigurnost summary { display: inline-block; color: var(--akcent); padding: 6px 10px; border-radius: 999px; list-style: none; }
-      .sigurnost summary::-webkit-details-marker { display: none; }
-      .sigurnost summary:hover { background: var(--akcent-blago); }
-      .sigurnost details[open] summary { margin-bottom: 4px; }
-      .sigurnost p { text-align: left; }
-      footer { margin-top: 24px; font-size: .85rem; color: var(--blijedo); text-align: center; }
+      /* Kako to radi: ispod koraka, uvod pa tri stavke u redu (na mobitelu jedna ispod druge). */
+      .kako { margin-top: 40px; }
+      .kako h2 { display: flex; align-items: center; gap: 8px; font-size: 1.25rem; }
+      .kako h2 .i { color: var(--akcent); }
+      .kako-uvod { color: var(--blijedo); max-width: 760px; margin: 0 0 18px; }
+      .kako-tri { display: grid; gap: 12px; }
+      .kako-stavka { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; }
+      .kako-stavka h3 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin: 0 0 6px; }
+      .kako-stavka h3 .i { color: var(--akcent); }
+      .kako-stavka p { margin: 0; color: var(--blijedo); font-size: .92rem; }
+      .kako-izvor { color: var(--blijedo); font-size: .9rem; max-width: 760px; margin: 16px 0 0; }
       .mala-oznaka { display: inline-block; padding: 0 8px; margin: 0 2px; border-radius: 999px; background: var(--akcent);
         color: var(--akcent-tekst); font-weight: 700; font-size: .85em; white-space: nowrap; }
       .prije { font-weight: 600; margin-top: 0; }
@@ -120,7 +124,7 @@ import Marka from "../components/Marka.astro";
         .kartica { padding: 16px; }
         .oznaka-red { padding: 18px 0 6px; }
         .oznaka { padding: 14px 26px; font-size: 1.1rem; }
-        footer { margin-top: 4px; }
+        .kako-tri { grid-template-columns: repeat(3, 1fr); }
       }
     </style>
   </head>
@@ -175,7 +179,8 @@ import Marka from "../components/Marka.astro";
             <li>Prijavi se kao inače.</li>
             <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span>
               u <span class="ime-trake-u">traci s oznakama</span>, pri vrhu prozora.</li>
-            <li>U prozorčiću koji se pojavi klikni <b>Uvezi</b>. Podaci stižu ovamo, pod „Moji uvozi“.</li>
+            <li>S desne strane otvori se stupac: klikni <b>Pročitaj podatke</b>, pogledaj što je pročitano
+              i klikni <b>Pošalji</b>. Podaci stižu ovamo, pod „Moji uvozi“.</li>
           </ol>
           <div class="portali">
             <a class="portal" href="https://mojamreza.hep.hr/" target="_blank" rel="noopener">
@@ -191,17 +196,28 @@ import Marka from "../components/Marka.astro";
 
       </div>
 
-      <section class="sigurnost">
-        <details>
-          <summary><i class="i i-lock" aria-hidden="true"></i> Kako to radi i zašto je sigurno</summary>
-          <p class="blijedo">Oznaka na HEP-ovu stranicu na kojoj si prijavljen učita našu skriptu. Ona čita iste stranice koje i ti
-            vidiš, a gotov sažetak šalje ovamo tek kad klikneš <b>Uvezi</b>. Ne čita OIB ni lozinku, ne šalje kolačiće ni
-            token prijave, i nestane kad zatvoriš stranicu. PDF računa pročitamo i ne čuvamo.</p>
-          <p class="blijedo">Svaki zahtjev je popisan u
-            <a href="https://github.com/stepanic/flutter_moja_mreza/blob/main/docs/kako-citamo-podatke.md" target="_blank" rel="noopener">kako čitamo podatke</a>,
-            a kod koji se izvršava vidiš na <a href="/hep-uvoz.js" target="_blank">/hep-uvoz.js</a>.</p>
-          <p class="blijedo">Oznaka sadrži ključ ovog preglednika: tko ga ima, vidi tvoje uvoze. Ne dijeli je.</p>
-        </details>
+      <section class="kako" id="kako">
+        <h2><i class="i i-lock" aria-hidden="true"></i> Kako to radi i zašto je sigurno</h2>
+        <p class="kako-uvod">Oznaka na HEP-ovoj stranici na kojoj si prijavljen otvori stupac s desne strane. Prije ičega
+          kaže što će pročitati, a nakon čitanja pokaže sve što bi poslala. Ovamo ne ide ništa dok ne klikneš <b>Pošalji</b>.</p>
+        <div class="kako-tri">
+          <div class="kako-stavka">
+            <h3><i class="i i-visibility" aria-hidden="true"></i> Što čitamo</h3>
+            <p>Iste stranice koje vidiš na portalu: mjerna mjesta, očitanja brojila, potrošnju po razdobljima, a s Mojeg
+              računa i Hepija još račune, uplate i saldo.</p>
+          </div>
+          <div class="kako-stavka">
+            <h3><i class="i i-send" aria-hidden="true"></i> Što šaljemo ovamo</h3>
+            <p>Samo pročitane podatke kao JSON, pod ključem ovog preglednika. S Hepija i PDF-ove računa: iz njih
+              pročitamo iznose, a PDF ne čuvamo.</p>
+          </div>
+          <div class="kako-stavka">
+            <h3><i class="i i-block" aria-hidden="true"></i> Što ne diramo</h3>
+            <p>OIB, lozinku, kolačiće i token prijave. Na portalu ništa ne mijenjamo, a skripta nestane kad zatvoriš
+              stranicu.</p>
+          </div>
+        </div>
+        <p class="kako-izvor">Svaki zahtjev je popisan u <a href="https://github.com/stepanic/flutter_moja_mreza/blob/main/docs/kako-citamo-podatke.md" target="_blank" rel="noopener">kako čitamo podatke</a>, a kod koji se izvršava je na <a href="/hep-uvoz.js" target="_blank">/hep-uvoz.js</a>. Oznaka sadrži ključ ovog preglednika: tko ga ima, vidi tvoje uvoze, pa je ne dijeli.</p>
       </section>
 
       <aside class="kartica bocno">
@@ -214,7 +230,7 @@ import Marka from "../components/Marka.astro";
         </div>
       </aside>
 
-      <footer>Rana verzija bez prijave: uvozi su vezani uz ovaj preglednik. · <a href="/ocitaj">Očitaj brojilo sa slike</a></footer>
+      <Podnozje />
     </main>
 
     <script>
