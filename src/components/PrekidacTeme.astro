@@ -1,0 +1,22 @@
+---
+// Gumb svijetlo/tamno. Bez klika mod prati sustav; klik ga fiksira (localStorage `omm-tema`).
+---
+<button type="button" class="prekidac-teme" aria-label="Promijeni svijetli ili tamni prikaz" title="Svijetlo / tamno">
+  <i class="i i-dark_mode samo-dan" aria-hidden="true"></i><i class="i i-light_mode samo-noc" aria-hidden="true"></i>
+</button>
+<script>
+  for (const b of document.querySelectorAll<HTMLButtonElement>(".prekidac-teme")) {
+    b.onclick = () => {
+      const h = document.documentElement;
+      const tamno = h.dataset.tema ? h.dataset.tema === "tamna" : matchMedia("(prefers-color-scheme: dark)").matches;
+      h.dataset.tema = tamno ? "svijetla" : "tamna";
+      try { localStorage.setItem("omm-tema", h.dataset.tema); } catch {}
+    };
+  }
+</script>
+<style is:global>
+  .prekidac-teme { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+    padding: 0; border: 1px solid var(--rub); border-radius: 999px; background: var(--kartica); color: var(--tekst);
+    cursor: pointer; font-size: 1rem; flex: none; }
+  .prekidac-teme:hover { border-color: var(--akcent); color: var(--akcent); }
+</style>

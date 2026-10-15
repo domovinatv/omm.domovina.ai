@@ -3,6 +3,8 @@
 // nudimo korisnicima: ništa se ne instalira, prijava ostaje na HEP-u.
 // Kod oznake je public/hep-uvoz.js, generiran iz flutter_moja_mreza/extension.
 import Ikone from "../components/Ikone.astro";
+import Tema from "../components/Tema.astro";
+import PrekidacTeme from "../components/PrekidacTeme.astro";
 import Marka from "../components/Marka.astro";
 ---
 <!doctype html>
@@ -12,22 +14,15 @@ import Marka from "../components/Marka.astro";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OMM · Uvoz s HEP-a</title>
     <Ikone />
+    <Tema />
     <meta name="description" content="Očitanja, potrošnja i računi s Moje mreže, Mojeg računa i Hepija u dva klika, bez instaliranja ičega." />
     <style is:global>
-      :root {
-        --bg: #f5f7fb; --kartica: #fff; --tekst: #0e1a2e; --blijedo: #55617a;
-        --rub: #dde3ee; --akcent: #002F6C; --akcent-tekst: #fff; --akcent-blago: #e6ecf5; --greska: #b3261e;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root { --bg: #001a3d; --kartica: #002452; --tekst: #eef2f8; --blijedo: #9fb0c9; --rub: #1d3a66;
-          --akcent: #E3AF35; --akcent-tekst: #001a3d; --akcent-blago: #0d2d58; --greska: #ff8a80; }
-      }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--tekst);
         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
       main { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
       a { color: var(--akcent); }
-      .zaglavlje { margin: 0 0 28px; }
+      .zaglavlje { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 28px; }
       h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 8px; }
       h2 { font-size: 1.1rem; margin: 0 0 8px; }
       p { margin: 8px 0; }
@@ -132,7 +127,7 @@ import Marka from "../components/Marka.astro";
   <body>
     <div id="pusti" hidden><span class="strelica"><i class="i i-arrow_upward" aria-hidden="true"></i></span> Pusti ga gore, u <span class="ime-trake">traku s oznakama</span> <span class="strelica"><i class="i i-arrow_upward" aria-hidden="true"></i></span></div>
     <main>
-      <header class="zaglavlje"><Marka dodatak="domovina.ai" /></header>
+      <header class="zaglavlje"><Marka dodatak="domovina.ai" /><PrekidacTeme /></header>
       <h1>Tvoji podaci s HEP-a, u dva klika</h1>
       <p class="uvod">Očitanja, potrošnja i računi s <b>Moje mreže</b>, <b>Mojeg računa</b> i <b>Hepija</b>.
         Ništa ne instaliraš, a lozinku upisuješ samo HEP-u. Radi na računalu.</p>
@@ -154,18 +149,18 @@ import Marka from "../components/Marka.astro";
         <div id="postavljeno" hidden>
           <h2>Oznaka je u traci</h2>
           <p class="stanje istaknuto" id="stanje-postavljeno" style="text-align:left" hidden></p>
-          <p class="blijedo">Gumb <span class="mala-oznaka"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</span> je u <span class="ime-trake-u">traci s oznakama</span>. Nastavi s korakom 2.</p>
+          <p class="blijedo">Gumb <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span> je u <span class="ime-trake-u">traci s oznakama</span>. Nastavi s korakom 2.</p>
           <p class="blijedo"><a href="#" id="ponovo">Nemam je više, postavi je ponovno</a></p>
         </div>
         <div id="postavljanje">
           <h2>Povuci gumb u <span class="ime-trake">traku s oznakama</span></h2>
           <p class="blijedo" id="traka">Traku ne vidiš? Pritisni <span id="precac"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></span>. Ovo radiš samo jednom.</p>
           <div class="oznaka-red">
-            <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</a>
+            <a class="oznaka" id="oznaka" href="#" title="Povuci me u traku s oznakama">⚡ Uvezi iz HEP-a</a>
           </div>
           <div class="demo" id="demo" aria-hidden="true">
             <div class="demo-traka"><i></i><i></i><i></i></div>
-            <div class="demo-gumb"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</div>
+            <div class="demo-gumb">⚡ Uvezi iz HEP-a</div>
           </div>
           <div class="stanje" id="stanje-oznaka">Kad je gumb u traci, klikni ga tamo, na ovoj stranici, da provjerimo radi li.</div>
         </div>
@@ -178,7 +173,7 @@ import Marka from "../components/Marka.astro";
           <p class="prije">Pročitaj prije nego otvoriš portal:</p>
           <ol>
             <li>Prijavi se kao inače.</li>
-            <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka"><i class="i i-bolt" aria-hidden="true"></i> Uvezi iz HEP-a</span>
+            <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span>
               u <span class="ime-trake-u">traci s oznakama</span>, pri vrhu prozora.</li>
             <li>U prozorčiću koji se pojavi klikni <b>Uvezi</b>. Podaci stižu ovamo, pod „Moji uvozi“.</li>
           </ol>

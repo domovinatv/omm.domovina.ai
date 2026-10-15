@@ -38,13 +38,14 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 
 ## Izgled: znak, paleta, ikone
 
-- **Znak** je pločica (tamnoplava, bijeli O, zlatna munja), opcija B iz 2026-10-15. Opcija A
-  (D okvir s O i munjom) vidi se s `?znak=a` dok se ne odluči. Datoteke: `public/logo*.svg`,
-  `public/a/`, komponente `Marka.astro` (zaglavlje) i `Ikone.astro` (favicon, CSS ikona).
-  Svijetla stranica nosi `logo.svg`, tamna `logo-noc.svg`.
-- **Paleta**: svijetli mod bijel s akcentom `#002F6C`, tamni mod tamnoplav (`#001a3d`) sa
-  zlatnim akcentom `#E3AF35`. Tokeni su po stranici (`index`, `ocitaj`, `AdminOkvir`).
-- **Bez emojija.** Ikone su font Material Symbols Sharp (`ikone/`, cijeli font u gitu):
+- **Znak i tema**: zadano B (pločica, plavo i zlatno). `?znak=a` (ili `A`) daje opciju A:
+  D okvir i DOMOVINA temu (neutralna bijela ili tamna, tamnoplavo, zastava kao traka na vrhu).
+  Svi tokeni boja, za obje opcije i oba moda, su u `Tema.astro`. Mod prati sustav dok se ne
+  klikne `PrekidacTeme.astro` (pamti se u localStorage `omm-tema`, kao `data-tema` na `<html>`).
+  Znak: `Marka.astro` (`logo.svg` za svijetlo, `logo-noc.svg` za tamno; A u `public/a/`),
+  favicon i CSS ikona: `Ikone.astro`.
+- **Bez emojija**, osim ⚡ u oznaci „Uvezi iz HEP-a“ (ime oznake u traci preglednika, gdje
+  font ikona ne postoji). Ikone su font Material Symbols Sharp (`ikone/`, cijeli font u gitu):
   `<i class="i i-bolt" aria-hidden="true"></i>`, u skripti `ikona("i-check")`, uvijek cijelim
   imenom. `npm run dev` koristi cijeli font, `npm run build` u `dist/client/ikone` zapiše
   samo korištene ikone (`scripts/ikone.mjs`, ~2 kB).

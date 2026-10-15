@@ -4,6 +4,8 @@ interface Props { naslov: string; siroko?: boolean }
 const { naslov, siroko = false } = Astro.props;
 const admin = Astro.locals.admin;
 import Ikone from "./Ikone.astro";
+import Tema from "./Tema.astro";
+import PrekidacTeme from "./PrekidacTeme.astro";
 import Marka from "./Marka.astro";
 ---
 <!doctype html>
@@ -14,15 +16,8 @@ import Marka from "./Marka.astro";
     <meta name="robots" content="noindex" />
     <title>{naslov} · OMM admin</title>
     <Ikone />
+    <Tema />
     <style is:global>
-      :root {
-        --bg: #f5f7fb; --kartica: #fff; --tekst: #0e1a2e; --blijedo: #55617a;
-        --rub: #dde3ee; --akcent: #002F6C; --akcent-tekst: #fff; --akcent-blago: #e6ecf5; --greska: #b3261e;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root { --bg: #001a3d; --kartica: #002452; --tekst: #eef2f8; --blijedo: #9fb0c9; --rub: #1d3a66;
-          --akcent: #E3AF35; --akcent-tekst: #001a3d; --akcent-blago: #0d2d58; --greska: #ff8a80; }
-      }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--tekst); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
       header { border-bottom: 1px solid var(--rub); background: var(--kartica); }
@@ -71,6 +66,7 @@ import Marka from "./Marka.astro";
           <a href="/admin">Pregled</a>
           <a href="/admin/passkeys">Passkeyi</a>
           <span class="blijedo">{admin.email}</span>
+          <PrekidacTeme />
           <form method="post" action="/admin/logout"><button class="mali" type="submit">Odjava</button></form>
         </div>
       </header>

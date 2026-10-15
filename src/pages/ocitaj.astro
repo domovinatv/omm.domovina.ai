@@ -2,6 +2,8 @@
 // Očitavač brojila u pregledniku: slika zaslona → OCR → potvrda → snimak.
 // Sporedna stranica; glavni ulaz je uvoz oznakom na /.
 import Ikone from "../components/Ikone.astro";
+import Tema from "../components/Tema.astro";
+import PrekidacTeme from "../components/PrekidacTeme.astro";
 import Marka from "../components/Marka.astro";
 ---
 <!doctype html>
@@ -11,50 +13,9 @@ import Marka from "../components/Marka.astro";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OMM · Očitaj brojilo</title>
     <Ikone />
+    <Tema />
     <meta name="description" content="Uslikaj zaslon brojila, provjeri 1.8.1 i 1.8.2 i spremi očitanje." />
     <style is:global>
-      :root {
-        --bg: #f5f7fb;
-        --kartica: #fff;
-        --tekst: #0e1a2e;
-        --blijedo: #55617a;
-        --vrlo-blijedo: #8592a8;
-        --rub: #dde3ee;
-        --rub-fokus: #002F6C;
-        --akcent: #002F6C;
-        --akcent-tekst: #fff;
-        --akcent-blago: #e6ecf5;
-        --upozorenje: #9a5b00;
-        --upozorenje-bg: #fff8e8;
-        --greska: #b3261e;
-        --greska-bg: #fdf2f2;
-        --uspjeh: #196931;
-        --uspjeh-bg: #eaf6ee;
-        --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-        --sjena-md: 0 4px 12px rgba(0, 0, 0, 0.07);
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #001a3d;
-          --kartica: #002452;
-          --tekst: #eef2f8;
-          --blijedo: #9fb0c9;
-          --vrlo-blijedo: #6f82a0;
-          --rub: #1d3a66;
-          --rub-fokus: #E3AF35;
-          --akcent: #E3AF35;
-          --akcent-tekst: #001a3d;
-          --akcent-blago: #0d2d58;
-          --upozorenje: #f0b45a;
-          --upozorenje-bg: #2d2210;
-          --greska: #ff8a80;
-          --greska-bg: #321616;
-          --uspjeh: #6dd489;
-          --uspjeh-bg: #12281a;
-          --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-          --sjena-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-        }
-      }
       * { box-sizing: border-box; }
       body {
         margin: 0;
@@ -75,6 +36,7 @@ import Marka from "../components/Marka.astro";
         border-bottom: 1px solid var(--rub);
         background: var(--kartica);
       }
+      .gornja-desno { display: flex; align-items: center; gap: 10px; }
       .znacka-status {
         display: inline-flex;
         align-items: center;
@@ -559,8 +521,11 @@ import Marka from "../components/Marka.astro";
   <body>
     <header class="gornja-traka">
       <Marka dodatak="očitanje" />
-      <div class="znacka-status">
-        <span class="tocka"></span> OCR asistent
+      <div class="gornja-desno">
+        <div class="znacka-status">
+          <span class="tocka"></span> OCR asistent
+        </div>
+        <PrekidacTeme />
       </div>
     </header>
 

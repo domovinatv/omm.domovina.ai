@@ -1,0 +1,70 @@
+---
+// Boje svih stranica: znak B (pločica, plavo i zlatno) ili A (D okvir, boje zastave),
+// svaki u svijetlom i tamnom modu. Mod prati sustav dok korisnik ne klikne prekidač
+// (PrekidacTeme.astro); izbor se pamti u localStorage `omm-tema` kao data-tema na <html>.
+import { znakA } from "../lib/znak";
+const a = znakA(Astro.url);
+---
+<script is:inline define:vars={{ a }}>
+  const h = document.documentElement;
+  if (a) h.dataset.znak = "a";
+  try { const t = localStorage.getItem("omm-tema"); if (t === "svijetla" || t === "tamna") h.dataset.tema = t; } catch {}
+</script>
+<style is:global>
+  /* B, svijetlo */
+  :root {
+    color-scheme: light; --dan: inline-block; --noc: none;
+    --bg: #f5f7fb; --kartica: #fff; --tekst: #0e1a2e; --blijedo: #55617a; --vrlo-blijedo: #8592a8;
+    --rub: #dde3ee; --rub-fokus: #002F6C; --akcent: #002F6C; --akcent-tekst: #fff; --akcent-blago: #e6ecf5;
+    --upozorenje: #9a5b00; --upozorenje-bg: #fff8e8; --greska: #b3261e; --greska-bg: #fdf2f2;
+    --uspjeh: #196931; --uspjeh-bg: #eaf6ee;
+    --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.05); --sjena-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  }
+  /* B, tamno */
+  :root[data-tema="tamna"] {
+    color-scheme: dark; --dan: none; --noc: inline-block;
+    --bg: #001a3d; --kartica: #002452; --tekst: #eef2f8; --blijedo: #9fb0c9; --vrlo-blijedo: #6f82a0;
+    --rub: #1d3a66; --rub-fokus: #E3AF35; --akcent: #E3AF35; --akcent-tekst: #001a3d; --akcent-blago: #0d2d58;
+    --upozorenje: #f0b45a; --upozorenje-bg: #2d2210; --greska: #ff8a80; --greska-bg: #321616;
+    --uspjeh: #6dd489; --uspjeh-bg: #12281a;
+    --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.3); --sjena-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="svijetla"]) {
+      color-scheme: dark; --dan: none; --noc: inline-block;
+      --bg: #001a3d; --kartica: #002452; --tekst: #eef2f8; --blijedo: #9fb0c9; --vrlo-blijedo: #6f82a0;
+      --rub: #1d3a66; --rub-fokus: #E3AF35; --akcent: #E3AF35; --akcent-tekst: #001a3d; --akcent-blago: #0d2d58;
+      --upozorenje: #f0b45a; --upozorenje-bg: #2d2210; --greska: #ff8a80; --greska-bg: #321616;
+      --uspjeh: #6dd489; --uspjeh-bg: #12281a;
+      --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.3); --sjena-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+  /* A, svijetlo: neutralna bijela, tamnoplavi gumbi, zastava u traci na vrhu */
+  :root[data-znak="a"] {
+    color-scheme: light; --dan: inline-block; --noc: none;
+    --bg: #f7f7f8; --kartica: #fff; --tekst: #111318; --blijedo: #5b5f6a; --vrlo-blijedo: #8a8f99;
+    --rub: #e3e4e8; --rub-fokus: #002F6C; --akcent: #002F6C; --akcent-tekst: #fff; --akcent-blago: #e7ecf4;
+    --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.05); --sjena-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  }
+  /* A, tamno: neutralna tamna, bijeli gumbi s tamnoplavim tekstom */
+  :root[data-znak="a"][data-tema="tamna"] {
+    color-scheme: dark; --dan: none; --noc: inline-block;
+    --bg: #0e1014; --kartica: #171a20; --tekst: #f1f2f4; --blijedo: #a3a8b3; --vrlo-blijedo: #707684;
+    --rub: #2a2e37; --rub-fokus: #ffffff; --akcent: #ffffff; --akcent-tekst: #002F6C; --akcent-blago: #232833;
+    --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.3); --sjena-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-znak="a"]:not([data-tema="svijetla"]) {
+      color-scheme: dark; --dan: none; --noc: inline-block;
+      --bg: #0e1014; --kartica: #171a20; --tekst: #f1f2f4; --blijedo: #a3a8b3; --vrlo-blijedo: #707684;
+      --rub: #2a2e37; --rub-fokus: #ffffff; --akcent: #ffffff; --akcent-tekst: #002F6C; --akcent-blago: #232833;
+      --sjena-sm: 0 1px 3px rgba(0, 0, 0, 0.3); --sjena-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+  /* A: zastava kao traka na vrhu, iznad bočnog stupca (fixed) */
+  :root[data-znak="a"] body { padding-top: 6px; }
+  :root[data-znak="a"] body::before { content: ""; position: fixed; inset: 0 0 auto; height: 6px; z-index: 1000;
+    background: linear-gradient(90deg, #FF0000 0 33.3%, #FFFFFF 33.3% 66.6%, #002F6C 66.6%); }
+  .samo-dan { display: var(--dan) !important; }
+  .samo-noc { display: var(--noc) !important; }
+</style>
