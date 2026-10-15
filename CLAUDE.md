@@ -49,6 +49,7 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
   `<i class="i i-bolt" aria-hidden="true"></i>`, u skripti `ikona("i-check")`, uvijek cijelim
   imenom. `npm run dev` koristi cijeli font, `npm run build` u `dist/client/ikone` zapiše
   samo korištene ikone (`scripts/ikone.mjs`, ~2 kB).
+- Odluke, odbačene varijante i zamke: `docs/2026-10-15-znak-tema-ikone.md`.
 
 ## Baza: pročišćeno + sirovi dnevnik
 
