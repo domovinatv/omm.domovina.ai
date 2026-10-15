@@ -44,6 +44,11 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
   klikne `PrekidacTeme.astro` (pamti se u localStorage `omm-tema`, kao `data-tema` na `<html>`).
   Znak: `Marka.astro` (`logo.svg` za svijetlo, `logo-noc.svg` za tamno; A u `public/a/`),
   favicon i CSS ikona: `Ikone.astro`.
+- **Podnožje**: `Podnozje.astro` na `/` i `/ocitaj`, po uzoru na mpt-landing (stupci poveznica,
+  napomena, impresum ITalka doslovno iz `energy.domovina.ai/lib/brand.ts`, ©). Kontakt je
+  `ms@domovina.ai`.
+- **Astro briše prijelom reda između teksta i taga** (`u\n<a>` postane „ua“): riječ i tag
+  drži u istom redu ili prelomi poslije taga.
 - **Bez emojija**, osim ⚡ u oznaci „Uvezi iz HEP-a“ (ime oznake u traci preglednika, gdje
   font ikona ne postoji). Ikone su font Material Symbols Sharp (`ikone/`, cijeli font u gitu):
   `<i class="i i-bolt" aria-hidden="true"></i>`, u skripti `ikona("i-check")`, uvijek cijelim

@@ -70,3 +70,15 @@ font, a za deploy samo izrezane ikone.
   koje postavljaju tokeni teme.
 - **Traka zastave kao `border-top` na `body`** nestane ispod bočnog stupca (fixed). Zato je
   `body::before` s `position: fixed` i `z-index`.
+
+## Naslovnica ispod koraka i podnožje (2026-10-15, popodne)
+
+- „Kako to radi i zašto je sigurno“ više nije `<details>` po sredini nego odjeljak: uvod i tri
+  kartice (čitamo, šaljemo, ne diramo), na računalu u jednom redu. Matija je tražio da taj dio
+  bude „bolje organiziran, razmaci nisu dobro stavljeni“.
+- Podnožje je `Podnozje.astro` po uzoru na mpt-landing (`src/components/site.tsx`, `Footer`).
+  Kontakt `ms@domovina.ai` je moj izbor (mpt-landing ima `ms@mpt.hr`), Matija ga još nije potvrdio.
+- Oznaka na HEP-u je sad desni stupac u ovoj temi (znak B, tema prati sustav jer prekidač s
+  našeg origina ondje ne vidimo). Pojedinosti: `flutter_moja_mreza/docs/2026-10-14-uvoz-bez-instalacije.md`.
+- Zamka: Astro (compressHTML) briše prijelom reda između teksta i taga, pa je „u“ + novi red +
+  `<a>` dalo „ukako čitamo podatke“, a „klikni“ + novi red + `<b>` dalo „klikniPošalji“.
