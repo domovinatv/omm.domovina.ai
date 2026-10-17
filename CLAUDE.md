@@ -69,6 +69,15 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
   User-Agentom i državom. Tu se vidi koliko je puta isti snimak stigao.
   Uzrok: 2026-10-12 je isti uvoz stigao 4 puta u 37 s (gumb je ostao aktivan).
 
+## Sigurnost (audit 2026-10-16)
+
+`docs/security/2026-10-16-security-audit-fable.md`, checklist na kraju ima stanje popravaka.
+Ključ iz adrese (`#k=`, stare oznake `?k=`) se preuzima tek na klik (`kljuc-klijent.ts`); oznaka
+nosi ključ u fragmentu. Middleware za `/api/*`: `ratelimits` (`LIMIT_API`, `LIMIT_SKUPO`), pa
+`kljucevi` (upis registrira, zamijenjen → 401). CSP s nonceom na svim HTML stranicama. Slike iz
+`/api/ocitaj` su pod `tmp/` dok ih snimak ne preseli; R2 lifecycle `tmp` briše ih nakon dana.
+Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
+
 ## API
 
 | Ruta | Što |
@@ -77,7 +86,9 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `POST /api/snimak` | (201 novi, 200 + `duplikat: true` postojeći) JSON `{izvor: foto\|rucno\|hep\|hep-moj-racun\|hep-hepi, t1, t2, omm, slike[], ocr, lokacija{lat,lon,tocnost_m}, uvoz, hep_dostava}` |
 | `GET /api/snimak` | snimci ovog ključa |
 | `PATCH /api/snimak/:id` | `{hep_dostava, omm?}` nakon slanja HEP-u |
-| `DELETE /api/snimak/:id` | briše snimak i slike |
+| `DELETE /api/snimak/:id` | briše snimak, slike i njegove retke u dnevniku |
+| `DELETE /api/snimak` | briše sve podatke ključa (snimci, dnevnik, mailovi, R2); gumb na `/` |
+| `POST /api/kljuc/rotiraj` | novi ključ od servera, podaci prelaze, stari dobiva 401 (`kljucevi.zamijenjen`) |
 | `GET /api/slika/<ključ>/<uuid>.jpg` | slika |
 | `GET /api/racun` | pozivi na broj računa koje ključ već ima (bookmarklet na Hepiju šalje samo nove) |
 | `POST /api/racun` | tijelo je PDF računa HEP Opskrbe → pročita se kao mail i spremi kao `hep-racun` (201, 200 duplikat, 422 nije račun) |
@@ -86,6 +97,7 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
 | `GET /api/izvjestaj/:omm` | godišnji izvještaj potrošnje, `?oblik=pdf` (zadano) \| `html` \| `json`, `?anonimno=1`; 422 kad nema podataka |
 | `/` | naslovnica: uvoz oznakom (bookmarklet) „Uvezi iz HEP-a“, jedini put uvoza za korisnike; u bočnom stupcu „Izvještaj potrošnje“ po OMM-u (PDF i anonimni za dijeljenje); `?primi=1` je rezerva preko postMessage |
 | `/ocitaj` | očitanje brojila sa slike (sporedno) |
+| `/privatnost` | politika privatnosti; rokovi iz `src/lib/ciscenje.ts` (dnevni cron) |
 | `/uvoz` | 301 na `/` (stara adresa) |
 | `/admin` | admin (Access OTP ili passkey): korisnici po OMM-u, izvještaj za bilo koji OMM; `docs/admin.md` |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
