@@ -6,9 +6,11 @@ import type { Podaci } from "./izracun";
 
 export async function odgovorIzvjestaja(
   podaci: Podaci,
-  o: { omm: string; oblik: "pdf" | "html"; anonimno: boolean; origin: string; zaglavlja?: Record<string, string> },
+  o: { omm: string; oblik: "pdf" | "html"; anonimno: boolean; zaglavlja?: Record<string, string> },
 ): Promise<Response> {
-  const font = (w: number) => `${o.origin}/fonts/Inter-${w}.ttf`;
+  // Relativno, ne iz `Host` zahtjeva (SEC-11): HTML se otvara na našem originu, a PDF fontove
+  // ugrađuje iz ASSETS, kojem je host svejedno.
+  const font = (w: number) => `/fonts/Inter-${w}.ttf`;
   if (o.oblik === "html") {
     const stranica = html(podaci, { 400: font(400), 600: font(600), 700: font(700) });
     return new Response(stranica, { headers: { "Content-Type": "text/html; charset=utf-8", ...o.zaglavlja } });
@@ -27,7 +29,7 @@ export async function odgovorIzvjestaja(
   if (izKesa) return new Response(izKesa.body, { headers: zaglavljaPdf });
 
   const ugradi = async (w: number) => {
-    const r = await env.ASSETS.fetch(font(w));
+    const r = await env.ASSETS.fetch(new URL(font(w), "https://omm.domovina.ai"));
     return `data:font/ttf;base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;
   };
   const [f400, f600, f700] = await Promise.all([ugradi(400), ugradi(600), ugradi(700)]);

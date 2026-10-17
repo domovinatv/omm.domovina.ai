@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     throw e;
   }
   if (oblik === "json") return json(podaci);
-  return odgovorIzvjestaja(podaci, { omm, oblik: oblik === "html" ? "html" : "pdf", anonimno, origin: url.origin, zaglavlja: CORS });
+  return odgovorIzvjestaja(podaci, { omm, oblik: oblik === "html" ? "html" : "pdf", anonimno, zaglavlja: CORS });
 };
 
 export const OPTIONS: APIRoute = opcije;

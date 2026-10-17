@@ -27,5 +27,5 @@ export const GET: APIRoute = async ({ params, url, locals }) => {
     throw e;
   }
   if (oblik === "json") return Response.json(podaci);
-  return odgovorIzvjestaja(podaci, { omm, oblik: oblik === "html" ? "html" : "pdf", anonimno, origin: url.origin });
+  return odgovorIzvjestaja(podaci, { omm, oblik: oblik === "html" ? "html" : "pdf", anonimno });
 };
