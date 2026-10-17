@@ -26,7 +26,8 @@ export const POST: APIRoute = async ({ request }) => {
   const ommPolje = forma?.get("omm");
   const omm = typeof ommPolje === "string" && /^\d{10}$/.test(ommPolje) ? ommPolje : null;
   if (!(slika instanceof File)) return greska("Pošalji sliku u polju 'slika'");
-  if (slika.size > 8 * 1024 * 1024) return greska("Slika je veća od 8 MB", 413);
+  // Klijent šalje JPEG do 1600 px (ocitaj.astro), ~0,5 MB; 3 MB je rezerva za aplikaciju.
+  if (slika.size > 3 * 1024 * 1024) return greska("Slika je veća od 3 MB", 413);
 
   const bajtovi = new Uint8Array(await slika.arrayBuffer());
   // Vrsta po sadržaju, ne po zaglavlju: Dartov http šalje application/octet-stream.
@@ -39,9 +40,10 @@ export const POST: APIRoute = async ({ request }) => {
   await env.SLIKE.put(r2, bajtovi, { httpMetadata: { contentType: mime } });
 
   try {
-    // `model` u formi služi za usporedbu modela; zadano je OCR_MODEL.
+    // `model` u formi služi za usporedbu modela, samo s popisa OCR_MODELI (SEC-02).
     const zatrazen = forma?.get("model");
-    const model = typeof zatrazen === "string" && /^@cf\/[\w.\/-]+$/.test(zatrazen) ? zatrazen : env.OCR_MODEL;
+    const dopusteni = env.OCR_MODELI.split(",").map((m) => m.trim()).filter(Boolean);
+    const model = typeof zatrazen === "string" && dopusteni.includes(zatrazen) ? zatrazen : env.OCR_MODEL;
     const r = await procitaj(env.AI, model, bajtovi, mime);
     let t1: number | null = r.registri.find((x) => x.obis === "1.8.1")?.vrijednost ?? null;
     let t2: number | null = r.registri.find((x) => x.obis === "1.8.2")?.vrijednost ?? null;

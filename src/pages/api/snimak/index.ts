@@ -48,12 +48,22 @@ function sadrzajUvoza(uvoz: unknown): unknown {
   return u;
 }
 
+// Najveći uvoz u bazi 2026-10-17 je 45 kB (Hepi s prometom); 512 kB je rezerva za
+// kupce s više mjesta, a štiti D1 od petlje s golemim JSON-om (SEC-02).
+const NAJVISE_TIJELA = 512 * 1024;
+const NAJVISE_OCR = 32 * 1024;
+
 /** POST JSON snimak (očitanje i/ili uvoz s HEP-a). */
 export const POST: APIRoute = async ({ request }) => {
   const kljuc = uredaj(request);
   if (!kljuc) return greska("Nedostaje ključ uređaja", 401);
-  const b = (await request.json().catch(() => null)) as Ulaz | null;
-  if (!b) return greska("Tijelo mora biti JSON");
+  if (Number(request.headers.get("content-length") ?? 0) > NAJVISE_TIJELA) return greska("Tijelo je preveliko", 413);
+  const tekst = await request.text();
+  if (tekst.length > NAJVISE_TIJELA) return greska("Tijelo je preveliko", 413);
+  let b: Ulaz | null = null;
+  try { b = JSON.parse(tekst) as Ulaz; } catch {}
+  if (!b || typeof b !== "object") return greska("Tijelo mora biti JSON");
+  if (b.ocr != null && JSON.stringify(b.ocr).length > NAJVISE_OCR) return greska("ocr je prevelik", 413);
 
   const izvor = IZVORI.includes(b.izvor as string) ? (b.izvor as string) : null;
   if (!izvor) return greska(`izvor mora biti ${IZVORI.map((i) => `'${i}'`).join(", ")}`);

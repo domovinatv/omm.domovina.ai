@@ -5,7 +5,8 @@ import { procitajRacun } from "../../lib/hep-racun";
 import { greska, json, opcije, uredaj } from "../../lib/http";
 import { spremiRacun } from "../../lib/racuni";
 
-const NAJVISE = 10 * 1024 * 1024;
+// HEP-ovi računi su do ~0,85 MB (rezije, 2026-10-17); parsiranje troši CPU (SEC-02).
+const NAJVISE = 3 * 1024 * 1024;
 
 /** GET brojevi računa (poziv na broj) koje ovaj ključ već ima, da bookmarklet šalje samo nove. */
 export const GET: APIRoute = async ({ request }) => {
@@ -26,6 +27,7 @@ export const GET: APIRoute = async ({ request }) => {
 export const POST: APIRoute = async ({ request }) => {
   const kljuc = uredaj(request);
   if (!kljuc) return greska("Nedostaje ključ uređaja", 401);
+  if (Number(request.headers.get("content-length") ?? 0) > NAJVISE) return greska("PDF je prevelik", 413);
   const pdf = new Uint8Array(await request.arrayBuffer());
   if (pdf.length > NAJVISE) return greska("PDF je prevelik", 413);
   const racun = await procitajRacun(pdf).catch(() => null);

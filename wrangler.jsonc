@@ -24,11 +24,25 @@
   // Browser Rendering: PDF izvještaja iz HTML stranice (src/pages/api/izvjestaj).
   "browser": { "binding": "BROWSER" },
 
+  // Ograničenje brzine za /api/* (src/middleware.ts, SEC-02). Brojač je po lokaciji
+  // Cloudflarea i približan, dovoljan protiv petlje skripte. Prvi uvoz s Hepija
+  // pošalje i do 40 PDF-ova računa, pa je opći limit širok.
+  "ratelimits": [
+    { "name": "LIMIT_API", "namespace_id": "7101", "simple": { "limit": 120, "period": 60 } },
+    // OCR (Workers AI) i PDF izvještaja (Browser Rendering): po IP-u i po ključu.
+    { "name": "LIMIT_SKUPO", "namespace_id": "7102", "simple": { "limit": 10, "period": 60 } }
+  ],
+  // PDF računa parsira unpdf na CPU-u; bez ovoga zahtjev smije trošiti 30 s.
+  "limits": { "cpu_ms": 10000 },
+
   "vars": {
     // Vision model za čitanje zaslona brojila. Usporedba 2026-10-12 na slici
     // Iskra MT171: llama-4-scout točno za 2 s (oznaku registra zna izmisliti),
     // kimi-k2.6 točno za 30 s, gemma-4 prazan odgovor, mistral-small greška.
     "OCR_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct",
+    // Dodatni modeli koje `model` u /api/ocitaj smije tražiti (zarezom; za usporedbu).
+    // Prazno: samo OCR_MODEL, jer bi inače svatko birao najskuplji model (SEC-02).
+    "OCR_MODELI": "",
     // /admin (docs/admin.md): Cloudflare Access na /admin/sso ili passkey.
     // ADMIN_EMAILS se provjerava pri svakom zahtjevu; micanje iz popisa odmah gasi sesije.
     "ADMIN_EMAILS": "stepanic.matija@gmail.com,ms@ff.hr",
