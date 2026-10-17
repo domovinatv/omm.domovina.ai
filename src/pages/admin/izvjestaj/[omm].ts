@@ -5,13 +5,17 @@ import { odgovorIzvjestaja } from "../../../lib/izvjestaj/odgovor";
 import { cjenik } from "../../../lib/izvjestaj/snimci";
 
 /**
- * Izvještaj za bilo koji OMM, iz uvoza i očitanja svih korisnika (ili `?kljuc=` jednog).
+ * Izvještaj za bilo koji OMM iz uvoza i očitanja jednog ključa (`?kljuc=`), ili svih (`?svi=1`).
+ * Spojeni samo izričito: uvoz šalje korisnik, pa tuđa očitanja mogu ući u ponudu (SEC-07).
  * Isti izračun i izgled kao `/api/izvjestaj/:omm`. `?oblik=pdf|html|json`, `?anonimno=1`.
  */
 export const GET: APIRoute = async ({ params, url }) => {
   const omm = params.omm ?? "";
   if (!/^\d{10}$/.test(omm)) return new Response("OMM ima 10 znamenki", { status: 400 });
   const kljuc = url.searchParams.get("kljuc");
+  if (!kljuc && url.searchParams.get("svi") !== "1") {
+    return new Response("Odaberi ključ (?kljuc=) ili izričito spoji sve (?svi=1)", { status: 400 });
+  }
   const oblik = url.searchParams.get("oblik") ?? "pdf";
   const anonimno = url.searchParams.get("anonimno") === "1";
   let podaci;

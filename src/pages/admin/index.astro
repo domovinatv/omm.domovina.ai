@@ -7,7 +7,7 @@ const korisnika = new Set(omm.flatMap((o) => o.korisnici.map((k) => k.uredaj))).
 const tjedan = new Date(Date.now() - 7 * 86_400_000).toISOString();
 const aktivnih = new Set(omm.flatMap((o) => o.korisnici.filter((k) => k.zadnji > tjedan).map((k) => k.uredaj))).size;
 const uvoza = omm.reduce((s, o) => s + o.uvoza, 0);
-const izv = (o: string) => `/admin/izvjestaj/${o}`;
+const izv = (o: string, k: string) => `/admin/izvjestaj/${o}?kljuc=${encodeURIComponent(k)}`;
 ---
 <AdminOkvir naslov="Pregled" siroko>
   <h1>Pregled uvoza</h1>
@@ -31,26 +31,30 @@ const izv = (o: string) => `/admin/izvjestaj/${o}`;
             <td>
               <b>{o.korisnici.length}</b>{" "}
               <span class="blijedo mono">{o.korisnici.slice(0, 3).map((k) => kratko(k.uredaj)).join(", ")}{o.korisnici.length > 3 ? " …" : ""}</span>
+              {o.neslaganje && <br />}
+              {o.neslaganje && <span class="oznaka upozorenje" title="Ključevi navode različitu adresu ili ime">ne slažu se</span>}
             </td>
             <td>{o.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</td>
             <td class="broj">{o.uvoza}</td>
             <td class="broj">{o.ocitanja}{o.racuna ? ` + ${o.racuna} rač.` : ""}</td>
             <td style="white-space:nowrap">{kad(o.zadnji)}</td>
             <td>
-              {o.uvoza > 0 ? (
-                <div class="akcije">
-                  <a class="gumb mali" href={izv(o.omm)}>PDF</a>
-                  <a class="gumb mali" href={`${izv(o.omm)}?oblik=html`} target="_blank">HTML</a>
-                  <a class="gumb mali" href={`${izv(o.omm)}?anonimno=1`}>Anonimno</a>
-                </div>
-              ) : <span class="blijedo">nema uvoza</span>}
+              {o.uvoza === 0 ? <span class="blijedo">nema uvoza</span>
+                : o.korisnici.length > 1 ? <a href={`/admin/omm/${o.omm}`}>po ključu</a>
+                : (
+                  <div class="akcije">
+                    <a class="gumb mali" href={izv(o.omm, o.korisnici[0].uredaj)}>PDF</a>
+                    <a class="gumb mali" href={`${izv(o.omm, o.korisnici[0].uredaj)}&oblik=html`} target="_blank">HTML</a>
+                    <a class="gumb mali" href={`${izv(o.omm, o.korisnici[0].uredaj)}&anonimno=1`}>Anonimno</a>
+                  </div>
+                )}
             </td>
           </tr>
         ))}
       </tbody>
     </table>
   </div>
-  <p class="blijedo">„Korisnik“ je ključ uređaja iz preglednika ili aplikacije (prijave za korisnike nema). Izvještaj spaja uvoze i očitanja svih korisnika tog OMM-a; po korisniku je u detalju OMM-a.</p>
+  <p class="blijedo">„Korisnik“ je ključ uređaja iz preglednika ili aplikacije (prijave za korisnike nema). Izvještaj je iz podataka jednog ključa. Kad OMM ima više ključeva, izvještaj je u detalju OMM-a, po ključu; spojeni samo uz izričit klik, jer uvoz šalje korisnik i tuđi OMM može upisati bilo tko.</p>
 </AdminOkvir>
 <script>
   const filtar = document.getElementById("filtar") as HTMLInputElement;

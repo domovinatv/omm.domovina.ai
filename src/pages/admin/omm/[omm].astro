@@ -7,6 +7,7 @@ const o = /^\d{10}$/.test(omm) ? (await pregledOmm()).find((x) => x.omm === omm)
 if (!o) return new Response("Nema tog OMM-a", { status: 404 });
 const dnevnik = await uredaji(o.korisnici.map((k) => k.uredaj));
 const izv = `/admin/izvjestaj/${omm}`;
+const k1 = encodeURIComponent(o.korisnici[0]?.uredaj ?? "");
 const preglednik = (ua: string | null) =>
   !ua ? "—" : /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : ua.slice(0, 40);
 ---
@@ -15,24 +16,38 @@ const preglednik = (ua: string | null) =>
   <h1 class="mono" style="font-size:1.5rem">{omm}</h1>
   <p>{o.adresa ?? "—"}{o.ime && <span class="blijedo"> · {o.ime}</span>}</p>
   <p>{o.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</p>
+  {o.neslaganje && (
+    <p><span class="oznaka upozorenje">ne slažu se</span> Ključevi navode različitu adresu ili ime. Uvoz šalje
+      korisnik, pa je netko ovaj OMM možda upisao kao svoj; izvještaj radi po ključu.</p>
+  )}
 
   <div class="kartica">
-    <h2 style="margin-top:0">Izvještaj iz svih uvoza</h2>
-    {o.uvoza > 0 ? (
-      <div class="akcije">
-        <a class="gumb glavni" href={izv}>PDF</a>
-        <a class="gumb" href={`${izv}?oblik=html`} target="_blank">HTML</a>
-        <a class="gumb" href={`${izv}?anonimno=1`}>Anonimni PDF</a>
-        <a class="gumb" href={`${izv}?oblik=json`} target="_blank">JSON</a>
-      </div>
-    ) : <p class="blijedo">Nema uvoza s HEP-a, pa nema ni izvještaja (samo očitanja ili računi mailom).</p>}
+    <h2 style="margin-top:0">Izvještaj</h2>
+    {o.uvoza === 0 ? <p class="blijedo">Nema uvoza s HEP-a, pa nema ni izvještaja (samo očitanja ili računi mailom).</p>
+      : o.korisnici.length === 1 ? (
+        <div class="akcije">
+          <a class="gumb glavni" href={`${izv}?kljuc=${k1}`}>PDF</a>
+          <a class="gumb" href={`${izv}?kljuc=${k1}&oblik=html`} target="_blank">HTML</a>
+          <a class="gumb" href={`${izv}?kljuc=${k1}&anonimno=1`}>Anonimni PDF</a>
+          <a class="gumb" href={`${izv}?kljuc=${k1}&oblik=json`} target="_blank">JSON</a>
+        </div>
+      ) : (
+        <>
+          <p class="blijedo">Podatke za ovaj OMM šalje više ključeva ({o.korisnici.length}). Izvještaj po ključu je u
+            tablici ispod; spojeni miješa njihova očitanja, pa ga koristi samo kad znaš da su svi ključevi iste osobe.</p>
+          <div class="akcije">
+            <a class="gumb" href={`${izv}?svi=1`}>Spojeni PDF</a>
+            <a class="gumb" href={`${izv}?svi=1&oblik=html`} target="_blank">Spojeni HTML</a>
+          </div>
+        </>
+      )}
   </div>
 
   <h2>Korisnici ({o.korisnici.length})</h2>
   <div class="tablica">
     <table>
       <thead>
-        <tr><th>Ključ</th><th>Izvori</th><th>Uvoza</th><th>Očitanja</th><th>Prvi</th><th>Zadnji</th><th>Uređaj</th><th>Izvještaj</th></tr>
+        <tr><th>Ključ</th><th>Adresa / kupac</th><th>Izvori</th><th>Uvoza</th><th>Očitanja</th><th>Prvi</th><th>Zadnji</th><th>Uređaj</th><th>Izvještaj</th></tr>
       </thead>
       <tbody>
         {o.korisnici.map((k) => {
@@ -40,6 +55,7 @@ const preglednik = (ua: string | null) =>
           return (
             <tr>
               <td class="mono" title={k.uredaj}>{k.uredaj}</td>
+              <td>{k.adresa ?? "—"}<br /><span class="blijedo">{k.ime ?? ""}</span></td>
               <td>{k.izvori.map((i) => <span class="oznaka">{IZVORI[i] ?? i}</span>)}</td>
               <td class="broj">{k.uvoza}</td>
               <td class="broj">{k.ocitanja}{k.racuna ? ` + ${k.racuna} rač.` : ""}</td>
