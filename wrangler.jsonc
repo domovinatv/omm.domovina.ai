@@ -7,6 +7,10 @@
   "compatibility_flags": ["nodejs_compat"],
   // D.O.M. račun — isti kao podcast.domovina.ai i glazba.domovina.ai.
   "account_id": "7dc7167b7e2e00923bfa7cd697df14e4",
+  // Samo omm.domovina.ai: API ni stranice ne smiju biti i na *.workers.dev ili
+  // preview adresama, drugom originu bez istih pravila (audit, „Za provjeru“).
+  "workers_dev": false,
+  "preview_urls": false,
 
   "assets": { "directory": "./dist", "binding": "ASSETS" },
 

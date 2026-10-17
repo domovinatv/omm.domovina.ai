@@ -6,7 +6,7 @@
   "description": "omm.domovina.ai — snimci HEP OMM-ova i očitanja brojila (slika → 1.8.1/1.8.2) za ponudu za sunčanu elektranu",
   "scripts": {
     "dev": "npm run ikone && astro dev",
-    "build": "astro build && node scripts/ikone.mjs dist/client/ikone",
+    "build": "node scripts/provjeri-oznaku.mjs && astro build && node scripts/ikone.mjs dist/client/ikone",
     "preview": "npm run build && wrangler dev",
     "db:migrate": "wrangler d1 migrations apply omm-domovina-ai --remote",
     "db:migrate:local": "wrangler d1 migrations apply omm-domovina-ai --local",

@@ -1,5 +1,6 @@
 // Generirano iz github.com/stepanic/flutter_moja_mreza (extension/tools/bookmarklet.mjs).
 // Ne mijenjati ovdje: izvor su extension/uvoz.js, mojracun.js, hepi.js i bookmarklet.js.
+// Izvor 253327e, sha256 ostatka 39dc260f33b01cae65a2c8101cf4f8bdd20996dd4d0e77939863553e394b5e8c
 // ---- uvoz.js ----
 // Uvoz s Moje mre\u017ee (https://mojamreza.hep.hr) u pregledniku.
 //
