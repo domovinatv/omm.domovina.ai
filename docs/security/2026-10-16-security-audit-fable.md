@@ -470,12 +470,22 @@ postavljati `cache-control` za admin; isto bi trebalo za javne stranice ako se �
 
 ## Zadaci za Opus 5.5 (po prioritetu)
 
-- [ ] SEC-01 `kljuc-klijent.ts`/`index.astro`: `?k=` ne smije tiho zamijeniti postojeći ključ; potvrda + vidljiva traka; oznaka se gradi tek nakon potvrde.
-- [ ] SEC-02 Rate limiting (WAF pravilo ili `ratelimits` binding) na `/api/*`, stroži na `/api/ocitaj` i `/api/izvjestaj/*`; maknuti javni izbor `model`; limit slike 3 MB; `limits.cpu_ms`; limit veličine JSON tijela u `/api/snimak`.
-- [ ] SEC-03 `dnevnik.ts`: u `tijelo` samo sažetak, ne cijeli uvoz; `DELETE` po ključu (snimci + dogadaji + mailovi + R2 prefiks) i gumb „Obriši sve moje podatke“; `DELETE /api/snimak/:id` briše i `dogadaji`; R2 lifecycle ili `tmp/` prefiks za slike prije snimka; cron za stare `dogadaji`/`mailovi`; politika privatnosti u podnožju.
-- [ ] SEC-04 Ključ u fragment (`#k=`) u oznaci, `window.open` i `/`; `Referrer-Policy: no-referrer` na javnim stranicama; provjeriti/isključiti URL u Workers Logs.
-- [ ] SEC-05 Registracija ključeva na serveru (server generira), odbijanje nepoznatih (API i mail), rotacija ključa s prijenosom podataka.
-- [ ] SEC-06 CSP + `nosniff` + `Referrer-Policy` + `X-Frame-Options` za sve HTML odgovore u `middleware.ts`; `innerHTML` → `textContent` u `ocitaj.astro:771,936,938`; validacija oblika `uvoz`.
+Stanje 2026-10-17 (Opus 5.5): SEC-01 do SEC-06 popravljeni i commitani, **nisu deployani**
+(`npm run db:migrate` za 0006 i 0007, pa `npm run deploy`; prije toga u pregledniku provjeriti
+oznaku na naslovnici pod novim CSP-om). R2 lifecycle `tmp` je već na bucketu. Odstupanja:
+ključ i dalje generira klijent (server samo pamti, rotacija daje serverski ključ); GET nepoznatim
+ključem vraća prazno, ne 401 (oznaka zove GET /api/racun prije prvog upisa); WAF pravilo nije
+dodano, koristi se `ratelimits` binding; stare slike-siročad u R2 nisu obrisane (wrangler nema
+popis objekata). Kopija `dogadaji` prije 0006: `data/backup/2026-10-17-dogadaji.sql` (gitignored).
+SEC-11 shema uvoza je napravljena (`src/lib/uvoz.ts`), fiksni origin u `odgovor.ts` nije.
+SEC-12 `nosniff` je napravljen.
+
+- [x] SEC-01 `kljuc-klijent.ts`/`index.astro`: `?k=` ne smije tiho zamijeniti postojeći ključ; potvrda + vidljiva traka; oznaka se gradi tek nakon potvrde.
+- [x] SEC-02 Rate limiting (WAF pravilo ili `ratelimits` binding) na `/api/*`, stroži na `/api/ocitaj` i `/api/izvjestaj/*`; maknuti javni izbor `model`; limit slike 3 MB; `limits.cpu_ms`; limit veličine JSON tijela u `/api/snimak`.
+- [x] SEC-03 `dnevnik.ts`: u `tijelo` samo sažetak, ne cijeli uvoz; `DELETE` po ključu (snimci + dogadaji + mailovi + R2 prefiks) i gumb „Obriši sve moje podatke“; `DELETE /api/snimak/:id` briše i `dogadaji`; R2 lifecycle ili `tmp/` prefiks za slike prije snimka; cron za stare `dogadaji`/`mailovi`; politika privatnosti u podnožju.
+- [x] SEC-04 Ključ u fragment (`#k=`) u oznaci, `window.open` i `/`; `Referrer-Policy: no-referrer` na javnim stranicama; provjeriti/isključiti URL u Workers Logs.
+- [x] SEC-05 Registracija ključeva na serveru (server generira), odbijanje nepoznatih (API i mail), rotacija ključa s prijenosom podataka.
+- [x] SEC-06 CSP + `nosniff` + `Referrer-Policy` + `X-Frame-Options` za sve HTML odgovore u `middleware.ts`; `innerHTML` → `textContent` u `ocitaj.astro:771,936,938`; validacija oblika `uvoz`.
 - [ ] SEC-07 Admin: izvještaj zadano po ključu, jasna oznaka kad više ključeva prisvaja isti OMM; `snimciOmm` preko `json_each` umjesto `instr`.
 - [ ] SEC-08 `Astro.locals.admin` provjera u `AdminOkvir.astro` i `admin/izvjestaj/[omm].ts`; test `curl /%61dmin/…`.
 - [ ] SEC-09 `mail.ts:52` regex `/(^|[.@])google\.com$/i` + provjera `Authentication-Results`.

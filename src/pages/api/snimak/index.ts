@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { zapisi } from "../../../lib/dnevnik";
 import { greska, json, noviId, opcije, uredaj } from "../../../lib/http";
+import { provjeriUvoz } from "../../../lib/uvoz";
 
 type Ulaz = {
   izvor?: string;
@@ -93,8 +94,9 @@ export const POST: APIRoute = async ({ request }) => {
   const t2 = cijeli(b.t2);
   if (!uvozni && t1 === null) return greska("Nedostaje stanje 1.8.1 (t1)");
   if (uvozni && b.uvoz == null) return greska(`Izvor '${izvor}' traži uvoz`);
-  if ((izvor === "hep-moj-racun" || izvor === "hep-hepi") && !Array.isArray((b.uvoz as { kupci?: unknown })?.kupci)) {
-    return greska("Uvoz s Mojeg računa traži kupci[]");
+  if (uvozni) {
+    const g = provjeriUvoz(izvor, b.uvoz);
+    if (g) return greska(g);
   }
 
   const stvoren = new Date().toISOString();

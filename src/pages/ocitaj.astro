@@ -668,6 +668,7 @@ import Podnozje from "../components/Podnozje.astro";
         i.setAttribute("aria-hidden", "true");
         return i;
       };
+      const raspon = (...dijelovi: (Node | string)[]) => { const e = document.createElement("span"); e.append(...dijelovi); return e; };
       import { kljuc } from "../lib/kljuc-klijent";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -768,7 +769,10 @@ import Podnozje from "../components/Podnozje.astro";
             if (d.zadnje) {
               const z = $("zadnje-stanje");
               z.classList.add("vidljiva");
-              $("zadnje-stanje-tekst").innerHTML = `Zadnje stanje (${d.zadnje.datum}): <b>1.8.1:</b> <span class="zadnje-stanje-vrijednost">${d.zadnje.t1 ?? "–"} kWh</span> · <b>1.8.2:</b> <span class="zadnje-stanje-vrijednost">${d.zadnje.t2 ?? "–"} kWh</span>`;
+              // textContent, ne innerHTML: datum dolazi iz uvoza koji server ne provjerava (SEC-06).
+              const b = (t: string) => Object.assign(document.createElement("b"), { textContent: t });
+              const vr = (v: unknown) => Object.assign(document.createElement("span"), { className: "zadnje-stanje-vrijednost", textContent: `${v ?? "–"} kWh` });
+              $("zadnje-stanje-tekst").replaceChildren(`Zadnje stanje (${d.zadnje.datum}): `, b("1.8.1:"), " ", vr(d.zadnje.t1), " · ", b("1.8.2:"), " ", vr(d.zadnje.t2));
             }
 
             if (nasao && dodatno) {
@@ -933,9 +937,9 @@ import Podnozje from "../components/Podnozje.astro";
             } else if (s.izvor === "hep-hepi") {
               tarife.textContent = "Uvoz s Mojeg Hepi računa";
             } else if (s.izvor === "hep-racun") {
-              tarife.innerHTML = `<span>VT: ${s.t1 ?? "–"} kWh</span> <span>NT: ${s.t2 ?? "–"} kWh</span>`;
+              tarife.replaceChildren(raspon(`VT: ${s.t1 ?? "–"} kWh`), " ", raspon(`NT: ${s.t2 ?? "–"} kWh`));
             } else {
-              tarife.innerHTML = `<span><i class="i i-light_mode" aria-hidden="true"></i> ${s.t1 ?? "–"}</span> <span><i class="i i-dark_mode" aria-hidden="true"></i> ${s.t2 ?? "–"} kWh</span>`;
+              tarife.replaceChildren(raspon(ikona("i-light_mode"), ` ${s.t1 ?? "–"}`), " ", raspon(ikona("i-dark_mode"), ` ${s.t2 ?? "–"} kWh`));
             }
 
             const meta = document.createElement("div");

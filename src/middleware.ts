@@ -65,7 +65,7 @@ async function provjeriKljuc(request: Request): Promise<Response | null> {
 
 export const onRequest = defineMiddleware(async ({ request, url, locals }, next) => {
   if (url.pathname.startsWith("/api/")) return (await ogranicenje(request, url)) ?? (await provjeriKljuc(request)) ?? next();
-  if (!jeAdmin(url.pathname)) return next();
+  if (!jeAdmin(url.pathname)) return zastiti(await next(), false);
 
   // 1. Jedan host: rpID passkeya je hostname, a Access štiti samo ADMIN_HOST/admin/sso.
   const host = (env.ADMIN_HOST ?? "").trim();
@@ -90,24 +90,37 @@ export const onRequest = defineMiddleware(async ({ request, url, locals }, next)
     locals.admin = s;
   }
 
-  // 4. Sigurnosna zaglavlja. Astro male skripte umeće inline, pa dobivaju nonce.
-  const odgovor = await next();
+  return zastiti(await next(), true);
+});
+
+/**
+ * Sigurnosna zaglavlja za HTML stranice: admin i javne (SEC-06). Astro male
+ * skripte umeće inline, pa dobivaju nonce. Javne stranice drže ključ u
+ * localStorage, pa CSP ograničava što bi XSS mogao.
+ */
+async function zastiti(odgovor: Response, admin: boolean): Promise<Response> {
+  const html = (odgovor.headers.get("content-type") ?? "").startsWith("text/html");
+  if (!admin && !html) return odgovor;
   const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))).replace(/[+/=]/g, "");
   let tijelo: BodyInit | null = odgovor.body;
-  if ((odgovor.headers.get("content-type") ?? "").startsWith("text/html")) {
+  if (html) {
     tijelo = (await odgovor.text()).replace(/<script(?![^>]*\bsrc=)/g, `<script nonce="${nonce}"`);
   }
   const h = new Headers(odgovor.headers);
   h.set(
     "content-security-policy",
     `default-src 'none'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; ` +
-      `img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`,
+      // blob: za pregled slike brojila prije slanja (ocitaj.astro).
+      `img-src 'self' data:${admin ? "" : " blob:"}; font-src 'self'; connect-src 'self'; form-action 'self'; ` +
+      `frame-ancestors 'none'; base-uri 'none'`,
   );
   h.set("x-content-type-options", "nosniff");
-  // Ne "no-referrer": uz nju preglednik na <form> POST šalje `Origin: null`.
-  h.set("referrer-policy", "same-origin");
+  // Admin: ne "no-referrer", jer uz nju preglednik na <form> POST šalje `Origin: null`.
+  // Javne stranice nemaju formi, a adresa može nositi #k= ili ?primi=1.
+  h.set("referrer-policy", admin ? "same-origin" : "no-referrer");
   h.set("x-frame-options", "DENY");
-  h.set("x-robots-tag", "noindex");
-  if (!h.has("cache-control")) h.set("cache-control", "no-store");
+  if (admin) h.set("x-robots-tag", "noindex");
+  // _headers ne djeluje na odgovore Workera (SEC-16), pa se ovdje postavlja.
+  if (!h.has("cache-control")) h.set("cache-control", admin ? "no-store" : "no-cache");
   return new Response(tijelo, { status: odgovor.status, statusText: odgovor.statusText, headers: h });
-});
+}
