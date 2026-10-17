@@ -30,6 +30,16 @@ export function gmailPotvrda(naslov: string, tekst: string): { kod: string | nul
   return { kod, poveznica };
 }
 
+/**
+ * Mail je od Googlea: domena pošiljatelja je google.com ili njena poddomena (ne
+ * `attacker-google.com`), a kad Email Routing doda `Authentication-Results`, DMARC je
+ * prošao, pa `From` nije lažan (SEC-09). Bez tog zaglavlja vrijedi samo domena.
+ */
+export function odGooglea(od: string, rezultati: string | null): boolean {
+  if (!/(^|[.@])google\.com$/i.test(od.trim())) return false;
+  return rezultati == null || /\bdmarc=pass\b/i.test(rezultati);
+}
+
 type Zapis = { vrsta: "racun" | "gmail-potvrda" | "ostalo"; ishod: "novo" | "duplikat" | "nije-racun" | "greska"; poruka?: unknown; snimakId?: string };
 
 async function zapisiMail(uredaj: string, od: string, naslov: string, z: Zapis) {
@@ -56,7 +66,7 @@ export async function primiMail(poruka: ForwardableEmailMessage): Promise<void> 
   const od = mail.from?.address ?? poruka.from;
   try {
     const potvrda = gmailPotvrda(naslov, `${mail.text ?? ""}\n${mail.html ?? ""}`);
-    if (potvrda && /google\.com$/i.test(od)) {
+    if (potvrda && odGooglea(od, poruka.headers.get("authentication-results"))) {
       if (stanje === "nepoznat") await registriraj(uredaj);
       return await zapisiMail(uredaj, od, naslov, { vrsta: "gmail-potvrda", ishod: "novo", poruka: potvrda });
     }
