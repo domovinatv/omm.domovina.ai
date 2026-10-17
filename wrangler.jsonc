@@ -58,5 +58,7 @@
   "triggers": { "crons": ["17 3 * * *"] },
 
   "routes": [{ "pattern": "omm.domovina.ai", "custom_domain": true }],
-  "observability": { "enabled": true }
+  // Bez invocation logova: bilježe URL zahtjeva, a stare oznake nose ključ u ?k= (SEC-04).
+  // console.log/error i dalje stižu u Workers Logs.
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } }
 }
