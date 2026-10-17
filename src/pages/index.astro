@@ -108,6 +108,10 @@ import Podnozje from "../components/Podnozje.astro";
         .samo-mobitel { display: block; }
         .koraci { display: none; }
       }
+      .upozorenje { border-color: var(--greska); }
+      .gumbi-red { display: flex; gap: 8px; flex-wrap: wrap; }
+      .gumbi-red button { flex: 1 1 200px; }
+      button.glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
       [hidden] { display: none !important; }
 
       /* Oznaka se povlači na računalu: tamo sve stane na jedan ekran, koraci jedan do drugog. */
@@ -140,6 +144,18 @@ import Podnozje from "../components/Podnozje.astro";
         <h2>Otvori ovu stranicu na računalu</h2>
         <p>Uvoz radi gumb koji se povuče u traku s oznakama preglednika, a to na mobitelu ne ide.
           Na računalu (Chrome, Edge, Brave, Firefox ili Safari) otvori <b>omm.domovina.ai</b> i slijedi dva koraka.</p>
+      </section>
+
+      <section class="kartica upozorenje" id="drugi-kljuc" hidden>
+        <h2>Ova poveznica nosi drugi ključ</h2>
+        <p>Ključ određuje kamo idu tvoji uvozi i tko ih može vidjeti. Prihvati ga samo ako je poveznicu otvorila
+          tvoja oznaka ili aplikacija. Ako ti je poveznicu netko poslao, zadrži svoj ključ: s tuđim bi tvoji podaci s HEP-a
+          otišli njemu.</p>
+        <p class="blijedo">Ključ iz poveznice: <code id="drugi-kljuc-oznaka"></code> · tvoj ključ: <code id="moj-kljuc-oznaka"></code></p>
+        <div class="gumbi-red">
+          <button type="button" class="glavni" id="zadrzi-kljuc">Zadrži svoj ključ</button>
+          <button type="button" id="prihvati-kljuc">Prihvati ključ iz poveznice</button>
+        </div>
       </section>
 
       <section class="kartica" id="primi" hidden>
@@ -242,15 +258,24 @@ import Podnozje from "../components/Podnozje.astro";
         i.setAttribute("aria-hidden", "true");
         return i;
       };
-      import { kljuc } from "../lib/kljuc-klijent";
+      import { kljuc, kljucIzAdrese, postaviKljuc, skraceno } from "../lib/kljuc-klijent";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+      const drugi = kljucIzAdrese();
       const k = kljuc();
+      if (drugi) {
+        $("drugi-kljuc").hidden = false;
+        $("drugi-kljuc-oznaka").textContent = skraceno(drugi);
+        $("moj-kljuc-oznaka").textContent = skraceno(k);
+        $("zadrzi-kljuc").onclick = () => { $("drugi-kljuc").hidden = true; };
+        $("prihvati-kljuc").onclick = () => { postaviKljuc(drugi); location.reload(); };
+      }
       const auth = { Authorization: `Bearer ${k}` };
       const HEP = ["https://mojamreza.hep.hr", "https://mojracun.hep.hr"];
 
       // Mali loader; sav kod je u /hep-uvoz.js da se parser može popraviti bez
-      // ponovnog povlačenja oznake. ?v= zaobilazi predmemoriju.
-      const kod = `javascript:(()=>{var s=document.createElement('script');s.src='${location.origin}/hep-uvoz.js?k=${k}&v='+Date.now();document.body.appendChild(s)})()`;
+      // ponovnog povlačenja oznake. ?v= zaobilazi predmemoriju. Ključ je u fragmentu
+      // (#k=), koji preglednik ne šalje serveru, pa ga nema u logovima (SEC-04).
+      const kod = `javascript:(()=>{var s=document.createElement('script');s.src='${location.origin}/hep-uvoz.js?v='+Date.now()+'#k=${k}';document.body.appendChild(s)})()`;
       const oznaka = $<HTMLAnchorElement>("oznaka");
       oznaka.href = kod;
       oznaka.onclick = (e) => {
@@ -302,9 +327,12 @@ import Podnozje from "../components/Podnozje.astro";
       window.addEventListener("omm-oznaka", (e) => {
         try { localStorage.setItem(POSTAVLJENA, "1"); } catch {}
         // Starija oznaka ili oznaka iz drugog profila nosi svoj ključ: uvozi idu na
-        // njega, pa ga stranica preuzme da bi ih pokazala (isto kao /?k= iz oznake).
+        // njega, pa ga stranica preuzme da bi ih pokazala. Klik je korisnikov, na
+        // vlastitu oznaku, pa ovdje ne pitamo kao za ključ iz poveznice.
         const kljucOznake = (e as CustomEvent).detail?.kljuc;
-        if (kljucOznake && kljucOznake !== k) { location.href = `/?k=${encodeURIComponent(kljucOznake)}`; return; }
+        if (kljucOznake && kljucOznake !== k && /^[A-Za-z0-9_-]{22,64}$/.test(kljucOznake)) {
+          postaviKljuc(kljucOznake); location.reload(); return;
+        }
         prikaziPostavljeno(true);
         const s = $("stanje-postavljeno");
         s.hidden = false;

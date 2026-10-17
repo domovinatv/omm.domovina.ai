@@ -1,4 +1,9 @@
 ---
-// Stara adresa uvoza; uvoz oznakom je sada naslovnica. Upit (?primi=1, ?k=) ide dalje.
-return Astro.redirect(`/${Astro.url.search}`, 301);
+// Stara adresa uvoza; uvoz oznakom je sada naslovnica. Upit (?primi=1) ide dalje,
+// a ?k= postaje #k=, pa ga naslovnica pokaže kao ključ iz poveznice (SEC-01, SEC-04).
+const upit = new URLSearchParams(Astro.url.search);
+const k = upit.get("k");
+upit.delete("k");
+const ostatak = upit.toString();
+return Astro.redirect(`/${ostatak ? `?${ostatak}` : ""}${k ? `#k=${encodeURIComponent(k)}` : ""}`, 301);
 ---
