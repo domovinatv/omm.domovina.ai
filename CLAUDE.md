@@ -65,7 +65,7 @@ Usporedba modela: `curl -F "slika=@x.jpg;type=image/jpeg" --form-string "model=@
   očitanja je OMM + t1 + t2 + dan (UTC). Ponovljeni
   `POST /api/snimak` vraća postojeći snimak (200, `duplikat: true`).
 - **`dogadaji`** je sirovi dnevnik svakog upisa (`snimak`, `ocitaj`, `dostava`,
-  `brisanje`) s ishodom (`novo`, `duplikat`, `ok`, `greska`), tijelom zahtjeva,
+  `brisanje`) s ishodom (`novo`, `duplikat`, `ok`, `greska`), sažetkom zahtjeva (ne sadržajem),
   User-Agentom i državom. Tu se vidi koliko je puta isti snimak stigao.
   Uzrok: 2026-10-12 je isti uvoz stigao 4 puta u 37 s (gumb je ostao aktivan).
 
