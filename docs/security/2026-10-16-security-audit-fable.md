@@ -480,8 +480,18 @@ ključ i dalje generira klijent (server samo pamti, rotacija daje serverski klju
 ključem vraća prazno, ne 401 (oznaka zove GET /api/racun prije prvog upisa); WAF pravilo nije
 dodano, koristi se `ratelimits` binding; stare slike-siročad u R2 nisu obrisane (wrangler nema
 popis objekata). Kopija `dogadaji` prije 0006: `data/backup/2026-10-17-dogadaji.sql` (gitignored).
-SEC-11 shema uvoza je napravljena (`src/lib/uvoz.ts`), fiksni origin u `odgovor.ts` nije.
-SEC-12 `nosniff` je napravljen.
+
+Nastavak 2026-10-17 (Opus 5.5), deployano kao `2e01f4e1`: SEC-07 do SEC-12 i dio „Za provjeru“.
+Admin izvještaj traži `?kljuc=` ili izričit `?svi=1` (inače 400); pregled i detalj OMM-a pokazuju
+adresu i ime po ključu i oznaku „ne slažu se“. SEC-08 provjereno u produkciji: `/%61dmin/…`,
+`//admin/…` i `/admin/izvjestaj/…` bez sesije vode na prijavu. SEC-09: bez `Authentication-Results`
+vrijedi samo domena (ne znamo dodaje li ga Email Routing; vidi dolje). SEC-10: generator u
+flutter_moja_mreza (253327e) upisuje commit i SHA-256 u treći redak, `npm run build` ovdje pada kad
+se ne slaže (`scripts/provjeri-oznaku.mjs`); CI nema (repo nema `.github/workflows`), verzionirani
+URL nije napravljen (svi bi morali ponovno povući oznaku). SEC-11: PDF u produkciji svjež (~3 s),
+Inter ugrađen. SEC-12: `nosniff` je na svim API odgovorima (`CORS` u `http.ts`); `DELETE` nije
+dodan u `Allow-Methods` jer ga zove samo naš origin. Admin stranice nakon SEC-07 nisu pogledane
+u pregledniku (prijava passkeyem); build prolazi, upit je provjeren na lokalnom D1.
 
 - [x] SEC-01 `kljuc-klijent.ts`/`index.astro`: `?k=` ne smije tiho zamijeniti postojeći ključ; potvrda + vidljiva traka; oznaka se gradi tek nakon potvrde.
 - [x] SEC-02 Rate limiting (WAF pravilo ili `ratelimits` binding) na `/api/*`, stroži na `/api/ocitaj` i `/api/izvjestaj/*`; maknuti javni izbor `model`; limit slike 3 MB; `limits.cpu_ms`; limit veličine JSON tijela u `/api/snimak`.
@@ -489,10 +499,10 @@ SEC-12 `nosniff` je napravljen.
 - [x] SEC-04 Ključ u fragment (`#k=`) u oznaci, `window.open` i `/`; `Referrer-Policy: no-referrer` na javnim stranicama; provjeriti/isključiti URL u Workers Logs.
 - [x] SEC-05 Registracija ključeva na serveru (server generira), odbijanje nepoznatih (API i mail), rotacija ključa s prijenosom podataka.
 - [x] SEC-06 CSP + `nosniff` + `Referrer-Policy` + `X-Frame-Options` za sve HTML odgovore u `middleware.ts`; `innerHTML` → `textContent` u `ocitaj.astro:771,936,938`; validacija oblika `uvoz`.
-- [ ] SEC-07 Admin: izvještaj zadano po ključu, jasna oznaka kad više ključeva prisvaja isti OMM; `snimciOmm` preko `json_each` umjesto `instr`.
-- [ ] SEC-08 `Astro.locals.admin` provjera u `AdminOkvir.astro` i `admin/izvjestaj/[omm].ts`; test `curl /%61dmin/…`.
-- [ ] SEC-09 `mail.ts:52` regex `/(^|[.@])google\.com$/i` + provjera `Authentication-Results`.
-- [ ] SEC-10 Hash `hep-uvoz.js` u zaglavlju + CI provjera; 2FA na Cloudflare/GitHub; verzionirani URL skripte.
-- [ ] SEC-11 Shema za `uvoz`; fiksni origin za fontove u `odgovor.ts`.
-- [ ] SEC-12 `nosniff` na API odgovore; `DELETE` u `Allow-Methods` samo ako treba.
-- [ ] Za provjeru: `workers_dev: false`, Workers Logs i `?k=`, Email Routing DMARC, nasumičnost ključa u Flutter/extension klijentima, veličine `uvoz`/`tijelo` u produkciji.
+- [x] SEC-07 Admin: izvještaj zadano po ključu, jasna oznaka kad više ključeva prisvaja isti OMM; `snimciOmm` preko `json_each` umjesto `instr`.
+- [x] SEC-08 `Astro.locals.admin` provjera u `AdminOkvir.astro` i `admin/izvjestaj/[omm].ts`; test `curl /%61dmin/…`.
+- [x] SEC-09 `mail.ts:52` regex `/(^|[.@])google\.com$/i` + provjera `Authentication-Results`.
+- [x] SEC-10 Hash `hep-uvoz.js` u zaglavlju + provjera pri buildu (CI nema). Otvoreno: 2FA na Cloudflare/GitHub (korisnik); verzionirani URL skripte.
+- [x] SEC-11 Shema za `uvoz`; fiksni origin za fontove u `odgovor.ts`.
+- [x] SEC-12 `nosniff` na API odgovore; `DELETE` u `Allow-Methods` samo ako treba.
+- [ ] Za provjeru: ~~`workers_dev: false`~~ (postavljeno, i `preview_urls: false`; deploy ionako nije javljao workers.dev adresu), Workers Logs i `?k=` (invocation logovi su isključeni, SEC-04), Email Routing DMARC (otvoreno: pogledati `Authentication-Results` u jednom pravom mailu), ~~nasumičnost ključa~~ (web, ekstenzija i Flutter: 18 bajtova = 144 bita), ~~veličine~~ (2026-10-17: `uvoz` najviše 45 kB, prosjek 6,5 kB na 68 snimaka; `tijelo` najviše 223 B), Access politika i Browser Rendering kvota (dashboard).

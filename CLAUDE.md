@@ -99,8 +99,8 @@ Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
 | `/ocitaj` | očitanje brojila sa slike (sporedno) |
 | `/privatnost` | politika privatnosti; rokovi iz `src/lib/ciscenje.ts` (dnevni cron) |
 | `/uvoz` | 301 na `/` (stara adresa) |
-| `/admin` | admin (Access OTP ili passkey): korisnici po OMM-u, izvještaj za bilo koji OMM; `docs/admin.md` |
-| `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje |
+| `/admin` | admin (Access OTP ili passkey): korisnici po OMM-u, izvještaj za bilo koji OMM po ključu (`?kljuc=`) ili izričito spojen (`?svi=1`), jer uvoz šalje korisnik; `docs/admin.md` |
+| `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje: treći redak nosi SHA-256, `npm run build` pada kad se ne slaže |
 
 ## Izvještaj potrošnje
 
