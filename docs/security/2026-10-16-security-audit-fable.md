@@ -470,9 +470,12 @@ postavljati `cache-control` za admin; isto bi trebalo za javne stranice ako se �
 
 ## Zadaci za Opus 5.5 (po prioritetu)
 
-Stanje 2026-10-17 (Opus 5.5): SEC-01 do SEC-06 popravljeni i commitani, **nisu deployani**
-(`npm run db:migrate` za 0006 i 0007, pa `npm run deploy`; prije toga u pregledniku provjeriti
-oznaku na naslovnici pod novim CSP-om). R2 lifecycle `tmp` je već na bucketu. Odstupanja:
+Stanje 2026-10-17 (Opus 5.5): SEC-01 do SEC-06 popravljeni i **deployani** (migracije 0006 i
+0007 primijenjene, verzija `902c1548`). Prije deploya provjereno lokalno u Braveu pod novim CSP-om:
+naslovnica, traka za ključ iz `#k=`, zamjena ključa (stari 401, novi 200, oznaka s novim ključem),
+brisanje svega, oznaka kliknuta na naslovnici, `/ocitaj` (blob pregled i OCR), `/privatnost`,
+`/admin/login`; nijedan CSP prekršaj. U produkciji: CSP, `nosniff`, `no-referrer`, `DENY` na `/`;
+petlja od 30 `POST /api/ocitaj` daje 429 izmjenično s 400 (binding broji po lokaciji, s kašnjenjem). R2 lifecycle `tmp` je već na bucketu. Odstupanja:
 ključ i dalje generira klijent (server samo pamti, rotacija daje serverski ključ); GET nepoznatim
 ključem vraća prazno, ne 401 (oznaka zove GET /api/racun prije prvog upisa); WAF pravilo nije
 dodano, koristi se `ratelimits` binding; stare slike-siročad u R2 nisu obrisane (wrangler nema
