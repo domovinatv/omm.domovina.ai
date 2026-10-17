@@ -3,7 +3,8 @@
 import { defineMiddleware } from "astro:middleware";
 import { env } from "cloudflare:workers";
 import { getSession } from "./lib/admin/sesija";
-import { CORS } from "./lib/http";
+import { CORS, uredaj } from "./lib/http";
+import { registriraj, stanjeKljuca } from "./lib/kljucevi";
 
 const JAVNO = new Set([
   "/admin/login",
@@ -45,8 +46,25 @@ async function ogranicenje(request: Request, url: URL): Promise<Response | null>
   return null;
 }
 
+/**
+ * Zamijenjen ključ dobiva 401 na svakoj ruti; upis registrira nepoznat ključ i
+ * osvježi `zadnji` (SEC-05). Čitanje nepoznatim ključem samo vrati prazno.
+ */
+async function provjeriKljuc(request: Request): Promise<Response | null> {
+  const k = uredaj(request);
+  if (!k || request.method === "OPTIONS") return null;
+  if ((await stanjeKljuca(k)) === "zamijenjen") {
+    return new Response(JSON.stringify({ greska: "Ovaj ključ je zamijenjen novim. Napravi oznaku ponovno na omm.domovina.ai." }), {
+      status: 401,
+      headers: { "Content-Type": "application/json; charset=utf-8", ...CORS },
+    });
+  }
+  if (request.method !== "GET" && request.method !== "HEAD") await registriraj(k);
+  return null;
+}
+
 export const onRequest = defineMiddleware(async ({ request, url, locals }, next) => {
-  if (url.pathname.startsWith("/api/")) return (await ogranicenje(request, url)) ?? next();
+  if (url.pathname.startsWith("/api/")) return (await ogranicenje(request, url)) ?? (await provjeriKljuc(request)) ?? next();
   if (!jeAdmin(url.pathname)) return next();
 
   // 1. Jedan host: rpID passkeya je hostname, a Access štiti samo ADMIN_HOST/admin/sso.

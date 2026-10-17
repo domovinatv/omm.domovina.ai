@@ -4,6 +4,8 @@ export const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  // API ne vraća HTML; bez ovoga bi preglednik mogao pogađati vrstu (SEC-12).
+  "X-Content-Type-Options": "nosniff",
 };
 
 export function json(data: unknown, status = 200): Response {
@@ -23,7 +25,13 @@ export const opcije = () => new Response(null, { status: 204, headers: CORS });
  */
 export function uredaj(request: Request): string | null {
   const m = /^Bearer ([A-Za-z0-9_-]{22,64})$/.exec(request.headers.get("Authorization") ?? "");
-  return m ? m[1] : null;
+  return m && !slabKljuc(m[1]) ? m[1] : null;
 }
+
+/**
+ * Nasumičan ključ od 22 znaka ima ~19 različitih znakova (stvarni ključevi u bazi
+ * 15 do 23); ispod 10 je ručno upisan, poput AAAA…, i lako se pogodi (SEC-05).
+ */
+export const slabKljuc = (k: string) => new Set(k).size < 10;
 
 export const noviId = () => crypto.randomUUID();

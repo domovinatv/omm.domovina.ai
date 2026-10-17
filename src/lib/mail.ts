@@ -10,6 +10,8 @@
 import { env } from "cloudflare:workers";
 import PostalMime from "postal-mime";
 import { procitajRacun } from "./hep-racun";
+import { slabKljuc } from "./http";
+import { registriraj, stanjeKljuca } from "./kljucevi";
 import { spremiRacun } from "./racuni";
 
 const NAJVISE = 10 * 1024 * 1024;
@@ -17,7 +19,7 @@ const NAJVISE = 10 * 1024 * 1024;
 /** `racuni+<ključ>@…` → ključ; bez ključa nema kome pripisati mail. */
 export function kljucIzAdrese(adresa: string): string | null {
   const m = /^racuni\+([A-Za-z0-9_-]{22,64})@/i.exec(adresa.trim());
-  return m ? m[1] : null;
+  return m && !slabKljuc(m[1]) ? m[1] : null;
 }
 
 /** Gmail šalje kod i poveznicu na adresu prosljeđivanja prije nego je pusti. */
@@ -44,14 +46,21 @@ export async function primiMail(poruka: ForwardableEmailMessage): Promise<void> 
   if (!uredaj) return poruka.setReject("Nepoznata adresa");
   if (poruka.rawSize > NAJVISE) return poruka.setReject("Poruka je prevelika");
 
+  // Nepoznat ključ (SEC-05): prolazi samo Gmailova potvrda prosljeđivanja, koja
+  // stiže prije prvog računa i registrira ključ; ostalo se odbije prije parsiranja PDF-a.
+  const stanje = await stanjeKljuca(uredaj);
+  if (stanje === "zamijenjen") return poruka.setReject("Nepoznata adresa");
+
   const mail = await PostalMime.parse(poruka.raw);
   const naslov = mail.subject ?? "";
   const od = mail.from?.address ?? poruka.from;
   try {
     const potvrda = gmailPotvrda(naslov, `${mail.text ?? ""}\n${mail.html ?? ""}`);
     if (potvrda && /google\.com$/i.test(od)) {
+      if (stanje === "nepoznat") await registriraj(uredaj);
       return await zapisiMail(uredaj, od, naslov, { vrsta: "gmail-potvrda", ishod: "novo", poruka: potvrda });
     }
+    if (stanje === "nepoznat") return poruka.setReject("Nepoznata adresa");
 
     const pdfovi = mail.attachments.filter((a) => a.mimeType === "application/pdf" || /\.pdf$/i.test(a.filename ?? ""));
     let ijedan = false;

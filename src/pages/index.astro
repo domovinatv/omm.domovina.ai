@@ -248,6 +248,9 @@ import Podnozje from "../components/Podnozje.astro";
           <ul class="snimci" id="izvjestaji-popis"></ul>
         </div>
         <div class="brisanje">
+          <button type="button" id="rotiraj">Zamijeni ključ</button>
+          <p class="blijedo">Ako je oznaku vidio netko drugi: podaci prelaze na novi ključ, a stari više ništa ne otvara.
+            Staru oznaku zatim obriši iz trake i povuci novu.</p>
           <button type="button" id="obrisi">Obriši sve moje podatke</button>
           <div class="stanje" id="stanje-brisanje"></div>
           <p class="blijedo">Briše uvoze, račune, očitanja, slike i dnevnik ovog ključa, odmah i nepovratno.
@@ -435,6 +438,33 @@ import Podnozje from "../components/Podnozje.astro";
           b.disabled = false;
         }
       }
+
+      // Rotacija ključa (POST /api/kljuc/rotiraj): server da novi, stari dobiva 401.
+      // Oznaka nosi stari ključ, pa se korak 1 vraća na povlačenje.
+      const rotiraj = $<HTMLButtonElement>("rotiraj");
+      rotiraj.onclick = async () => {
+        const stanje = $("stanje-brisanje");
+        rotiraj.disabled = true;
+        stanje.className = "stanje"; stanje.textContent = "Mijenjam ključ…";
+        const r = await fetch("/api/kljuc/rotiraj", { method: "POST", headers: auth }).catch(() => null);
+        const d = await r?.json().catch(() => ({}));
+        if (r?.ok && d?.kljuc) {
+          postaviKljuc(d.kljuc);
+          try { localStorage.removeItem(POSTAVLJENA); sessionStorage.setItem("omm-rotiran", "1"); } catch {}
+          location.reload();
+          return;
+        }
+        rotiraj.disabled = false;
+        stanje.className = "stanje greska"; stanje.textContent = d?.greska ?? `Greška ${r?.status ?? "mreže"}`;
+      };
+      try {
+        if (sessionStorage.getItem("omm-rotiran")) {
+          sessionStorage.removeItem("omm-rotiran");
+          const s = $("stanje-oznaka");
+          s.textContent = "Ključ je zamijenjen. Obriši staru oznaku ⚡ Uvezi iz HEP-a iz trake i povuci ovu novu.";
+          s.className = "stanje istaknuto";
+        }
+      } catch {}
 
       // Brisanje svega pod ovim ključem: prvi klik pita, drugi briše (bez confirm()).
       const obrisi = $<HTMLButtonElement>("obrisi");
