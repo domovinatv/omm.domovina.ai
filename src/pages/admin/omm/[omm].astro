@@ -2,6 +2,8 @@
 import AdminOkvir from "../../../components/AdminOkvir.astro";
 import { IZVORI, kad, pregledOmm, uredaji } from "../../../lib/admin/pregled";
 
+if (!Astro.locals.admin) return new Response(null, { status: 401 });
+
 const omm = Astro.params.omm ?? "";
 const o = /^\d{10}$/.test(omm) ? (await pregledOmm()).find((x) => x.omm === omm) : undefined;
 if (!o) return new Response("Nema tog OMM-a", { status: 404 });

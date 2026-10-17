@@ -9,7 +9,8 @@ import { cjenik } from "../../../lib/izvjestaj/snimci";
  * Spojeni samo izričito: uvoz šalje korisnik, pa tuđa očitanja mogu ući u ponudu (SEC-07).
  * Isti izračun i izgled kao `/api/izvjestaj/:omm`. `?oblik=pdf|html|json`, `?anonimno=1`.
  */
-export const GET: APIRoute = async ({ params, url }) => {
+export const GET: APIRoute = async ({ params, url, locals }) => {
+  if (!locals.admin) return Response.json({ error: "unauthorized" }, { status: 401 });
   const omm = params.omm ?? "";
   if (!/^\d{10}$/.test(omm)) return new Response("OMM ima 10 znamenki", { status: 400 });
   const kljuc = url.searchParams.get("kljuc");

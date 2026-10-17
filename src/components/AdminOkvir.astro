@@ -1,8 +1,11 @@
 ---
 // Okvir admin stranica: isti tokeni boja kao naslovnica, širi raspored za tablice.
-interface Props { naslov: string; siroko?: boolean }
-const { naslov, siroko = false } = Astro.props;
+// Bez sesije baca (500) umjesto da prikaže stranicu, osim na prijavi (`javno`): druga
+// obrana ako middleware neku admin putanju ne prepozna (SEC-08).
+interface Props { naslov: string; siroko?: boolean; javno?: boolean }
+const { naslov, siroko = false, javno = false } = Astro.props;
 const admin = Astro.locals.admin;
+if (!admin && !javno) throw new Error("Admin stranica bez sesije");
 import Ikone from "./Ikone.astro";
 import Tema from "./Tema.astro";
 import PrekidacTeme from "./PrekidacTeme.astro";

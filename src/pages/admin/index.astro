@@ -2,6 +2,8 @@
 import AdminOkvir from "../../components/AdminOkvir.astro";
 import { IZVORI, kad, kratko, pregledOmm } from "../../lib/admin/pregled";
 
+if (!Astro.locals.admin) return new Response(null, { status: 401 });
+
 const omm = await pregledOmm();
 const korisnika = new Set(omm.flatMap((o) => o.korisnici.map((k) => k.uredaj))).size;
 const tjedan = new Date(Date.now() - 7 * 86_400_000).toISOString();

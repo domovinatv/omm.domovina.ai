@@ -3,7 +3,8 @@ import { env } from "cloudflare:workers";
 import AdminOkvir from "../../components/AdminOkvir.astro";
 import { kad } from "../../lib/admin/pregled";
 
-const { email } = Astro.locals.admin!;
+if (!Astro.locals.admin) return new Response(null, { status: 401 });
+const { email } = Astro.locals.admin;
 if (Astro.request.method === "POST") {
   const forma = await Astro.request.formData();
   await env.DB.prepare("DELETE FROM admin_passkeys WHERE id = ? AND email = ?").bind(String(forma.get("id")), email).run();

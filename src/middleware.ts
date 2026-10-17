@@ -16,6 +16,16 @@ const JAVNO = new Set([
 ]);
 
 const jeAdmin = (p: string) => p === "/admin" || p.startsWith("/admin/");
+/**
+ * Astro 7 putanju dekodira prije middlewarea, pa `/%61dmin` ovdje već stiže kao `/admin`.
+ * Ovo je za slučaj da neka verzija to prestane raditi: i dekodirana, bez dvostrukih kosih
+ * crta i malim slovima putanja mora proći istu provjeru (SEC-08).
+ */
+const adminPutanja = (p: string) => {
+  let d = p;
+  try { d = decodeURIComponent(p); } catch {}
+  return jeAdmin(p) || jeAdmin(d.replace(/\/{2,}/g, "/").toLowerCase());
+};
 const lokalno = (h: string) => h === "localhost" || h === "127.0.0.1";
 const json = (data: unknown, status: number) =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
@@ -65,7 +75,7 @@ async function provjeriKljuc(request: Request): Promise<Response | null> {
 
 export const onRequest = defineMiddleware(async ({ request, url, locals }, next) => {
   if (url.pathname.startsWith("/api/")) return (await ogranicenje(request, url)) ?? (await provjeriKljuc(request)) ?? next();
-  if (!jeAdmin(url.pathname)) return zastiti(await next(), false);
+  if (!adminPutanja(url.pathname)) return zastiti(await next(), false);
 
   // 1. Jedan host: rpID passkeya je hostname, a Access štiti samo ADMIN_HOST/admin/sso.
   const host = (env.ADMIN_HOST ?? "").trim();

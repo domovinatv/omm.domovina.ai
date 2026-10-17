@@ -7,7 +7,7 @@ if (await getSession(Astro.request.headers.get("cookie"))) return Astro.redirect
 const greska = Astro.url.searchParams.get("error") === "access" ? "Access prijava nije prihvaćena za ovaj admin." : null;
 const access = accessConfigured();
 ---
-<AdminOkvir naslov="Prijava">
+<AdminOkvir naslov="Prijava" javno>
   <h1>OMM admin</h1>
   <p class="blijedo">Pregled uvoza po OMM-u i izvještaji potrošnje.</p>
   <div class="kartica">
