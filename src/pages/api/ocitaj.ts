@@ -7,8 +7,8 @@ import { usporedi, zadnjeStanje } from "../../lib/usporedba";
 
 /**
  * POST multipart `slika` (jedna slika zaslona) → prijedlog 1.8.1 / 1.8.2.
- * Slika se sprema u R2 da se OCR kasnije može provjeriti; ključ se vraća pa ga
- * klijent šalje uz snimak.
+ * Slika se sprema u R2 (tmp/) da se OCR kasnije može provjeriti; ključ se vraća
+ * pa ga klijent šalje uz snimak, koji je zadrži.
  */
 function vrstaSlike(b: Uint8Array): string | null {
   if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
@@ -36,7 +36,9 @@ export const POST: APIRoute = async ({ request }) => {
     await zapisi(request, { uredaj: kljuc, vrsta: "ocitaj", ishod: "greska", tijelo: { greska: "nije JPEG/PNG/WebP", poslano_kao: slika.type } });
     return greska("Slika mora biti JPEG, PNG ili WebP", 415);
   }
-  const r2 = `${kljuc}/${noviId()}.${mime === "image/png" ? "png" : "jpg"}`;
+  // Pod tmp/ dok ne uđe u snimak: POST /api/snimak je preseli pod <ključ>/, a
+  // ostale (OCR pao, korisnik odustao) briše lifecycle pravilo bucketa nakon dana (SEC-03).
+  const r2 = `tmp/${kljuc}/${noviId()}.${mime === "image/png" ? "png" : "jpg"}`;
   await env.SLIKE.put(r2, bajtovi, { httpMetadata: { contentType: mime } });
 
   try {
@@ -73,7 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
       uredaj: kljuc,
       vrsta: "ocitaj",
       ishod: "ok",
-      tijelo: { slika: r2, model, registri: r.registri, napomena: r.napomena, zadnje, usporedba },
+      tijelo: { slika: r2, model, registri: r.registri },
     });
     return json({
       slika: r2,

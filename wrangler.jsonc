@@ -19,6 +19,8 @@
     }
   ],
   // Slike brojila, ključ <uređaj>/<id>.jpg. Čuvamo ih da se OCR može provjeriti.
+  // Nova slika je pod tmp/<uređaj>/ dok ne uđe u snimak; lifecycle pravilo „tmp“
+  // (wrangler r2 bucket lifecycle) briše tmp/ nakon dana.
   "r2_buckets": [{ "binding": "SLIKE", "bucket_name": "omm-domovina-ai-slike" }],
   "ai": { "binding": "AI" },
   // Browser Rendering: PDF izvještaja iz HTML stranice (src/pages/api/izvjestaj).
@@ -51,6 +53,9 @@
     // AUD Access aplikacije „OMM admin (sso)“ koja štiti omm.domovina.ai/admin/sso.
     "ACCESS_AUD": "4f2cae64004e536c0f5d2bc669ac9c3852e96b9ec99481c03c87b28a6bc9f929"
   },
+
+  // Dnevno čišćenje dnevnika i mailova (src/lib/ciscenje.ts, SEC-03).
+  "triggers": { "crons": ["17 3 * * *"] },
 
   "routes": [{ "pattern": "omm.domovina.ai", "custom_domain": true }],
   "observability": { "enabled": true }

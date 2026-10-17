@@ -112,6 +112,9 @@ import Podnozje from "../components/Podnozje.astro";
       .gumbi-red { display: flex; gap: 8px; flex-wrap: wrap; }
       .gumbi-red button { flex: 1 1 200px; }
       button.glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
+      .brisanje { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--rub); }
+      .brisanje button.potvrdi { background: var(--greska); color: #fff; border-color: var(--greska); }
+      .brisanje .stanje { text-align: left; }
       [hidden] { display: none !important; }
 
       /* Oznaka se povlači na računalu: tamo sve stane na jedan ekran, koraci jedan do drugog. */
@@ -243,6 +246,12 @@ import Podnozje from "../components/Podnozje.astro";
           <h2>Izvještaj potrošnje</h2>
           <p class="blijedo">Zadnjih 12 mjeseci s troškom, iz svih tvojih uvoza i očitanja. Radi se iznova kod svakog preuzimanja, pa uključuje i zadnje očitanje.</p>
           <ul class="snimci" id="izvjestaji-popis"></ul>
+        </div>
+        <div class="brisanje">
+          <button type="button" id="obrisi">Obriši sve moje podatke</button>
+          <div class="stanje" id="stanje-brisanje"></div>
+          <p class="blijedo">Briše uvoze, račune, očitanja, slike i dnevnik ovog ključa, odmah i nepovratno.
+            <a href="/privatnost">Što čuvamo i koliko</a></p>
         </div>
       </aside>
 
@@ -426,6 +435,33 @@ import Podnozje from "../components/Podnozje.astro";
           b.disabled = false;
         }
       }
+
+      // Brisanje svega pod ovim ključem: prvi klik pita, drugi briše (bez confirm()).
+      const obrisi = $<HTMLButtonElement>("obrisi");
+      let pitano = false;
+      obrisi.onclick = async () => {
+        const stanje = $("stanje-brisanje");
+        if (!pitano) {
+          pitano = true;
+          obrisi.textContent = "Da, obriši sve nepovratno";
+          obrisi.classList.add("potvrdi");
+          stanje.className = "stanje"; stanje.textContent = "Klikni ponovno za potvrdu.";
+          return;
+        }
+        obrisi.disabled = true;
+        stanje.textContent = "Brišem…";
+        const r = await fetch("/api/snimak", { method: "DELETE", headers: auth }).catch(() => null);
+        const d = await r?.json().catch(() => ({}));
+        obrisi.disabled = false; pitano = false;
+        obrisi.textContent = "Obriši sve moje podatke"; obrisi.classList.remove("potvrdi");
+        if (r?.ok) {
+          stanje.replaceChildren("Obrisano ", ikona("i-check"));
+          $("snimci").replaceChildren(Object.assign(document.createElement("li"), { className: "meta", textContent: "Još nema uvoza." }));
+          $("izvjestaji").hidden = true;
+        } else {
+          stanje.className = "stanje greska"; stanje.textContent = d?.greska ?? `Greška ${r?.status ?? "mreže"}`;
+        }
+      };
 
       // Rezerva kad HEP ne pusti izravan fetch: oznaka otvori /?primi=1 i pošalje
       // tijelo snimka preko postMessage. Prima se samo s HEP-ovih portala.

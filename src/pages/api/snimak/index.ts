@@ -53,6 +53,22 @@ function sadrzajUvoza(uvoz: unknown): unknown {
 const NAJVISE_TIJELA = 512 * 1024;
 const NAJVISE_OCR = 32 * 1024;
 
+/**
+ * Što od snimka ide u dnevnik: oblik, ne sadržaj. Uvoz nosi ime, adresu i promet,
+ * a čuva se već u `snimci`; dnevnik služi za duplikate i greške (SEC-03).
+ */
+function sazetak(b: Ulaz, bajtova: number) {
+  const u = b.uvoz as { mjesta?: unknown[]; kupci?: unknown[] } | null | undefined;
+  return {
+    izvor: b.izvor ?? null,
+    omm: b.omm ?? null,
+    bajtova,
+    ...(u ? { mjesta: Array.isArray(u.mjesta) ? u.mjesta.length : null, kupci: Array.isArray(u.kupci) ? u.kupci.length : null } : {}),
+    ...(b.slike?.length ? { slika: b.slike.length } : {}),
+    ...(b.lokacija ? { lokacija: true } : {}),
+  };
+}
+
 /** POST JSON snimak (očitanje i/ili uvoz s HEP-a). */
 export const POST: APIRoute = async ({ request }) => {
   const kljuc = uredaj(request);
@@ -70,7 +86,9 @@ export const POST: APIRoute = async ({ request }) => {
   const uvozni = izvor === "hep" || izvor === "hep-moj-racun" || izvor === "hep-hepi";
   const omm = b.omm == null ? null : String(b.omm);
   if (omm !== null && !/^\d{10}$/.test(omm)) return greska("OMM ima 10 znamenki");
-  const slike = (b.slike ?? []).filter((s) => typeof s === "string" && s.startsWith(`${kljuc}/`));
+  const trazene = (Array.isArray(b.slike) ? b.slike : []).filter(
+    (s): s is string => typeof s === "string" && (s.startsWith(`${kljuc}/`) || s.startsWith(`tmp/${kljuc}/`)),
+  );
   const t1 = cijeli(b.t1);
   const t2 = cijeli(b.t2);
   if (!uvozni && t1 === null) return greska("Nedostaje stanje 1.8.1 (t1)");
@@ -96,8 +114,21 @@ export const POST: APIRoute = async ({ request }) => {
       .first<{ id: string; stvoren: string }>();
   const postojeci = await nadji();
   if (postojeci) {
-    await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "duplikat", snimakId: postojeci.id, otisak, tijelo: b });
+    await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "duplikat", snimakId: postojeci.id, otisak, tijelo: sazetak(b, tekst.length) });
     return json({ ...postojeci, duplikat: true });
+  }
+
+  // Slike iz /api/ocitaj su pod tmp/ (inače ih briše lifecycle): snimak ih zadrži.
+  const slike: string[] = [];
+  for (const s of trazene) {
+    if (!s.startsWith("tmp/")) { slike.push(s); continue; }
+    const trajno = s.slice(4);
+    const o = await env.SLIKE.get(s);
+    if (o) {
+      await env.SLIKE.put(trajno, o.body, { httpMetadata: o.httpMetadata });
+      await env.SLIKE.delete(s);
+      slike.push(trajno);
+    } else if (await env.SLIKE.head(trajno)) slike.push(trajno);
   }
 
   const id = noviId();
@@ -127,10 +158,10 @@ export const POST: APIRoute = async ({ request }) => {
   // Dva istovremena zahtjeva: drugi ne upiše ništa i vrati prvi.
   if (!upis.meta.changes) {
     const prvi = await nadji();
-    await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "duplikat", snimakId: prvi?.id, otisak, tijelo: b });
+    await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "duplikat", snimakId: prvi?.id, otisak, tijelo: sazetak(b, tekst.length) });
     return json({ ...prvi, duplikat: true });
   }
-  await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "novo", snimakId: id, otisak, tijelo: b });
+  await zapisi(request, { uredaj: kljuc, vrsta: "snimak", ishod: "novo", snimakId: id, otisak, tijelo: sazetak(b, tekst.length) });
   return json({ id, stvoren }, 201);
 };
 
@@ -153,6 +184,33 @@ export const GET: APIRoute = async ({ request }) => {
       ima_uvoz: !!r.ima_uvoz,
     })),
   );
+};
+
+/**
+ * DELETE sve podatke ovog ključa: snimke, dnevnik, mailove i slike u R2 (i one
+ * pod tmp/). Pravo na brisanje (SEC-03); gumb je na naslovnici.
+ */
+export const DELETE: APIRoute = async ({ request }) => {
+  const kljuc = uredaj(request);
+  if (!kljuc) return greska("Nedostaje ključ uređaja", 401);
+  let slika = 0;
+  for (const prefix of [`${kljuc}/`, `tmp/${kljuc}/`]) {
+    let cursor: string | undefined;
+    do {
+      const popis = await env.SLIKE.list({ prefix, cursor });
+      if (popis.objects.length) await env.SLIKE.delete(popis.objects.map((o) => o.key));
+      slika += popis.objects.length;
+      cursor = popis.truncated ? popis.cursor : undefined;
+    } while (cursor);
+  }
+  const [snimci] = await env.DB.batch([
+    env.DB.prepare(`DELETE FROM snimci WHERE uredaj = ?`).bind(kljuc),
+    env.DB.prepare(`DELETE FROM dogadaji WHERE uredaj = ?`).bind(kljuc),
+    env.DB.prepare(`DELETE FROM mailovi WHERE uredaj = ?`).bind(kljuc),
+  ]);
+  // Jedan redak ostaje da se vidi da je brisanje bilo; bez sadržaja.
+  await zapisi(request, { uredaj: kljuc, vrsta: "brisanje", ishod: "ok", tijelo: { sve: true, snimaka: snimci.meta.changes, slika } });
+  return json({ ok: true, snimaka: snimci.meta.changes, slika });
 };
 
 export const OPTIONS: APIRoute = opcije;

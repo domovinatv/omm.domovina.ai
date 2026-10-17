@@ -1,0 +1,83 @@
+---
+// Politika privatnosti (SEC-03 u docs/security/2026-10-16-security-audit-fable.md).
+// Rokovi moraju odgovarati kodu: src/lib/ciscenje.ts i lifecycle pravilo bucketa.
+import Ikone from "../components/Ikone.astro";
+import Tema from "../components/Tema.astro";
+import PrekidacTeme from "../components/PrekidacTeme.astro";
+import Marka from "../components/Marka.astro";
+import Podnozje from "../components/Podnozje.astro";
+import { DNEVNIK_DANA, MAILOVI_DANA } from "../lib/ciscenje";
+---
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OMM · Privatnost</title>
+    <Ikone />
+    <Tema />
+    <meta name="description" content="Koje podatke OMM čuva, zašto, koliko dugo i kako ih obrisati." />
+    <style is:global>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--tekst);
+        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+      a { color: var(--akcent); }
+      .zaglavlje { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 28px; }
+      h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 8px; }
+      h2 { font-size: 1.15rem; margin: 28px 0 8px; }
+      ul { padding-left: 22px; } li { margin: 4px 0; }
+      .blijedo { color: var(--blijedo); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="zaglavlje"><Marka dodatak="domovina.ai" /><PrekidacTeme /></header>
+      <h1>Privatnost</h1>
+      <p class="blijedo">Koje podatke OMM čuva, zašto, koliko dugo i kako ih obrisati.</p>
+
+      <h2>Tko je voditelj obrade</h2>
+      <p>ITalk d.o.o., IX. Južna obala 20, 10000 Zagreb, OIB 54872935051. Kontakt za sve o podacima:
+        <a href="mailto:ms@domovina.ai">ms@domovina.ai</a>.</p>
+
+      <h2>Što čuvamo</h2>
+      <ul>
+        <li><b>Uvoz s HEP-ovih portala</b>, kad klikneš <b>Pošalji</b> u oznaci: ime i adresu kupca, broj mjernog
+          mjesta (OMM) i brojila, ugovorni račun, očitanja, potrošnju, račune, uplate i saldo.</li>
+        <li><b>Račune u PDF-u</b> (s Hepija ili mailom): samo što iz njih pročitamo (razdoblje, kWh, iznosi, poziv
+          na broj). Sam PDF i mail ne čuvamo, a OIB iz računa ne čitamo.</li>
+        <li><b>Očitanja brojila</b> koja upišeš ili uslikaš: stanja 1.8.1 i 1.8.2, sliku zaslona brojila i, ako
+          dopustiš, lokaciju u trenutku očitanja.</li>
+        <li><b>Dnevnik zahtjeva</b>: vrijeme, vrstu (uvoz, očitanje, brisanje), ishod, preglednik (User-Agent) i
+          državu, uz sažetak bez osobnih podataka. Služi za otkrivanje grešaka i dvostrukih uvoza.</li>
+      </ul>
+      <p>Sve je vezano uz <b>ključ ovog preglednika</b>, ne uz korisnički račun: tko zna ključ, vidi te podatke.
+        Ključ je u oznaci, pa je ne dijeli. Lozinku, kolačiće i token prijave na HEP-u nikad ne vidimo.</p>
+
+      <h2>Zašto</h2>
+      <p>Da ti pokažemo uvoze i napravimo izvještaj potrošnje, i da ti na temelju potrošnje možemo predložiti
+        sunčanu elektranu. Podatke ne prodajemo i ne dajemo trećima.</p>
+      <p>Osnova je tvoja privola: podatke šalješ sam, klikom, i u svakom trenutku ih možeš obrisati.</p>
+
+      <h2>Gdje</h2>
+      <p>Na Cloudflareu (baza D1, spremište slika R2, Workers AI za čitanje slike brojila, Browser Rendering za PDF
+        izvještaja), kao izvršitelju obrade.</p>
+
+      <h2>Koliko dugo</h2>
+      <ul>
+        <li>Uvozi, računi, očitanja i spremljene slike: dok ih ne obrišeš.</li>
+        <li>Slika brojila koja nije spremljena uz očitanje: jedan dan.</li>
+        <li>Dnevnik zahtjeva: {DNEVNIK_DANA} dana.</li>
+        <li>Zapis o primljenom mailu (pošiljatelj, naslov, ishod): {MAILOVI_DANA} dana.</li>
+      </ul>
+
+      <h2>Kako obrisati</h2>
+      <p>Na <a href="/">naslovnici</a>, u stupcu <b>Moji uvozi</b>, gumb <b>Obriši sve moje podatke</b> odmah
+        briše sve pod ključem ovog preglednika: uvoze, račune, očitanja, slike, dnevnik i zapise mailova. Ako
+        više nemaš preglednik s tim ključem, piši na <a href="mailto:ms@domovina.ai">ms@domovina.ai</a>.</p>
+      <p>Imaš pravo na pristup, ispravak, brisanje i prigovor Agenciji za zaštitu osobnih podataka (azop.hr).</p>
+
+      <Podnozje />
+    </main>
+  </body>
+</html>

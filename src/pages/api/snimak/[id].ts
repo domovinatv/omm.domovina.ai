@@ -20,12 +20,13 @@ export const PATCH: APIRoute = async ({ request, params }) => {
     vrsta: "dostava",
     ishod: r.meta.changes ? "ok" : "greska",
     snimakId: params.id,
-    tijelo: b,
+    // Samo ishod dostave, ne cijeli odgovor HEP-a (SEC-03).
+    tijelo: { omm: b.omm ?? null, status: (b.hep_dostava as { Status?: unknown })?.Status ?? null },
   });
   return r.meta.changes ? json({ ok: true }) : greska("Nema takvog snimka", 404);
 };
 
-/** DELETE: briše snimak i njegove slike. */
+/** DELETE: briše snimak, njegove slike i njegove retke u dnevniku. */
 export const DELETE: APIRoute = async ({ request, params }) => {
   const kljuc = uredaj(request);
   if (!kljuc) return greska("Nedostaje ključ uređaja", 401);
@@ -35,7 +36,11 @@ export const DELETE: APIRoute = async ({ request, params }) => {
   if (!row) return greska("Nema takvog snimka", 404);
   const slike: string[] = row.slike ? JSON.parse(row.slike) : [];
   if (slike.length) await env.SLIKE.delete(slike);
-  await env.DB.prepare(`DELETE FROM snimci WHERE id = ? AND uredaj = ?`).bind(params.id, kljuc).run();
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM snimci WHERE id = ? AND uredaj = ?`).bind(params.id, kljuc),
+    env.DB.prepare(`DELETE FROM dogadaji WHERE snimak_id = ? AND uredaj = ?`).bind(params.id, kljuc),
+    env.DB.prepare(`UPDATE mailovi SET snimak_id = NULL WHERE snimak_id = ? AND uredaj = ?`).bind(params.id, kljuc),
+  ]);
   await zapisi(request, { uredaj: kljuc, vrsta: "brisanje", ishod: "ok", snimakId: params.id });
   return json({ ok: true });
 };
