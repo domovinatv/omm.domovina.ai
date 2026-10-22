@@ -1,6 +1,6 @@
 // Generirano iz github.com/stepanic/flutter_moja_mreza (extension/tools/bookmarklet.mjs).
 // Ne mijenjati ovdje: izvor su extension/uvoz.js, mojracun.js, hepi.js i bookmarklet.js.
-// Izvor 253327e, sha256 ostatka 39dc260f33b01cae65a2c8101cf4f8bdd20996dd4d0e77939863553e394b5e8c
+// Izvor 546d02a, sha256 ostatka a64e11d228f1533865a76bbc08402163795daefc5cdee6a0a468d3bacd2c565f
 // ---- uvoz.js ----
 // Uvoz s Moje mre\u017ee (https://mojamreza.hep.hr) u pregledniku.
 //
@@ -530,7 +530,7 @@
 // Bookmarklet \u201eUvezi iz HEP-a\u201c: isti uvoz kao extension, bez instalacije.
 //
 // Oznaka u pregledniku ubacuje <script src="https://omm.domovina.ai/hep-uvoz.js?v=\u2026#k=<klju\u010d>">
-// u prijavljenu karticu Moje mre\u017ee, Mojeg ra\u010duna (Elektra) ili Mojeg Hepi
+// (ili isti kod kroz eval, vidi CSP ni\u017ee) u prijavljenu karticu Moje mre\u017ee, Mojeg ra\u010duna (Elektra) ili Mojeg Hepi
 // ra\u010duna. Ta datoteka je spoj uvoz.js + mojracun.js + hepi.js + ove datoteke
 // (tools/bookmarklet.mjs), pa se kod
 // izvr\u0161ava na HEP-ovoj domeni: fetch je same-origin s cookiejima sesije, kao u
@@ -540,13 +540,18 @@
 // prvo ka\u017ee \u0161to \u010dita, \u0161to \u0161alje i \u0161to ne dira, nakon \u010ditanja poka\u017ee sa\u017eetak i
 // cijeli JSON, a \u0161alje tek na drugi klik.
 //
-// Za\u0161to radi: nijedan portal nema CSP koji ograni\u010dava script-src ili
-// connect-src (provjereno 2026-10-14), a /api/snimak ima CORS *. Ako se to
-// promijeni, rezerva je nova kartica omm.domovina.ai/?primi=1 i postMessage.
+// CSP portala (od 2026-10-22): Moja mre\u017ea ima script-src bez nas, Moj ra\u010dun i
+// connect-src 'self'; oba dopu\u0161taju 'unsafe-eval'. Zato oznaka (index.astro na
+// omm.domovina.ai) prvo proba <script>, pa fetch + eval, pa malu karticu
+// omm.domovina.ai/oznaka koja kod po\u0161alje preko postMessage. Uz eval nema
+// document.currentScript, pa oznaka adresu s klju\u010dem ostavi u globalThis.ommOznaka.
+// Slanje: /api/snimak ima CORS *; kad connect-src to prije\u010di, rezerva je nova
+// kartica omm.domovina.ai/?primi=1 i postMessage.
 
 (() => {
   const skripta = document.currentScript;
-  const adresa = new URL(skripta ? skripta.src : 'https://omm.domovina.ai/hep-uvoz.js');
+  const adresa = new URL(skripta?.src || globalThis.ommOznaka || 'https://omm.domovina.ai/hep-uvoz.js');
+  delete globalThis.ommOznaka;
   const SERVER = adresa.origin;
   const HOST = SERVER.replace('https://', '');
   // Klju\u010d je u fragmentu (#k=), koji se ne \u0161alje serveru ni u logove; ?k= je za

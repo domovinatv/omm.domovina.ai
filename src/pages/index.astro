@@ -287,7 +287,11 @@ import Podnozje from "../components/Podnozje.astro";
       // Mali loader; sav kod je u /hep-uvoz.js da se parser može popraviti bez
       // ponovnog povlačenja oznake. ?v= zaobilazi predmemoriju. Ključ je u fragmentu
       // (#k=), koji preglednik ne šalje serveru, pa ga nema u logovima (SEC-04).
-      const kod = `javascript:(()=>{var s=document.createElement('script');s.src='${location.origin}/hep-uvoz.js?v='+Date.now()+'#k=${k}';document.body.appendChild(s)})()`;
+      // HEP-ov CSP (od 2026-10-22) priječi <script src> s našeg origina, a na Mojem
+      // računu i fetch, ali dopušta eval. Zato: <script>, pa fetch + eval, pa mala
+      // kartica /oznaka koja kod pošalje preko postMessage. Uz eval nema
+      // document.currentScript, pa adresa s ključem ide u window.ommOznaka.
+      const kod = `javascript:(()=>{var S='${location.origin}',u=S+'/hep-uvoz.js?v='+Date.now()+'#k=${k}',x=function(t){window.ommOznaka=u;(0,eval)(t)},s=document.createElement('script');s.src=u;s.onerror=function(){fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()}).then(x).catch(function(){var w=open(S+'/oznaka','omm-oznaka','popup,width=480,height=200');addEventListener('message',function f(e){if(e.origin===S&&e.source===w&&e.data&&e.data.omm==='kod'){removeEventListener('message',f);x(e.data.kod)}})})};document.body.appendChild(s)})()`;
       const oznaka = $<HTMLAnchorElement>("oznaka");
       oznaka.href = kod;
       oznaka.onclick = (e) => {

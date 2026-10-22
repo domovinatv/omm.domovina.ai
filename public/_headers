@@ -5,5 +5,7 @@
   Cache-Control: no-cache
 /hep-uvoz.js
   Cache-Control: no-cache
+  # Oznaka ga na Mojoj mreži dohvaća fetchom i izvršava kroz eval (CSP od 2026-10-22).
+  Access-Control-Allow-Origin: *
 /ikone/*
   Cache-Control: no-cache

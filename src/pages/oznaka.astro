@@ -1,0 +1,47 @@
+---
+// Rezerva oznake „Uvezi iz HEP-a“ kad HEP-ov CSP ne pusti ni <script src> ni fetch
+// prema nama (Moj račun: connect-src 'self', od 2026-10-22). Oznaka otvori ovu
+// malu karticu; ona pročita /hep-uvoz.js i pošalje ga HEP-ovoj kartici preko
+// postMessage, gdje ga oznaka izvrši kroz eval (portali dopuštaju 'unsafe-eval').
+// Kod je javan, a ključ ostaje u oznaci, pa ovdje nema ničeg tajnog.
+import Ikone from "../components/Ikone.astro";
+import Tema from "../components/Tema.astro";
+---
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>OMM · Oznaka</title>
+    <Ikone />
+    <Tema />
+    <style is:global>
+      body { margin: 0; background: var(--bg); color: var(--tekst);
+        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { padding: 24px 16px; }
+      .greska { color: var(--greska); }
+    </style>
+  </head>
+  <body>
+    <main><p id="stanje">Učitavam uvoz za HEP-ovu karticu…</p></main>
+    <script>
+      const HEP = ["https://mojamreza.hep.hr", "https://mojracun.hep.hr"];
+      const stanje = document.getElementById("stanje")!;
+      const greska = (t: string) => { stanje.textContent = t; stanje.className = "greska"; };
+      if (!window.opener) {
+        greska("Ova kartica služi oznaci „Uvezi iz HEP-a“. Otvori je klikom na oznaku na HEP-ovoj stranici.");
+      } else {
+        fetch(`/hep-uvoz.js?v=${Date.now()}`)
+          .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+          .then((kod) => {
+            // Poruka stigne samo onom od ovih origina koji je stvarno otvorio karticu.
+            for (const o of HEP) window.opener.postMessage({ omm: "kod", kod }, o);
+            stanje.textContent = "Gotovo, vrati se na HEP-ovu karticu.";
+            setTimeout(() => window.close(), 300);
+          })
+          .catch((e) => greska(`Ne mogu učitati uvoz (${e.message || e}).`));
+      }
+    </script>
+  </body>
+</html>
