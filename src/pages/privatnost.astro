@@ -42,7 +42,8 @@ import { DNEVNIK_DANA, MAILOVI_DANA } from "../lib/ciscenje";
 
       <h2>Što čuvamo</h2>
       <ul>
-        <li><b>Uvoz s HEP-ovih portala</b>, kad klikneš <b>Pošalji</b> u oznaci: ime i adresu kupca, broj mjernog
+        <li><b>Uvoz s HEP-ovih portala</b>, kad klikneš <b>Pošalji</b> u oznaci ili <b>Dopusti čitanje i uvezi</b> u
+          ekstenziji: ime i adresu kupca, broj mjernog
           mjesta (OMM) i brojila, ugovorni račun, očitanja, potrošnju, račune, uplate i saldo.</li>
         <li><b>Račune u PDF-u</b> (s Hepija ili mailom): samo što iz njih pročitamo (razdoblje, kWh, iznosi, poziv
           na broj). Sam PDF i mail ne čuvamo, a OIB iz računa ne čitamo.</li>
@@ -53,6 +54,13 @@ import { DNEVNIK_DANA, MAILOVI_DANA } from "../lib/ciscenje";
       </ul>
       <p>Sve je vezano uz <b>ključ ovog preglednika</b>, ne uz korisnički račun: tko zna ključ, vidi te podatke.
         Ključ je u oznaci, pa je ne dijeli. Lozinku, kolačiće i token prijave na HEP-u nikad ne vidimo.</p>
+
+      <h2>Ekstenzija za preglednik</h2>
+      <p>Ekstenzija <b>Uvoz s HEP-a za omm.domovina.ai</b> čita HEP-ov portal (Moja mreža, Moj račun, Hepi) samo u
+        kartici u kojoj je klikneš, tek nakon klika na <b>Dopusti čitanje i uvezi</b>, i to u tvojoj prijavi. Pročitano
+        šalje isključivo na omm.domovina.ai, s istim podacima kao gore. Na omm.domovina.ai preuzme ključ ovog
+        preglednika, da uvozi budu vidljivi na webu. U pregledniku čuva samo taj ključ i stanje zadnjeg uvoza. Ne
+        prati koje stranice posjećuješ, ne čita druge stranice i nema oglasa ni analitike.</p>
 
       <h2>Zašto</h2>
       <p>Da ti pokažemo uvoze i napravimo izvještaj potrošnje, i da ti na temelju potrošnje možemo predložiti
