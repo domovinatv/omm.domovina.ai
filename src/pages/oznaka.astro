@@ -3,8 +3,9 @@
 // prema nama (Moj račun: connect-src 'self', od 2026-10-22). Oznaka ovu stranicu
 // ubaci kao skriveni iframe (?v=3); ona pročita /hep-uvoz.js i pošalje ga HEP-ovoj
 // stranici preko postMessage, gdje ga oznaka izvrši kroz eval ili, gdje CSP ne
-// dopušta eval (Moj račun od 2026-10-30), kao inline <script>. Zatim prima uvoz
-// ({omm: "uvoz", id, kljuc, tijelo}) i šalje ga na /api/snimak s našeg origina.
+// dopušta eval (Moj račun od 2026-10-30), kao inline <script>. Zatim prima zahtjeve
+// ({omm: "zahtjev", id, put, metoda, tip, kljuc, tijelo}) za /api/snimak i /api/racun
+// (PDF računa s Hepija) i šalje ih s našeg origina.
 // Iframe, a ne popup: Moj račun od 2026-10-30 šalje COOP same-origin, pa popup
 // nema opener. Middleware ovoj stranici dopušta frame-ancestors HEP-ovih portala.
 // Starije oznake je otvaraju kao popup (window.opener); bez openera traže novu oznaku.
@@ -34,6 +35,7 @@ import Tema from "../components/Tema.astro";
       const HEP = ["https://mojamreza.hep.hr", "https://mojracun.hep.hr"];
       const stanje = document.getElementById("stanje")!;
       const greska = (t: string) => { stanje.textContent = t; stanje.className = "greska"; };
+      const PUTOVI = ["/api/snimak", "/api/racun"];
       const iframe = window.parent !== window;
       const hep = iframe ? window.parent : window.opener;
 
@@ -43,15 +45,14 @@ import Tema from "../components/Tema.astro";
       } else {
         if (iframe) {
           window.addEventListener("message", async (e) => {
-            if (!HEP.includes(e.origin) || e.source !== window.parent || e.data?.omm !== "uvoz") return;
-            const { id, kljuc, tijelo } = e.data;
-            let status = 0, j = {};
+            if (!HEP.includes(e.origin) || e.source !== window.parent || e.data?.omm !== "zahtjev") return;
+            const { id, put, metoda, tip, kljuc, tijelo } = e.data;
+            let status = 0, j: unknown = {};
             try {
-              const r = await fetch("/api/snimak", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${kljuc}`, "Content-Type": "application/json" },
-                body: JSON.stringify(tijelo),
-              });
+              if (!PUTOVI.includes(put) || !["GET", "POST"].includes(metoda)) throw new Error(`nedopušten zahtjev ${metoda} ${put}`);
+              const headers: Record<string, string> = { Authorization: `Bearer ${kljuc}` };
+              if (tip) headers["Content-Type"] = tip;
+              const r = await fetch(put, { method: metoda, headers, body: metoda === "GET" ? undefined : tijelo });
               status = r.status;
               j = await r.json().catch(() => ({}));
             } catch (x) {

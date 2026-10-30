@@ -1,6 +1,6 @@
 // Generirano iz github.com/stepanic/flutter_moja_mreza (extension/tools/bookmarklet.mjs).
 // Ne mijenjati ovdje: izvor su extension/uvoz.js, mojracun.js, hepi.js i bookmarklet.js.
-// Izvor 87a16ca, sha256 ostatka bb1c172cf20dc311d1bc1371686b009c2c7793197a0e78f4737eb5f8745e3f76
+// Izvor 126209a, sha256 ostatka 3b2ed1e176f3f271e18f2220821ad044a6ce5eb30fc9c8e3468922f9b012555c
 // ---- uvoz.js ----
 // Uvoz s Moje mre\u017ee (https://mojamreza.hep.hr) u pregledniku.
 //
@@ -834,20 +834,7 @@
     for (const b of $('gumbi').querySelectorAll('button')) b.disabled = true;
     status(`\u0160aljem na ${HOST}\u2026`);
     try {
-      let status, j;
-      try {
-        const o = await fetch(`${SERVER}/api/snimak`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${KLJUC}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(tijelo(uvoz)),
-          credentials: 'omit',
-        });
-        status = o.status;
-        j = await o.json().catch(() => ({}));
-      } catch {
-        // connect-src prije\u010di fetch prema nama (Moj ra\u010dun): \u0161alje iframe s na\u0161eg origina.
-        ({ status, j } = await krozMost({ omm: 'uvoz', kljuc: KLJUC, tijelo: tijelo(uvoz) }));
-      }
+      const { status, j } = await api('/api/snimak', 'POST', 'application/json', JSON.stringify(tijelo(uvoz)));
       if (status !== 200 && status !== 201) throw new Error(j.greska || `HTTP ${status}`);
       if (izvor.racuni) await posaljiRacune(uvoz);
       // Duplikat: server je po sadr\u017eaju prepoznao isti uvoz i vratio prvi (s `stvoren`).
@@ -864,7 +851,20 @@
     }
   }
 
-  // Iframe omm.domovina.ai/oznaka (vidi zaglavlje): prima poruku, \u0161alje je na API i
+  // Zahtjev na na\u0161 API s klju\u010dem: izravno, a kad connect-src prije\u010di fetch prema nama
+  // (Moj ra\u010dun, Hepi), kroz iframe s na\u0161eg origina. Vra\u0107a {status, j}.
+  async function api(put, metoda, tip, tijelo) {
+    try {
+      const headers = { Authorization: `Bearer ${KLJUC}` };
+      if (tip) headers['Content-Type'] = tip;
+      const o = await fetch(`${SERVER}${put}`, { method: metoda, headers, body: tijelo, credentials: 'omit' });
+      return { status: o.status, j: await o.json().catch(() => ({})) };
+    } catch {
+      return krozMost({ omm: 'zahtjev', put, metoda, tip, kljuc: KLJUC, tijelo });
+    }
+  }
+
+  // Iframe omm.domovina.ai/oznaka (vidi zaglavlje): prima zahtjev, \u0161alje ga na API i
   // vrati {status, j}. Kad ga oznaka nije ostavila, napravi ga; spreman je kad javi \u201ekod\u201c.
   function krozMost(poruka) {
     return new Promise((uspjeh, neuspjeh) => {
@@ -892,11 +892,10 @@
   // pro\u010ditaju (isti parser kao za ra\u010dune mailom) i odbace. Server vra\u0107a popis
   // poziva na broj koje ve\u0107 ima, pa se ponovni uvoz svodi na nove ra\u010dune.
   async function posaljiRacune(uvoz) {
-    const auth = { Authorization: `Bearer ${KLJUC}` };
     let imamo = [];
     try {
-      const o = await fetch(`${SERVER}/api/racun`, { headers: auth, credentials: 'omit' });
-      if (o.ok) imamo = await o.json();
+      const { status, j } = await api('/api/racun', 'GET');
+      if (status === 200 && Array.isArray(j)) imamo = j;
     } catch {}
     const novi = uvoz.kupci.flatMap((k) => k.racuni).filter((r) => r.link && r.poziv_na_broj && !imamo.includes(r.poziv_na_broj));
     let procitano = 0;
@@ -904,10 +903,8 @@
       status(`Ra\u010dun ${i + 1}/${novi.length}\u2026`);
       try {
         const pdf = await globalThis.hepiRacunPdf(r.link);
-        const o = await fetch(`${SERVER}/api/racun`, {
-          method: 'POST', headers: { ...auth, 'Content-Type': 'application/pdf' }, body: pdf, credentials: 'omit',
-        });
-        if (o.ok) procitano++;
+        const { status } = await api('/api/racun', 'POST', 'application/pdf', pdf);
+        if (status >= 200 && status < 300) procitano++;
       } catch {}
     }
     if (novi.length) {
