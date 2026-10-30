@@ -100,7 +100,7 @@ Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
 | `/privatnost` | politika privatnosti; rokovi iz `src/lib/ciscenje.ts` (dnevni cron) |
 | `/uvoz` | 301 na `/` (stara adresa) |
 | `/admin` | admin (Access OTP ili passkey): korisnici po OMM-u, izvještaj za bilo koji OMM po ključu (`?kljuc=`) ili izričito spojen (`?svi=1`), jer uvoz šalje korisnik; `docs/admin.md` |
-| `/oznaka` | mala kartica koju oznaka otvori kad HEP-ov CSP priječi i `<script>` i fetch (Moj račun): pošalje kod `/hep-uvoz.js` preko postMessage, oznaka ga izvrši kroz eval. Tijek i izmjereni CSP: `flutter_moja_mreza/docs/2026-10-14-uvoz-bez-instalacije.md` § „HEP-ov CSP“ |
+| `/oznaka` | skriveni iframe (most) koji oznaka ubaci kad HEP-ov CSP priječi i `<script>` i fetch (Moj račun, Hepi): pošalje kod `/hep-uvoz.js` preko postMessage (oznaka ga izvrši kroz eval, a bez `unsafe-eval` kao inline `<script>`) i šalje zahtjeve na `/api/snimak` i `/api/racun`. Jedina stranica s `frame-ancestors` HEP-ovih portala (popup ne ide: COOP od 2026-10-30). Tijek: `flutter_moja_mreza/docs/2026-10-14-uvoz-bez-instalacije.md` § „HEP-ov CSP“ |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje: treći redak nosi SHA-256, `npm run build` pada kad se ne slaže |
 
 ## Izvještaj potrošnje
