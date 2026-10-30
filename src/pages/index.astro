@@ -1,6 +1,7 @@
 ---
-// Naslovnica: uvoz s HEP-a oznakom (bookmarklet). To je jedini način uvoza koji
-// nudimo korisnicima: ništa se ne instalira, prijava ostaje na HEP-u.
+// Naslovnica: uvoz s HEP-a. U Chromiumu (Chrome, Brave, Edge, Opera) glavni put je
+// ekstenzija s Chrome Web Storea (od 2026-10-30, HEP-ov CSP sve više priječi oznaku),
+// drugdje i kao rezerva oznaka (bookmarklet). Prijava uvijek ostaje na HEP-u.
 // Kod oznake je public/hep-uvoz.js, generiran iz flutter_moja_mreza/extension.
 import Ikone from "../components/Ikone.astro";
 import Tema from "../components/Tema.astro";
@@ -37,6 +38,7 @@ import Podnozje from "../components/Podnozje.astro";
         background: var(--akcent); color: var(--akcent-tekst); font-weight: 700; font-size: 1.05rem; text-decoration: none;
         cursor: grab; box-shadow: 0 2px 10px rgba(0,47,108,.25); }
       .oznaka:active { cursor: grabbing; }
+      .oznaka.gumb-veza, .oznaka.gumb-veza:active { cursor: pointer; }
       .stanje.istaknuto { color: var(--akcent); font-weight: 600; }
       .broj.gotov { background: var(--akcent); color: var(--akcent-tekst); }
       /* Dok se gumb povlači: traka s oznakama je iznad stranice, pa strelica pokazuje gore. */
@@ -141,7 +143,7 @@ import Podnozje from "../components/Podnozje.astro";
       <header class="zaglavlje"><Marka dodatak="domovina.ai" /><PrekidacTeme /></header>
       <h1>Tvoji podaci s HEP-a, u dva klika</h1>
       <p class="uvod">Očitanja, potrošnja i računi s <b>Moje mreže</b>, <b>Mojeg računa</b> i <b>Hepija</b>.
-        Ništa ne instaliraš, a lozinku upisuješ samo HEP-u. Radi na računalu.</p>
+        Lozinku upisuješ samo HEP-u. Radi na računalu.</p>
 
       <section class="kartica samo-mobitel">
         <h2>Otvori ovu stranicu na računalu</h2>
@@ -175,6 +177,23 @@ import Podnozje from "../components/Podnozje.astro";
           <p class="blijedo">Gumb <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span> je u <span class="ime-trake-u">traci s oznakama</span>. Nastavi s korakom 2.</p>
           <p class="blijedo"><a href="#" id="ponovo">Nemam je više, postavi je ponovno</a></p>
         </div>
+        <div id="ekstenzija-dodaj" hidden>
+          <h2>Dodaj ekstenziju „Uvoz s HEP-a“</h2>
+          <p class="blijedo">Besplatna je i radi samo kad je klikneš na HEP-ovom portalu. Instalira se iz Chrome Web Storea,
+            jednom.</p>
+          <div class="oznaka-red">
+            <a class="oznaka gumb-veza" id="web-store" href="#" target="_blank" rel="noopener"><i class="i i-extension" aria-hidden="true"></i> Dodaj u preglednik</a>
+          </div>
+          <p class="blijedo">Na stranici koja se otvori klikni <b>Add to Chrome</b> (Dodaj u Chrome). Kad se instalira, ova
+            stranica to sama prepozna.</p>
+          <p class="blijedo"><a href="#" id="radije-oznaka">Radije bez instalacije: oznaka u traci</a></p>
+        </div>
+        <div id="ekstenzija-ima" hidden>
+          <h2>Ekstenzija je instalirana</h2>
+          <p class="stanje istaknuto" style="text-align:left" id="ekstenzija-povezana" hidden></p>
+          <p class="blijedo">Uvozi iz nje stižu ovamo, pod tvoj ključ. Ikonu ekstenzije pribodi uz adresnu traku
+            (ikona slagalice, pa pribadača kraj „Uvoz s HEP-a“). Nastavi s korakom 2.</p>
+        </div>
         <div id="postavljanje">
           <h2>Povuci gumb u <span class="ime-trake">traku s oznakama</span></h2>
           <p class="blijedo" id="traka">Traku ne vidiš? Pritisni <span id="precac"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></span>. Ovo radiš samo jednom.</p>
@@ -186,15 +205,22 @@ import Podnozje from "../components/Podnozje.astro";
             <div class="demo-gumb">⚡ Uvezi iz HEP-a</div>
           </div>
           <div class="stanje" id="stanje-oznaka">Kad je gumb u traci, klikni ga tamo, na ovoj stranici, da provjerimo radi li.</div>
+          <p class="blijedo" id="radije-ekstenzija-red" hidden><a href="#" id="radije-ekstenzija">Ili dodaj ekstenziju, otpornija je na promjene HEP-ovih portala</a></p>
         </div>
       </section>
 
       <section class="kartica korak" id="korak2">
         <div class="broj">2</div>
         <div>
-          <h2>Prijavi se na HEP i klikni gumb u traci</h2>
+          <h2 id="korak2-naslov">Prijavi se na HEP i klikni gumb u traci</h2>
           <p class="prije">Pročitaj prije nego otvoriš portal:</p>
-          <ol>
+          <ol id="upute-ekstenzija" hidden>
+            <li>Prijavi se kao inače.</li>
+            <li>Kad vidiš svoje podatke, klikni ikonu ekstenzije <b>Uvoz s HEP-a</b> desno od adresne trake
+              (ako je nema, prvo ikonu slagalice).</li>
+            <li>Klikni <b>Dopusti čitanje i uvezi</b>. Podaci stižu ovamo, pod „Moji uvozi“.</li>
+          </ol>
+          <ol id="upute-oznaka">
             <li>Prijavi se kao inače.</li>
             <li>Kad vidiš svoje podatke, klikni <span class="mala-oznaka">⚡ Uvezi iz HEP-a</span>
               u <span class="ime-trake-u">traci s oznakama</span>, pri vrhu prozora.</li>
@@ -209,7 +235,7 @@ import Podnozje from "../components/Podnozje.astro";
             <a class="portal" href="https://mojracun.hep.hr/elektra/" target="_blank" rel="noopener">
               <b>Moj račun</b><span>HEP Elektra · računi, uplate, potrošnja</span></a>
           </div>
-          <p class="blijedo">Za drugi portal ponovi: prijava, pa klik na gumb u traci.</p>
+          <p class="blijedo">Za drugi portal ponovi: prijava, pa uvoz.</p>
         </div>
       </section>
 
@@ -271,6 +297,7 @@ import Podnozje from "../components/Podnozje.astro";
         return i;
       };
       import { kljuc, kljucIzAdrese, postaviKljuc, skraceno } from "../lib/kljuc-klijent";
+      import { WEB_STORE } from "../lib/ekstenzija";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
       const drugi = kljucIzAdrese();
       const k = kljuc();
@@ -362,6 +389,48 @@ import Podnozje from "../components/Podnozje.astro";
         try { localStorage.removeItem(POSTAVLJENA); } catch {}
         prikaziPostavljeno(false);
       };
+
+      // Ekstenzija: njezin content script (flutter_moja_mreza/extension/omm.js) na <html>
+      // ostavi data-omm-ekstenzija i preuzme ključ iz localStorage, pa uvozi iz nje idu
+      // na ovaj ključ. Chromium s mišem dobiva nju kao korak 1, ostali oznaku.
+      const NACIN = "omm-nacin";
+      const chromium = !!(navigator as any).userAgentData && !(navigator as any).userAgentData.mobile;
+      const ponudiEkstenziju = chromium && !!WEB_STORE;
+      const ekstenzija = () => document.documentElement.dataset.ommEkstenzija;
+      const prikaziNacin = () => {
+        let zeli: string | null = null;
+        try { zeli = localStorage.getItem(NACIN); } catch {}
+        const nacin = ekstenzija() ? "ima" : ponudiEkstenziju && zeli !== "oznaka" ? "dodaj" : "oznaka";
+        $("ekstenzija-ima").hidden = nacin !== "ima";
+        $("ekstenzija-dodaj").hidden = nacin !== "dodaj";
+        $("radije-ekstenzija-red").hidden = !(nacin === "oznaka" && ponudiEkstenziju);
+        $("upute-ekstenzija").hidden = nacin === "oznaka";
+        $("upute-oznaka").hidden = nacin !== "oznaka";
+        $("korak2-naslov").textContent = nacin === "oznaka" ? "Prijavi se na HEP i klikni gumb u traci" : "Prijavi se na HEP i klikni ekstenziju";
+        if (nacin === "oznaka") return prikaziPostavljeno(zapamceno);
+        $("postavljanje").hidden = true;
+        $("postavljeno").hidden = true;
+        if (nacin === "ima") $("broj1").replaceChildren(ikona("i-check")); else $("broj1").textContent = "1";
+        $("broj1").classList.toggle("gotov", nacin === "ima");
+        if (nacin === "ima" && document.documentElement.dataset.ommEkstenzijaPovezana) {
+          $("ekstenzija-povezana").hidden = false;
+          $("ekstenzija-povezana").replaceChildren("Povezana s ovim ključem ", ikona("i-check"));
+        }
+      };
+      $<HTMLAnchorElement>("web-store").href = WEB_STORE || "#";
+      $("radije-oznaka").onclick = (e) => {
+        e.preventDefault();
+        try { localStorage.setItem(NACIN, "oznaka"); } catch {}
+        prikaziNacin();
+      };
+      $("radije-ekstenzija").onclick = (e) => {
+        e.preventDefault();
+        try { localStorage.removeItem(NACIN); } catch {}
+        prikaziNacin();
+      };
+      // omm.js ključ preuzme na DOMContentLoaded, a module skripta se izvrši prije toga.
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", prikaziNacin);
+      else prikaziNacin();
 
       const NAZIVI: Record<string, string> = {
         hep: "Moja mreža (HEP ODS)",

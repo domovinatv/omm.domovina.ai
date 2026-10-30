@@ -23,6 +23,8 @@ export function kljuc(): string {
 
 export function postaviKljuc(k: string) {
   try { localStorage.setItem(POHRANA, k); } catch {}
+  // Ekstenzija (content script extension/omm.js) na to preuzme novi ključ.
+  window.dispatchEvent(new Event("omm-kljuc"));
 }
 
 /**
