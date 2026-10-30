@@ -428,9 +428,10 @@ import Podnozje from "../components/Podnozje.astro";
         try { localStorage.removeItem(NACIN); } catch {}
         prikaziNacin();
       };
-      // omm.js ključ preuzme na DOMContentLoaded, a module skripta se izvrši prije toga.
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", prikaziNacin);
-      else prikaziNacin();
+      // omm.js ključ preuzme na DOMContentLoaded, a module skripta se izvrši prije toga
+      // (readyState je već „interactive“), pa se crta odmah i još jednom tada.
+      prikaziNacin();
+      document.addEventListener("DOMContentLoaded", prikaziNacin);
 
       const NAZIVI: Record<string, string> = {
         hep: "Moja mreža (HEP ODS)",
