@@ -95,7 +95,7 @@ Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
 | `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
 | `GET /api/izvjestaj` | OMM-ovi ovog ključa za koje se može napraviti izvještaj |
 | `GET /api/izvjestaj/:omm` | godišnji izvještaj potrošnje, `?oblik=pdf` (zadano) \| `html` \| `json`, `?anonimno=1`; 422 kad nema podataka |
-| `/` | naslovnica: u Chromiumu korak 1 je ekstenzija (Web Store, `WEB_STORE` u `src/lib/ekstenzija.ts`, prazno do objave; instaliranu prepozna po `data-omm-ekstenzija` koji postavlja njezin content script, a on preuzme i ključ iz localStorage; `postaviKljuc` javlja `omm-kljuc`), drugdje i kao rezerva oznaka (bookmarklet) „Uvezi iz HEP-a“; u bočnom stupcu „Izvještaj potrošnje“ po OMM-u (PDF i anonimni za dijeljenje); `?primi=1` je rezerva preko postMessage |
+| `/` | naslovnica: u Chromiumu korak 1 je ekstenzija (Web Store, ID `eaepdcjoahegcgokhpbgppdeanpcfadi`, predano 2026-10-30; `WEB_STORE` u `src/lib/ekstenzija.ts` prazno do odobrenja; instaliranu prepozna po `data-omm-ekstenzija` koji postavlja njezin content script, a on preuzme i ključ iz localStorage; `postaviKljuc` javlja `omm-kljuc`), drugdje i kao rezerva oznaka (bookmarklet) „Uvezi iz HEP-a“; u bočnom stupcu „Izvještaj potrošnje“ po OMM-u (PDF i anonimni za dijeljenje); `?primi=1` je rezerva preko postMessage |
 | `/ocitaj` | očitanje brojila sa slike (sporedno) |
 | `/privatnost` | politika privatnosti; rokovi iz `src/lib/ciscenje.ts` (dnevni cron) |
 | `/uvoz` | 301 na `/` (stara adresa) |
