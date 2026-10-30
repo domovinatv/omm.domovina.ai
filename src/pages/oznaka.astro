@@ -1,11 +1,14 @@
 ---
-// Rezerva oznake „Uvezi iz HEP-a“ kad HEP-ov CSP ne pusti ni <script src> ni fetch
-// prema nama (Moj račun: connect-src 'self', od 2026-10-22). Oznaka otvori ovu
-// malu karticu; ona pročita /hep-uvoz.js i pošalje ga HEP-ovoj kartici preko
-// postMessage, gdje ga oznaka izvrši kroz eval, a gdje CSP ne dopušta eval (Moj
-// račun od 2026-10-30) kao inline <script>. Oznake prije toga (bez ?v=2) znaju
-// samo eval, pa im kartica ostane otvorena i traži novu oznaku.
-// Kod je javan, a ključ ostaje u oznaci, pa ovdje nema ničeg tajnog.
+// Most oznake „Uvezi iz HEP-a“ kad HEP-ov CSP ne pusti ni <script src> ni fetch
+// prema nama (Moj račun: connect-src 'self', od 2026-10-22). Oznaka ovu stranicu
+// ubaci kao skriveni iframe (?v=3); ona pročita /hep-uvoz.js i pošalje ga HEP-ovoj
+// stranici preko postMessage, gdje ga oznaka izvrši kroz eval ili, gdje CSP ne
+// dopušta eval (Moj račun od 2026-10-30), kao inline <script>. Zatim prima uvoz
+// ({omm: "uvoz", id, kljuc, tijelo}) i šalje ga na /api/snimak s našeg origina.
+// Iframe, a ne popup: Moj račun od 2026-10-30 šalje COOP same-origin, pa popup
+// nema opener. Middleware ovoj stranici dopušta frame-ancestors HEP-ovih portala.
+// Starije oznake je otvaraju kao popup (window.opener); bez openera traže novu oznaku.
+// Kod je javan, a ključ dolazi iz oznake, pa ovdje nema ničeg tajnog.
 import Ikone from "../components/Ikone.astro";
 import Tema from "../components/Tema.astro";
 ---
@@ -31,14 +34,38 @@ import Tema from "../components/Tema.astro";
       const HEP = ["https://mojamreza.hep.hr", "https://mojracun.hep.hr"];
       const stanje = document.getElementById("stanje")!;
       const greska = (t: string) => { stanje.textContent = t; stanje.className = "greska"; };
-      if (!window.opener) {
-        greska("Ova kartica služi oznaci „Uvezi iz HEP-a“. Otvori je klikom na oznaku na HEP-ovoj stranici.");
+      const iframe = window.parent !== window;
+      const hep = iframe ? window.parent : window.opener;
+
+      if (!hep) {
+        stanje.className = "greska";
+        stanje.innerHTML = 'Ova kartica služi oznaci „Uvezi iz HEP-a“. Ako si je otvorio klikom na oznaku, oznaka je zastarjela (HEP je pooštrio zaštitu): otvori <a href="/" target="_blank">omm.domovina.ai</a>, obriši staru oznaku i povuci novu.';
       } else {
+        if (iframe) {
+          window.addEventListener("message", async (e) => {
+            if (!HEP.includes(e.origin) || e.source !== window.parent || e.data?.omm !== "uvoz") return;
+            const { id, kljuc, tijelo } = e.data;
+            let status = 0, j = {};
+            try {
+              const r = await fetch("/api/snimak", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${kljuc}`, "Content-Type": "application/json" },
+                body: JSON.stringify(tijelo),
+              });
+              status = r.status;
+              j = await r.json().catch(() => ({}));
+            } catch (x) {
+              j = { greska: (x as Error).message || String(x) };
+            }
+            window.parent.postMessage({ omm: "odgovor", id, status, j }, e.origin);
+          });
+        }
         fetch(`/hep-uvoz.js?v=${Date.now()}`)
           .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
           .then((kod) => {
             // Poruka stigne samo onom od ovih origina koji je stvarno otvorio karticu.
-            for (const o of HEP) window.opener.postMessage({ omm: "kod", kod }, o);
+            for (const o of HEP) hep.postMessage({ omm: "kod", kod }, o);
+            if (iframe) return;
             if (new URLSearchParams(location.search).get("v") === "2") {
               stanje.textContent = "Gotovo, vrati se na HEP-ovu karticu.";
               setTimeout(() => window.close(), 300);

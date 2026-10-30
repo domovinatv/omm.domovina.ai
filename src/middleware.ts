@@ -75,7 +75,7 @@ async function provjeriKljuc(request: Request): Promise<Response | null> {
 
 export const onRequest = defineMiddleware(async ({ request, url, locals }, next) => {
   if (url.pathname.startsWith("/api/")) return (await ogranicenje(request, url)) ?? (await provjeriKljuc(request)) ?? next();
-  if (!adminPutanja(url.pathname)) return zastiti(await next(), false);
+  if (!adminPutanja(url.pathname)) return zastiti(await next(), false, url.pathname === "/oznaka");
 
   // 1. Jedan host: rpID passkeya je hostname, a Access štiti samo ADMIN_HOST/admin/sso.
   const host = (env.ADMIN_HOST ?? "").trim();
@@ -108,7 +108,11 @@ export const onRequest = defineMiddleware(async ({ request, url, locals }, next)
  * skripte umeće inline, pa dobivaju nonce. Javne stranice drže ključ u
  * localStorage, pa CSP ograničava što bi XSS mogao.
  */
-async function zastiti(odgovor: Response, admin: boolean): Promise<Response> {
+// Moj račun od 2026-10-30 šalje COOP same-origin, pa popup nema opener; oznaka zato
+// /oznaka otvara kao skriveni iframe na HEP-ovoj stranici (most za kod i slanje).
+const HEP_PORTALI = "https://mojamreza.hep.hr https://mojracun.hep.hr";
+
+async function zastiti(odgovor: Response, admin: boolean, most = false): Promise<Response> {
   const html = (odgovor.headers.get("content-type") ?? "").startsWith("text/html");
   if (!admin && !html) return odgovor;
   const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))).replace(/[+/=]/g, "");
@@ -122,13 +126,13 @@ async function zastiti(odgovor: Response, admin: boolean): Promise<Response> {
     `default-src 'none'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; ` +
       // blob: za pregled slike brojila prije slanja (ocitaj.astro).
       `img-src 'self' data:${admin ? "" : " blob:"}; font-src 'self'; connect-src 'self'; form-action 'self'; ` +
-      `frame-ancestors 'none'; base-uri 'none'`,
+      `frame-ancestors ${most ? HEP_PORTALI : "'none'"}; base-uri 'none'`,
   );
   h.set("x-content-type-options", "nosniff");
   // Admin: ne "no-referrer", jer uz nju preglednik na <form> POST šalje `Origin: null`.
   // Javne stranice nemaju formi, a adresa može nositi #k= ili ?primi=1.
   h.set("referrer-policy", admin ? "same-origin" : "no-referrer");
-  h.set("x-frame-options", "DENY");
+  if (!most) h.set("x-frame-options", "DENY");
   if (admin) h.set("x-robots-tag", "noindex");
   // _headers ne djeluje na odgovore Workera (SEC-16), pa se ovdje postavlja.
   if (!h.has("cache-control")) h.set("cache-control", admin ? "no-store" : "no-cache");

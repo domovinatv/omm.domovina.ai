@@ -1,6 +1,6 @@
 // Generirano iz github.com/stepanic/flutter_moja_mreza (extension/tools/bookmarklet.mjs).
 // Ne mijenjati ovdje: izvor su extension/uvoz.js, mojracun.js, hepi.js i bookmarklet.js.
-// Izvor 546d02a, sha256 ostatka a64e11d228f1533865a76bbc08402163795daefc5cdee6a0a468d3bacd2c565f
+// Izvor 87a16ca, sha256 ostatka bb1c172cf20dc311d1bc1371686b009c2c7793197a0e78f4737eb5f8745e3f76
 // ---- uvoz.js ----
 // Uvoz s Moje mre\u017ee (https://mojamreza.hep.hr) u pregledniku.
 //
@@ -541,17 +541,23 @@
 // cijeli JSON, a \u0161alje tek na drugi klik.
 //
 // CSP portala (od 2026-10-22): Moja mre\u017ea ima script-src bez nas, Moj ra\u010dun i
-// connect-src 'self'; oba dopu\u0161taju 'unsafe-eval'. Zato oznaka (index.astro na
-// omm.domovina.ai) prvo proba <script>, pa fetch + eval, pa malu karticu
-// omm.domovina.ai/oznaka koja kod po\u0161alje preko postMessage. Uz eval nema
-// document.currentScript, pa oznaka adresu s klju\u010dem ostavi u globalThis.ommOznaka.
-// Slanje: /api/snimak ima CORS *; kad connect-src to prije\u010di, rezerva je nova
-// kartica omm.domovina.ai/?primi=1 i postMessage.
+// connect-src 'self'. Od 2026-10-30 Moj ra\u010dun nema 'unsafe-eval' (ostao je
+// 'unsafe-inline') i \u0161alje COOP same-origin, pa popup nema opener. Zato oznaka
+// (index.astro na omm.domovina.ai) prvo proba <script>, pa fetch + eval, pa
+// skriveni iframe omm.domovina.ai/oznaka koji kod po\u0161alje preko postMessage, a
+// oznaka ga izvr\u0161i kroz eval ili inline <script>. Bez src nema
+// document.currentScript.src, pa oznaka adresu s klju\u010dem ostavi u
+// globalThis.ommOznaka, a iframe u globalThis.ommMost.
+// Slanje: /api/snimak ima CORS *; kad connect-src to prije\u010di, ide kroz taj iframe
+// (napravi ga i sam ako ga oznaka nije ostavila), a zadnja rezerva je nova kartica
+// omm.domovina.ai/?primi=1 i postMessage (ne radi uz COOP) ili preuzimanje JSON-a.
 
 (() => {
   const skripta = document.currentScript;
   const adresa = new URL(skripta?.src || globalThis.ommOznaka || 'https://omm.domovina.ai/hep-uvoz.js');
   delete globalThis.ommOznaka;
+  let most = globalThis.ommMost;
+  delete globalThis.ommMost;
   const SERVER = adresa.origin;
   const HOST = SERVER.replace('https://', '');
   // Klju\u010d je u fragmentu (#k=), koji se ne \u0161alje serveru ni u logove; ?k= je za
@@ -828,14 +834,21 @@
     for (const b of $('gumbi').querySelectorAll('button')) b.disabled = true;
     status(`\u0160aljem na ${HOST}\u2026`);
     try {
-      const o = await fetch(`${SERVER}/api/snimak`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${KLJUC}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(tijelo(uvoz)),
-        credentials: 'omit',
-      });
-      const j = await o.json().catch(() => ({}));
-      if (o.status !== 200 && o.status !== 201) throw new Error(j.greska || `HTTP ${o.status}`);
+      let status, j;
+      try {
+        const o = await fetch(`${SERVER}/api/snimak`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${KLJUC}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(tijelo(uvoz)),
+          credentials: 'omit',
+        });
+        status = o.status;
+        j = await o.json().catch(() => ({}));
+      } catch {
+        // connect-src prije\u010di fetch prema nama (Moj ra\u010dun): \u0161alje iframe s na\u0161eg origina.
+        ({ status, j } = await krozMost({ omm: 'uvoz', kljuc: KLJUC, tijelo: tijelo(uvoz) }));
+      }
+      if (status !== 200 && status !== 201) throw new Error(j.greska || `HTTP ${status}`);
       if (izvor.racuni) await posaljiRacune(uvoz);
       // Duplikat: server je po sadr\u017eaju prepoznao isti uvoz i vratio prvi (s `stvoren`).
       // To nije gre\u0161ka, nego \u201eod zadnjeg puta na portalu nema ni\u0161ta novo\u201c.
@@ -849,6 +862,30 @@
       status(`Izravno slanje nije uspjelo (${e.message || e}).`, true);
       rezerva(uvoz);
     }
+  }
+
+  // Iframe omm.domovina.ai/oznaka (vidi zaglavlje): prima poruku, \u0161alje je na API i
+  // vrati {status, j}. Kad ga oznaka nije ostavila, napravi ga; spreman je kad javi \u201ekod\u201c.
+  function krozMost(poruka) {
+    return new Promise((uspjeh, neuspjeh) => {
+      const id = Math.random().toString(36).slice(2);
+      let spreman = !!most;
+      const salji = () => most.postMessage({ ...poruka, id }, SERVER);
+      const kraj = (fn, v) => { clearTimeout(rok); window.removeEventListener('message', slusaj); fn(v); };
+      const slusaj = (e) => {
+        if (e.origin !== SERVER || e.source !== most || !e.data) return;
+        if (e.data.omm === 'kod' && !spreman) { spreman = true; salji(); }
+        else if (e.data.omm === 'odgovor' && e.data.id === id) kraj(uspjeh, e.data);
+      };
+      const rok = setTimeout(() => kraj(neuspjeh, new Error('most ne odgovara')), 20000);
+      window.addEventListener('message', slusaj);
+      if (spreman) return salji();
+      const f = document.createElement('iframe');
+      f.src = `${SERVER}/oznaka?v=3`;
+      f.style.display = 'none';
+      document.body.appendChild(f);
+      most = f.contentWindow;
+    });
   }
 
   // Hepi: PDF-ove ra\u010duna koje server jo\u0161 nema \u0161alje na /api/racun, gdje se

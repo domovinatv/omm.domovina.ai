@@ -288,13 +288,13 @@ import Podnozje from "../components/Podnozje.astro";
       // ponovnog povlačenja oznake. ?v= zaobilazi predmemoriju. Ključ je u fragmentu
       // (#k=), koji preglednik ne šalje serveru, pa ga nema u logovima (SEC-04).
       // HEP-ov CSP (od 2026-10-22) priječi <script src> s našeg origina, a na Mojem
-      // računu i fetch. Zato: <script>, pa fetch + eval, pa mala kartica /oznaka koja
-      // kod pošalje preko postMessage. Moj račun od 2026-10-30 ne dopušta ni eval
+      // računu i fetch. Zato: <script>, pa fetch + eval, pa skriveni iframe /oznaka koji
+      // kod pošalje preko postMessage (popup ne može: Moj račun od 2026-10-30 šalje
+      // COOP same-origin, pa popup nema opener). Moj račun od tada ne dopušta ni eval
       // (ostao je 'unsafe-inline'), pa na EvalError kod ide u inline <script>. Bez
-      // src nema document.currentScript.src, pa adresa s ključem ide u window.ommOznaka.
-      // /oznaka?v=2 kaže kartici da oznaka zna za inline; stare oznake bez toga
-      // na Mojem računu ne mogu proći i kartica traži novu.
-      const kod = `javascript:(()=>{var S='${location.origin}',u=S+'/hep-uvoz.js?v='+Date.now()+'#k=${k}',x=function(t){window.ommOznaka=u;try{(0,eval)(t)}catch(e){if(!(e instanceof EvalError))throw e;var c=document.createElement('script');c.textContent=t;document.body.appendChild(c)}},s=document.createElement('script');s.src=u;s.onerror=function(){fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()}).then(x).catch(function(){var w=open(S+'/oznaka?v=2','omm-oznaka','popup,width=480,height=200');addEventListener('message',function f(e){if(e.origin===S&&e.source===w&&e.data&&e.data.omm==='kod'){removeEventListener('message',f);x(e.data.kod)}})})};document.body.appendChild(s)})()`;
+      // src nema document.currentScript.src, pa adresa s ključem ide u window.ommOznaka,
+      // a iframe u window.ommMost: hep-uvoz.js kroz njega šalje kad connect-src priječi fetch.
+      const kod = `javascript:(()=>{var S='${location.origin}',u=S+'/hep-uvoz.js?v='+Date.now()+'#k=${k}',x=function(t){window.ommOznaka=u;try{(0,eval)(t)}catch(e){if(!(e instanceof EvalError))throw e;var c=document.createElement('script');c.textContent=t;document.body.appendChild(c)}},s=document.createElement('script');s.src=u;s.onerror=function(){fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()}).then(x).catch(function(){var f=document.createElement('iframe');f.src=S+'/oznaka?v=3';f.style.display='none';document.body.appendChild(f);addEventListener('message',function g(e){if(e.origin===S&&e.source===f.contentWindow&&e.data&&e.data.omm==='kod'){removeEventListener('message',g);window.ommMost=f.contentWindow;x(e.data.kod)}})})};document.body.appendChild(s)})()`;
       const oznaka = $<HTMLAnchorElement>("oznaka");
       oznaka.href = kod;
       oznaka.onclick = (e) => {
