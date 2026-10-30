@@ -2,7 +2,9 @@
 // Rezerva oznake „Uvezi iz HEP-a“ kad HEP-ov CSP ne pusti ni <script src> ni fetch
 // prema nama (Moj račun: connect-src 'self', od 2026-10-22). Oznaka otvori ovu
 // malu karticu; ona pročita /hep-uvoz.js i pošalje ga HEP-ovoj kartici preko
-// postMessage, gdje ga oznaka izvrši kroz eval (portali dopuštaju 'unsafe-eval').
+// postMessage, gdje ga oznaka izvrši kroz eval, a gdje CSP ne dopušta eval (Moj
+// račun od 2026-10-30) kao inline <script>. Oznake prije toga (bez ?v=2) znaju
+// samo eval, pa im kartica ostane otvorena i traži novu oznaku.
 // Kod je javan, a ključ ostaje u oznaci, pa ovdje nema ničeg tajnog.
 import Ikone from "../components/Ikone.astro";
 import Tema from "../components/Tema.astro";
@@ -37,8 +39,12 @@ import Tema from "../components/Tema.astro";
           .then((kod) => {
             // Poruka stigne samo onom od ovih origina koji je stvarno otvorio karticu.
             for (const o of HEP) window.opener.postMessage({ omm: "kod", kod }, o);
-            stanje.textContent = "Gotovo, vrati se na HEP-ovu karticu.";
-            setTimeout(() => window.close(), 300);
+            if (new URLSearchParams(location.search).get("v") === "2") {
+              stanje.textContent = "Gotovo, vrati se na HEP-ovu karticu.";
+              setTimeout(() => window.close(), 300);
+            } else {
+              stanje.innerHTML = 'Ako se na HEP-ovoj kartici ne pojavi stupac, tvoja oznaka je zastarjela (HEP je pooštrio zaštitu). Otvori <a href="/" target="_blank">omm.domovina.ai</a>, obriši staru oznaku ⚡ Uvezi iz HEP-a i povuci novu.';
+            }
           })
           .catch((e) => greska(`Ne mogu učitati uvoz (${e.message || e}).`));
       }
