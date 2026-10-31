@@ -133,3 +133,34 @@ Ostaje: druga domena bez maila na D.O.M. računu (Cloudflare) ili Resend s MX sa
   priključak).“ Decimalna točka, bez osigurača. Proslijeđen preko Gmaila i pročitan automatski
   bez promjene koda (5,75 kW, 1F, OMM iz naslova). HEP je odgovorio iako je upit poslan s maila osobe koja nije
   kupac na tom OMM-u (u upitu je ime kupca): ne traži da pošiljatelj bude kupac.
+
+## Tko odgovara: čovjek u aplikaciji kontakt centra, ne bot (2026-10-31)
+
+Pitanje je bilo odgovara li na upite bot s vremenskim odgodama, jer je odgovor stigao u subotu.
+Iz zaglavlja i HTML-a obaju odgovora Elektre Zagreb:
+
+| | #ODS:10641937 (pet 23.10.) | #ODS:10674960 (sub 31.10.) |
+|---|---|---|
+| upit poslan (UTC) | 08:00:42 | 06:20:53 |
+| automatska potvrda `noreply@hep.hr` | odmah | 06:21:23 (30 s) |
+| otvoren odgovor (`emailSignature-<ms>`) | 10:57:29 | 12:45:49 |
+| poslan | 10:59:23 (**113 s** pisanja) | 12:48:02 (**132 s** pisanja) |
+| od upita do odgovora | 3 h | 6 h 27 min |
+| tekst | „na Vašem mjernom mjestu … je 11,04 kW (3F) - 3x16 A“ | „… potrošnje za navedeno obračunsko mjerno mjesto je 5.75 kW (jednofazni priključak)“ |
+
+- Sustav: `SZG01CCAPPODS01.data.centar` (CC APP ODS, Linux + sendmail 8.14.4) → Exchange `mail.hep.hr`.
+  `User-Agent: LIVE 2.0 Email Client`, MIME granice `_=_swift_v4_` (PHP SwiftMailer), HTML iz
+  CKEditora. Dakle web aplikacija kontakt centra s tiketima, a mail se piše u editoru.
+- `id="emailSignature-<epoch ms>"` je trenutak kad je u editor umetnut potpis, odnosno kad je
+  otvoren odgovor. Do slanja prođe 2 minute: toliko traje traženje OMM-a u drugom sustavu.
+- U prvom odgovoru je „11,04 kW (3F) - 3x16 A“ **izvan** `<span>` s fontom kojim je napisan ostatak
+  rečenice, dakle zalijepljeno iz drugog sustava. Drugi odgovor je drukčije sročen, s decimalnom točkom
+  i bez osigurača, što upućuje na druge ljude ili drugi izvor. Prvi odgovor je preskočio drugo pitanje
+  (postoji li portal). Bot s predloškom ne bi mijenjao oblik.
+- Brojač tiketa: 33 023 tiketa u 189 h (~4 200 na dan, za cijeli ODS i sve kanale).
+- Subota: kontakt centar očito radi i subotom (odgovor u 13:48 po lokalnom vremenu). Radno vrijeme
+  nisam provjerio.
+
+Posljedica za aplikaciju: odgovor stiže u roku od nekoliko sati, a oblik rečenice nije stalan, pa
+parser mora ostati tolerantan, a ručni unos ostaje kao rezerva. Masovni upiti (npr. za sve korisnike
+odjednom) opterećuju ljude u kontakt centru, a ne automat. Upit neka ostane na klik korisnika.
