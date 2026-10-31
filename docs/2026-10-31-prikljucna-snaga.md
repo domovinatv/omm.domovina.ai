@@ -110,3 +110,8 @@ radilo u produkciji. Cloudflare poddomenu dodaje samo kad je Email Routing uklju
 korijenu, a uključivanje traži Cloudflareove MX na `domovina.ai` (greška 2008 „Non-Cloudflare
 MX records exist“), gdje je Google Workspace. Samostalna poddomena kao zona je Enterprise.
 Ostaje: druga domena bez maila na D.O.M. računu (Cloudflare) ili Resend s MX samo na `omm`.
+
+**Odluka: Resend.** Domena `omm.domovina.ai` u Resendu (eu-west-1, slanje i primanje), MX
+`receive-euw1.forge.rmta.net`, webhook `1b649021-…` → `https://omm.domovina.ai/api/resend`
+(samo `email.received`). Test 2026-10-31 06:48 UTC: mail poslan preko Resenda na
+`racuni+<testni ključ>@` spremljen kao 11,04 kW / 3F / 16 A za 2 s; testni podaci obrisani.

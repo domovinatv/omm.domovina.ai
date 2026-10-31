@@ -1,7 +1,8 @@
 /**
  * Dolazni mail: HEP-ovi računi koje korisnik prosljeđuje na
  * `racuni+<ključ uređaja>@omm.domovina.ai` (Cloudflare Email Routing → ovaj
- * Worker). Ključ u adresi zamjenjuje prijavu, kao Bearer ključ u API-ju.
+ * Worker; od 2026-10-31 Resend, src/pages/api/resend.ts). Ključ u adresi zamjenjuje
+ * prijavu, kao Bearer ključ u API-ju.
  * Na istu adresu stiže i proslijeđeni odgovor Elektre o priključnoj snazi
  * (src/lib/prikljucak.ts); od računa se razlikuje po tome što nema PDF računa.
  *
@@ -55,26 +56,45 @@ async function zapisiMail(uredaj: string, od: string, naslov: string, z: Zapis) 
     .run();
 }
 
+/** Cloudflare Email Routing (nije uključen: domovina.ai ima Google Workspace, vidi CLAUDE.md). */
 export async function primiMail(poruka: ForwardableEmailMessage): Promise<void> {
+  const odbij = await obradiMail({
+    to: poruka.to, from: poruka.from, raw: poruka.raw, velicina: poruka.rawSize,
+    autentikacija: poruka.headers.get("authentication-results"),
+  });
+  if (odbij) poruka.setReject(odbij);
+}
+
+export type Dolazni = {
+  to: string;
+  from: string;
+  raw: ReadableStream | ArrayBuffer;
+  velicina: number;
+  /** `Authentication-Results` ili njegov ekvivalent (`dmarc=pass`); null kad ga nema. */
+  autentikacija: string | null;
+};
+
+/** Obradi dolazni mail; vrati razlog odbijanja ili ništa. Zovu ga Email Routing i Resend. */
+export async function obradiMail(poruka: Dolazni): Promise<string | void> {
   const uredaj = kljucIzAdrese(poruka.to);
-  if (!uredaj) return poruka.setReject("Nepoznata adresa");
-  if (poruka.rawSize > NAJVISE) return poruka.setReject("Poruka je prevelika");
+  if (!uredaj) return "Nepoznata adresa";
+  if (poruka.velicina > NAJVISE) return "Poruka je prevelika";
 
   // Nepoznat ključ (SEC-05): prolazi samo Gmailova potvrda prosljeđivanja, koja
   // stiže prije prvog računa i registrira ključ; ostalo se odbije prije parsiranja PDF-a.
   const stanje = await stanjeKljuca(uredaj);
-  if (stanje === "zamijenjen") return poruka.setReject("Nepoznata adresa");
+  if (stanje === "zamijenjen") return "Nepoznata adresa";
 
   const mail = await PostalMime.parse(poruka.raw);
   const naslov = mail.subject ?? "";
   const od = mail.from?.address ?? poruka.from;
   try {
     const potvrda = gmailPotvrda(naslov, `${mail.text ?? ""}\n${mail.html ?? ""}`);
-    if (potvrda && odGooglea(od, poruka.headers.get("authentication-results"))) {
+    if (potvrda && odGooglea(od, poruka.autentikacija)) {
       if (stanje === "nepoznat") await registriraj(uredaj);
       return await zapisiMail(uredaj, od, naslov, { vrsta: "gmail-potvrda", ishod: "novo", poruka: potvrda });
     }
-    if (stanje === "nepoznat") return poruka.setReject("Nepoznata adresa");
+    if (stanje === "nepoznat") return "Nepoznata adresa";
 
     const pdfovi = mail.attachments.filter((a) => a.mimeType === "application/pdf" || /\.pdf$/i.test(a.filename ?? ""));
     let ijedan = false;

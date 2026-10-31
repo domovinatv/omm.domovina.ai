@@ -94,6 +94,7 @@ Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
 | `POST /api/racun` | tijelo je PDF računa HEP Opskrbe → pročita se kao mail i spremi kao `hep-racun` (201, 200 duplikat, 422 nije račun) |
 | `GET /api/prikljucak` | OMM-ovi ključa s podacima za upit, Elektrom (po prefiksu OMM-a) i spremljenom priključnom snagom |
 | `POST /api/prikljucak` | `{omm, snaga_kw, faze?, osigurac_a?}` ručni unos ili ispravak |
+| `POST /api/resend` | webhook Resenda za dolazni mail na `*@omm.domovina.ai` (potpisan, inače 401) |
 | `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
 | `GET /api/izvjestaj` | OMM-ovi ovog ključa za koje se može napraviti izvještaj |
 | `GET /api/izvjestaj/:omm` | godišnji izvještaj potrošnje, `?oblik=pdf` (zadano) \| `html` \| `json`, `?anonimno=1`; 422 kad nema podataka |
@@ -123,8 +124,12 @@ učita, a podnožje ide kroz `footerTemplate` jer `@page` rubne okvire ne crta.
 
 ## Računi mailom
 
-**Ne radi od početka (2026-10-31): `omm.domovina.ai` nema MX**, Email Routing na `domovina.ai`
-je isključen jer je tamo Google Workspace; vidi `docs/2026-10-31-prikljucna-snaga.md` § Prijem maila.
+**Prijem ide preko Resenda (od 2026-10-31)**: MX `omm.domovina.ai` → `receive-euw1.forge.rmta.net`,
+webhook `email.received` → `POST /api/resend` (Svix potpis, `RESEND_WEBHOOK_SECRET`), koji mail
+dohvati (`GET /emails/receiving/{id}`, `raw.download_url`, `RESEND_API_KEY`) i preda
+`obradiMail`. Cloudflare Email Routing nije moguć: traži svoje MX i na `domovina.ai`, gdje je
+Google Workspace (`docs/2026-10-31-prikljucna-snaga.md` § Prijem maila). Do tada `racuni+` nije
+primao ništa. Ostatak odlomka opisuje izvorni plan; `email()` u workeru ostaje neiskorišten.
 `racuni+<ključ>@omm.domovina.ai` (Email Routing poddomena `omm`, subaddressing,
 pravilo `racuni@` → ovaj Worker). Zato je `main` u `wrangler.jsonc`
 `src/worker.ts` (Astro `handle` + `email()`), ne adapterov ulaz.
