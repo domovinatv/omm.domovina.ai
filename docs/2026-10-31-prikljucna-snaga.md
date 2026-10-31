@@ -141,7 +141,7 @@ Iz zaglavlja i HTML-a obaju odgovora Elektre Zagreb:
 
 | | #ODS:10641937 (pet 23.10.) | #ODS:10674960 (sub 31.10.) |
 |---|---|---|
-| upit poslan (UTC) | 07:00:42 (CEST) | 06:20:53 |
+| upit poslan (UTC) | 07:00:42 | 06:20:53 |
 | automatska potvrda `noreply@hep.hr` | odmah | 06:21:23 (30 s) |
 | otvoren odgovor (`emailSignature-<ms>`) | 10:57:29 | 12:45:49 |
 | poslan | 10:59:23 (**113 s** pisanja) | 12:48:02 (**132 s** pisanja) |
