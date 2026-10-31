@@ -47,6 +47,8 @@ import { DNEVNIK_DANA, MAILOVI_DANA } from "../lib/ciscenje";
           mjesta (OMM) i brojila, ugovorni račun, očitanja, potrošnju, račune, uplate i saldo.</li>
         <li><b>Račune u PDF-u</b> (s Hepija ili mailom): samo što iz njih pročitamo (razdoblje, kWh, iznosi, poziv
           na broj). Sam PDF i mail ne čuvamo, a OIB iz računa ne čitamo.</li>
+        <li><b>Priključnu snagu</b> po mjernom mjestu (kW, faze, osigurač), iz HEP-ova odgovora koji nam proslijediš
+          ili koju upišeš, i rečenicu iz odgovora u kojoj piše. Upit HEP-u šalješ sam, iz svog maila.</li>
         <li><b>Očitanja brojila</b> koja upišeš ili uslikaš: stanja 1.8.1 i 1.8.2, sliku zaslona brojila i, ako
           dopustiš, lokaciju u trenutku očitanja.</li>
         <li><b>Dnevnik zahtjeva</b>: vrijeme, vrstu (uvoz, očitanje, brisanje), ishod, preglednik (User-Agent) i
@@ -73,7 +75,7 @@ import { DNEVNIK_DANA, MAILOVI_DANA } from "../lib/ciscenje";
 
       <h2>Koliko dugo</h2>
       <ul>
-        <li>Uvozi, računi, očitanja i spremljene slike: dok ih ne obrišeš.</li>
+        <li>Uvozi, računi, očitanja, priključna snaga i spremljene slike: dok ih ne obrišeš.</li>
         <li>Slika brojila koja nije spremljena uz očitanje: jedan dan.</li>
         <li>Dnevnik zahtjeva: {DNEVNIK_DANA} dana.</li>
         <li>Zapis o primljenom mailu (pošiljatelj, naslov, ishod): {MAILOVI_DANA} dana.</li>
@@ -81,7 +83,7 @@ import { DNEVNIK_DANA, MAILOVI_DANA } from "../lib/ciscenje";
 
       <h2>Kako obrisati</h2>
       <p>Na <a href="/">naslovnici</a>, u stupcu <b>Moji uvozi</b>, gumb <b>Obriši sve moje podatke</b> odmah
-        briše sve pod ključem ovog preglednika: uvoze, račune, očitanja, slike, dnevnik i zapise mailova. Ako
+        briše sve pod ključem ovog preglednika: uvoze, račune, očitanja, priključnu snagu, slike, dnevnik i zapise mailova. Ako
         više nemaš preglednik s tim ključem, piši na <a href="mailto:ms@domovina.ai">ms@domovina.ai</a>.</p>
       <p>Imaš pravo na pristup, ispravak, brisanje i prigovor Agenciji za zaštitu osobnih podataka (azop.hr).</p>
 

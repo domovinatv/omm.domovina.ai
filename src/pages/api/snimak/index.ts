@@ -209,6 +209,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     env.DB.prepare(`DELETE FROM snimci WHERE uredaj = ?`).bind(kljuc),
     env.DB.prepare(`DELETE FROM dogadaji WHERE uredaj = ?`).bind(kljuc),
     env.DB.prepare(`DELETE FROM mailovi WHERE uredaj = ?`).bind(kljuc),
+    env.DB.prepare(`DELETE FROM prikljucci WHERE uredaj = ?`).bind(kljuc),
   ]);
   // Jedan redak ostaje da se vidi da je brisanje bilo; bez sadržaja.
   await zapisi(request, { uredaj: kljuc, vrsta: "brisanje", ishod: "ok", tijelo: { sve: true, snimaka: snimci.meta.changes, slika } });

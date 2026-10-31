@@ -87,11 +87,13 @@ Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
 | `GET /api/snimak` | snimci ovog ključa |
 | `PATCH /api/snimak/:id` | `{hep_dostava, omm?}` nakon slanja HEP-u |
 | `DELETE /api/snimak/:id` | briše snimak, slike i njegove retke u dnevniku |
-| `DELETE /api/snimak` | briše sve podatke ključa (snimci, dnevnik, mailovi, R2); gumb na `/` |
+| `DELETE /api/snimak` | briše sve podatke ključa (snimci, dnevnik, mailovi, priključci, R2); gumb na `/` |
 | `POST /api/kljuc/rotiraj` | novi ključ od servera, podaci prelaze, stari dobiva 401 (`kljucevi.zamijenjen`) |
 | `GET /api/slika/<ključ>/<uuid>.jpg` | slika |
 | `GET /api/racun` | pozivi na broj računa koje ključ već ima (bookmarklet na Hepiju šalje samo nove) |
 | `POST /api/racun` | tijelo je PDF računa HEP Opskrbe → pročita se kao mail i spremi kao `hep-racun` (201, 200 duplikat, 422 nije račun) |
+| `GET /api/prikljucak` | OMM-ovi ključa s podacima za upit, Elektrom (po prefiksu OMM-a) i spremljenom priključnom snagom |
+| `POST /api/prikljucak` | `{omm, snaga_kw, faze?, osigurac_a?}` ručni unos ili ispravak |
 | `GET /api/mail` | zadnji primljeni mailovi ovog ključa (računi, Gmailov kod potvrde) |
 | `GET /api/izvjestaj` | OMM-ovi ovog ključa za koje se može napraviti izvještaj |
 | `GET /api/izvjestaj/:omm` | godišnji izvještaj potrošnje, `?oblik=pdf` (zadano) \| `html` \| `json`, `?anonimno=1`; 422 kad nema podataka |
@@ -129,6 +131,13 @@ pravilo `racuni@` → ovaj Worker). Zato je `main` u `wrangler.jsonc`
 `hep-racun` (`src/lib/racuni.ts`, isto kao `POST /api/racun`); svaki mail ide u tablicu `mailovi`. PDF ni mail se ne čuvaju (OIB).
 Lokalni test: `wrangler dev`, pa
 `curl -X POST "localhost:8787/cdn-cgi/handler/email?from=a@b.hr&to=racuni%2B<ključ>@omm.domovina.ai" --data-binary @racun.eml`.
+
+**Priključna snaga** (`src/lib/prikljucak.ts`, tablica `prikljucci`): nema je ni na portalu ni na
+računu, ali Elektra je kaže na mail. Gumb na `/` otvori upit (mailto ili Gmail) Elektri po
+prve dvije znamenke OMM-a (potvrđeno samo `01` = Zagreb, inače `info.ods@hep.hr`); korisnik
+odgovor proslijedi na isti `racuni+<ključ>@`, a `primiMail` ga, kad nema PDF računa, pročita
+(„priključna snaga je 11,04 kW (3F) - 3x16 A“). Tijelo upita ne smije imati broj ispred „kW“.
+Istraživanje i adrese svih 21 Elektre: `docs/2026-10-31-prikljucna-snaga.md`.
 
 **Usporedba sa zadnjim stanjem** (`src/lib/usporedba.ts`): zadnje stanje je
 najnovije od (a) zadnjeg očitanja u zadnjem uvozu s Moje mreže (`hep`, `mjesta[]`)

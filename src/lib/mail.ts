@@ -2,6 +2,8 @@
  * Dolazni mail: HEP-ovi računi koje korisnik prosljeđuje na
  * `racuni+<ključ uređaja>@omm.domovina.ai` (Cloudflare Email Routing → ovaj
  * Worker). Ključ u adresi zamjenjuje prijavu, kao Bearer ključ u API-ju.
+ * Na istu adresu stiže i proslijeđeni odgovor Elektre o priključnoj snazi
+ * (src/lib/prikljucak.ts); od računa se razlikuje po tome što nema PDF računa.
  *
  * Čuva se samo pročitani JSON računa (bez OIB-a i imena), ne PDF ni sirovi
  * mail. Gmailova potvrda prosljeđivanja čuva se da je korisnik vidi na /uvoz,
@@ -12,6 +14,8 @@ import PostalMime from "postal-mime";
 import { procitajRacun } from "./hep-racun";
 import { slabKljuc } from "./http";
 import { registriraj, stanjeKljuca } from "./kljucevi";
+import { procitajPrikljucak } from "./prikljucak";
+import { popisPrikljucaka, spremiPrikljucak } from "./prikljucci";
 import { spremiRacun } from "./racuni";
 
 const NAJVISE = 10 * 1024 * 1024;
@@ -40,7 +44,7 @@ export function odGooglea(od: string, rezultati: string | null): boolean {
   return rezultati == null || /\bdmarc=pass\b/i.test(rezultati);
 }
 
-type Zapis = { vrsta: "racun" | "gmail-potvrda" | "ostalo"; ishod: "novo" | "duplikat" | "nije-racun" | "greska"; poruka?: unknown; snimakId?: string };
+type Zapis = { vrsta: "racun" | "gmail-potvrda" | "prikljucak" | "ostalo"; ishod: "novo" | "duplikat" | "nije-racun" | "nema-omm" | "greska"; poruka?: unknown; snimakId?: string };
 
 async function zapisiMail(uredaj: string, od: string, naslov: string, z: Zapis) {
   await env.DB.prepare(
@@ -88,6 +92,16 @@ export async function primiMail(poruka: ForwardableEmailMessage): Promise<void> 
       });
     }
     if (!ijedan) {
+      const p = procitajPrikljucak(`${naslov}\n${mail.text ?? (mail.html ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ")}`);
+      if (p) {
+        // OMM iz odgovora ili naslova; bez njega samo ako ključ ima jedno mjesto.
+        const mjesta = p.omm ? [] : await popisPrikljucaka(uredaj);
+        const omm = p.omm ?? (mjesta.length === 1 ? mjesta[0].omm : null);
+        const sazetak = { omm, snaga_kw: p.snaga_kw, faze: p.faze, osigurac_a: p.osigurac_a, recenica: p.recenica };
+        if (!omm) return await zapisiMail(uredaj, od, naslov, { vrsta: "prikljucak", ishod: "nema-omm", poruka: sazetak });
+        await spremiPrikljucak(uredaj, omm, p, "mail", p.recenica);
+        return await zapisiMail(uredaj, od, naslov, { vrsta: "prikljucak", ishod: "novo", poruka: sazetak });
+      }
       await zapisiMail(uredaj, od, naslov, { vrsta: "ostalo", ishod: "nije-racun", poruka: { prilozi: mail.attachments.map((a) => a.filename) } });
     }
   } catch (e) {

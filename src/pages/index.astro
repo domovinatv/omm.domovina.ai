@@ -89,6 +89,22 @@ import Podnozje from "../components/Podnozje.astro";
       .izvjestaji .gumbi button { margin: 0; min-height: 36px; font-size: .9rem; }
       .izvjestaji .gumbi button.glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
       .izvjestaji .stanje { text-align: left; }
+      .prikljucci { margin-top: 18px; }
+      .prikljucci .snaga { font-size: 1.05rem; font-weight: 700; margin-top: 2px; }
+      .prikljucci .gumbi { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+      .prikljucci .gumb { flex: 1 1 120px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        min-height: 36px; padding: 0 10px; border: 1px solid var(--rub); border-radius: 12px; font-size: .9rem;
+        font-weight: 600; text-decoration: none; color: var(--tekst); }
+      .prikljucci .gumb.glavni { background: var(--akcent); color: var(--akcent-tekst); border-color: var(--akcent); }
+      .prikljucci .adresa { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+      .prikljucci .adresa code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: .78rem; }
+      .prikljucci .adresa button, .prikljucci form button { width: auto; margin: 0; min-height: 32px; padding: 0 10px; font-size: .85rem; }
+      .prikljucci form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px; }
+      .prikljucci form label { font-size: .8rem; color: var(--blijedo); display: grid; gap: 2px; }
+      .prikljucci form input, .prikljucci form select { width: 100%; min-height: 32px; font: inherit; font-size: .9rem;
+        border: 1px solid var(--rub); border-radius: 8px; background: var(--bg); color: var(--tekst); padding: 0 6px; }
+      .prikljucci form button { grid-column: 1 / -1; }
+      .prikljucci .stanje { text-align: left; }
       /* Kako to radi: ispod koraka, uvod pa tri stavke u redu (na mobitelu jedna ispod druge). */
       .kako { margin-top: 40px; }
       .kako h2 { display: flex; align-items: center; gap: 8px; font-size: 1.25rem; }
@@ -273,6 +289,12 @@ import Podnozje from "../components/Podnozje.astro";
           <p class="blijedo">Zadnjih 12 mjeseci s troškom, iz svih tvojih uvoza i očitanja. Radi se iznova kod svakog preuzimanja, pa uključuje i zadnje očitanje.</p>
           <ul class="snimci" id="izvjestaji-popis"></ul>
         </div>
+        <div class="prikljucci" id="prikljucci" hidden>
+          <h2>Priključna snaga</h2>
+          <p class="blijedo">O njoj ovisi koliku elektranu smiješ spojiti. Ne piše ni na računu ni na portalu, ali Elektra je
+            kaže na upit mailom, obično isti dan.</p>
+          <ul class="snimci" id="prikljucci-popis"></ul>
+        </div>
         <div class="brisanje">
           <button type="button" id="rotiraj">Zamijeni ključ</button>
           <p class="blijedo">Ako je oznaku vidio netko drugi: podaci prelaze na novi ključ, a stari više ništa ne otvara.
@@ -298,6 +320,7 @@ import Podnozje from "../components/Podnozje.astro";
       };
       import { kljuc, kljucIzAdrese, postaviKljuc, skraceno } from "../lib/kljuc-klijent";
       import { WEB_STORE } from "../lib/ekstenzija";
+      import { upitHepu, type Podaci } from "../lib/prikljucak";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
       const drugi = kljucIzAdrese();
       const k = kljuc();
@@ -469,8 +492,9 @@ import Podnozje from "../components/Podnozje.astro";
       }
       ucitaj();
       ucitajIzvjestaje();
-      // Povratak s HEP-ove kartice osvježi popis.
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) { ucitaj(); ucitajIzvjestaje(); } });
+      ucitajPrikljucke();
+      // Povratak s HEP-ove kartice (ili iz maila) osvježi popis.
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { ucitaj(); ucitajIzvjestaje(); ucitajPrikljucke(); } });
 
       // Izvještaj po OMM-u: PDF se računa na serveru iz svih snimaka ovog ključa.
       type Omm = { omm: string; adresa: string | null };
@@ -514,6 +538,96 @@ import Podnozje from "../components/Podnozje.astro";
         } finally {
           b.disabled = false;
         }
+      }
+
+      // Priključna snaga po OMM-u (GET /api/prikljucak). Upit šalje korisnik iz svog
+      // maila Elektri po prefiksu OMM-a (rezerva HEP ODS), a odgovor proslijedi na
+      // racuni+<ključ>@, gdje ga src/lib/mail.ts pročita. Ručni unos je rezerva.
+      type Prikljucni = Podaci & {
+        elektra: { naziv: string; email: string } | null;
+        prikljucak: { snaga_kw: number; faze: 1 | 3 | null; osigurac_a: number | null; izvor: string; azuriran: string } | null;
+      };
+      const adresaMaila = `racuni+${k}@omm.domovina.ai`;
+      const kw = (n: number) => n.toLocaleString("hr-HR", { maximumFractionDigits: 2 });
+      const opisPrikljucka = (p: NonNullable<Prikljucni["prikljucak"]>) =>
+        [`${kw(p.snaga_kw)} kW`, p.faze === 3 ? "trofazni" : p.faze === 1 ? "jednofazni" : null,
+          p.osigurac_a && `${p.faze ?? 1}×${p.osigurac_a} A`].filter(Boolean).join(" · ");
+      // Iz uvoza ime dolazi velikim slovima („STEPANIĆ MATIJA“); Elektri pišemo normalno.
+      const lijepo = (t?: string | null) => t?.toLocaleLowerCase("hr").replace(/(^|[\s,./-])(\p{L})/gu, (_, a, b) => a + b.toLocaleUpperCase("hr")) ?? null;
+      async function ucitajPrikljucke() {
+        const r = await fetch("/api/prikljucak", { headers: auth });
+        if (!r.ok) return;
+        const popis = (await r.json()) as Prikljucni[];
+        $("prikljucci").hidden = !popis.length;
+        $("prikljucci-popis").replaceChildren(...popis.map(redakPrikljucka));
+      }
+      function redakPrikljucka(o: Prikljucni) {
+        const li = document.createElement("li");
+        const el = (tag: string, klasa: string, tekst = "") => Object.assign(document.createElement(tag), { className: klasa, textContent: tekst });
+        li.append(el("div", "naslov", `OMM ${o.omm}`));
+        if (o.adresa) li.append(el("div", "meta", o.adresa));
+        const stanje = el("div", "stanje");
+        const forma = rucniUnos(o, stanje);
+        forma.hidden = true;
+        const ispravi = el("a", "", "Upiši ručno") as HTMLAnchorElement;
+        ispravi.href = "#";
+        ispravi.onclick = (e) => { e.preventDefault(); forma.hidden = !forma.hidden; };
+        if (o.prikljucak) {
+          li.append(el("div", "snaga", opisPrikljucka(o.prikljucak)),
+            el("div", "meta", `${o.prikljucak.izvor === "mail" ? "Iz odgovora HEP-a" : "Upisano ručno"}, ${new Date(o.prikljucak.azuriran).toLocaleDateString("hr-HR")} · `));
+          ispravi.textContent = "Ispravi";
+          li.lastElementChild!.append(ispravi);
+        } else {
+          const kome = o.elektra ?? { naziv: "HEP ODS", email: "info.ods@hep.hr" };
+          const { naslov, tijelo } = upitHepu({ ...o, ime: lijepo(o.ime), adresa: lijepo(o.adresa) });
+          const q = (x: string) => encodeURIComponent(x);
+          const gumbi = el("div", "gumbi");
+          const veza = (tekst: string, href: string, glavni: boolean) => {
+            const a = el("a", glavni ? "gumb glavni" : "gumb", tekst) as HTMLAnchorElement;
+            a.href = href; a.target = "_blank"; a.rel = "noopener";
+            a.prepend(ikona("i-mail"));
+            return a;
+          };
+          gumbi.append(
+            veza("Pošalji upit", `mailto:${kome.email}?subject=${q(naslov)}&body=${q(tijelo)}`, true),
+            veza("U Gmailu", `https://mail.google.com/mail/?view=cm&fs=1&to=${q(kome.email)}&su=${q(naslov)}&body=${q(tijelo)}`, false),
+          );
+          const adresa = el("div", "adresa");
+          const kopiraj = el("button", "", "Kopiraj") as HTMLButtonElement;
+          kopiraj.type = "button";
+          kopiraj.onclick = async () => {
+            try { await navigator.clipboard.writeText(adresaMaila); kopiraj.replaceChildren(ikona("i-check")); } catch { kopiraj.textContent = "Označi i kopiraj"; }
+          };
+          adresa.append(el("code", "", adresaMaila), kopiraj);
+          const uputa = el("div", "meta", `Prima ${kome.naziv} (${kome.email}). Šalješ sa svoje adrese, jer HEP podatak daje samo kupcu. Kad stigne odgovor, proslijedi ga ovamo:`);
+          const ili = el("div", "meta", "Imaš ga već (suglasnost, osigurač u ormariću)? ");
+          ili.append(ispravi);
+          li.append(gumbi, uputa, adresa, ili);
+        }
+        li.append(forma, stanje);
+        return li;
+      }
+      function rucniUnos(o: Prikljucni, stanje: HTMLElement) {
+        const f = document.createElement("form");
+        const p = o.prikljucak;
+        f.innerHTML = `<label>kW<input name="snaga_kw" inputmode="decimal" required></label>
+          <label>Faze<select name="faze"><option value="">?</option><option value="1">1</option><option value="3">3</option></select></label>
+          <label>Osigurač A<input name="osigurac_a" inputmode="numeric"></label><button type="submit">Spremi</button>`;
+        const polje = (ime: string) => f.elements.namedItem(ime) as HTMLInputElement;
+        if (p) { polje("snaga_kw").value = kw(p.snaga_kw); polje("faze").value = String(p.faze ?? ""); polje("osigurac_a").value = String(p.osigurac_a ?? ""); }
+        f.onsubmit = async (e) => {
+          e.preventDefault();
+          stanje.className = "stanje"; stanje.textContent = "Spremam…";
+          const r = await fetch("/api/prikljucak", {
+            method: "POST",
+            headers: { ...auth, "Content-Type": "application/json" },
+            body: JSON.stringify({ omm: o.omm, snaga_kw: polje("snaga_kw").value.replace(",", "."), faze: polje("faze").value, osigurac_a: polje("osigurac_a").value }),
+          }).catch(() => null);
+          const d = await r?.json().catch(() => ({}));
+          if (r?.ok) return ucitajPrikljucke();
+          stanje.className = "stanje greska"; stanje.textContent = d?.greska ?? `Greška ${r?.status ?? "mreže"}`;
+        };
+        return f;
       }
 
       // Rotacija ključa (POST /api/kljuc/rotiraj): server da novi, stari dobiva 401.
@@ -565,6 +679,7 @@ import Podnozje from "../components/Podnozje.astro";
           stanje.replaceChildren("Obrisano ", ikona("i-check"));
           $("snimci").replaceChildren(Object.assign(document.createElement("li"), { className: "meta", textContent: "Još nema uvoza." }));
           $("izvjestaji").hidden = true;
+          $("prikljucci").hidden = true;
         } else {
           stanje.className = "stanje greska"; stanje.textContent = d?.greska ?? `Greška ${r?.status ?? "mreže"}`;
         }

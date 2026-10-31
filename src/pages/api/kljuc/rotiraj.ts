@@ -5,7 +5,7 @@ import { noviKljuc } from "../../../lib/kljucevi";
 
 /**
  * POST (Bearer stari ključ) → `{kljuc}`: novi ključ koji generira server, sa svim
- * podacima starog (snimci, dnevnik, mailovi, slike). Stari ostaje zapisan kao
+ * podacima starog (snimci, dnevnik, mailovi, priključci, slike). Stari ostaje zapisan kao
  * zamijenjen i dobiva 401, pa procurjeli ključ više ništa ne otvara (SEC-05).
  * Oznaku i adresu za mailove treba zatim napraviti ponovno.
  */
@@ -37,6 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
     ).bind(novi, stari),
     env.DB.prepare(`UPDATE dogadaji SET uredaj = ? WHERE uredaj = ?`).bind(novi, stari),
     env.DB.prepare(`UPDATE mailovi SET uredaj = ? WHERE uredaj = ?`).bind(novi, stari),
+    env.DB.prepare(`UPDATE prikljucci SET uredaj = ? WHERE uredaj = ?`).bind(novi, stari),
     env.DB.prepare(`INSERT INTO kljucevi (kljuc, stvoren, zadnji) VALUES (?1, ?2, ?2)`).bind(novi, sad),
     env.DB.prepare(
       `INSERT INTO kljucevi (kljuc, stvoren, zadnji, zamijenjen) VALUES (?1, ?2, ?2, ?2)
