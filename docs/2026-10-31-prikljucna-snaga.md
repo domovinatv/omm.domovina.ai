@@ -141,11 +141,11 @@ Iz zaglavlja i HTML-a obaju odgovora Elektre Zagreb:
 
 | | #ODS:10641937 (pet 23.10.) | #ODS:10674960 (sub 31.10.) |
 |---|---|---|
-| upit poslan (UTC) | 08:00:42 | 06:20:53 |
+| upit poslan (UTC) | 07:00:42 (CEST) | 06:20:53 |
 | automatska potvrda `noreply@hep.hr` | odmah | 06:21:23 (30 s) |
 | otvoren odgovor (`emailSignature-<ms>`) | 10:57:29 | 12:45:49 |
 | poslan | 10:59:23 (**113 s** pisanja) | 12:48:02 (**132 s** pisanja) |
-| od upita do odgovora | 3 h | 6 h 27 min |
+| od upita do odgovora | 4 h | 6 h 27 min |
 | tekst | „na Vašem mjernom mjestu … je 11,04 kW (3F) - 3x16 A“ | „… potrošnje za navedeno obračunsko mjerno mjesto je 5.75 kW (jednofazni priključak)“ |
 
 - Sustav: `SZG01CCAPPODS01.data.centar` (CC APP ODS, Linux + sendmail 8.14.4) → Exchange `mail.hep.hr`.
