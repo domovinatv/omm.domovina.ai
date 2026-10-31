@@ -131,5 +131,5 @@ Ostaje: druga domena bez maila na D.O.M. računu (Cloudflare) ili Resend s MX sa
 - **Drugi oblik odgovora** (Elektra Zagreb, #ODS:10674960, 31.10. 12:48 UTC, za OMM 0112024676):
   „priključna snaga potrošnje za navedeno obračunsko mjerno mjesto je 5.75 kW (jednofazni
   priključak).“ Decimalna točka, bez osigurača. Proslijeđen preko Gmaila i pročitan automatski
-  bez promjene koda (5,75 kW, 1F, OMM iz naslova). HEP je odgovorio iako je upit poslan s maila
-  drugog člana obitelji od kupca na tom OMM-u: ne traži da pošiljatelj bude kupac.
+  bez promjene koda (5,75 kW, 1F, OMM iz naslova). HEP je odgovorio iako je upit poslan s maila osobe koja nije
+  kupac na tom OMM-u (u upitu je ime kupca): ne traži da pošiljatelj bude kupac.
