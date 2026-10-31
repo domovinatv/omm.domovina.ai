@@ -96,6 +96,9 @@ export function procitajPrikljucak(tekst: string): (Prikljucak & { omm: string |
   for (const m of t.matchAll(/priklju[čc]n\w*\s+sna[gz]\w*/gi)) {
     const okno = t.slice(m.index, m.index + 160);
     const kw = /(\d{1,4}(?:[.,]\d{1,3})?)\s*kW\b/i.exec(okno);
+    // Gmailov Forward prepiše i naslov („Upit o … priključnoj snazi – OMM …“): ako je do
+    // broja još jedan spomen, kreće se od njega, inače faze i osigurač ispadnu iz okna.
+    if (kw && /priklju[čc]n\w*\s+sna[gz]\w*/i.test(okno.slice(m[0].length, kw.index))) continue;
     const osig = /\b([13])\s*[x×*]\s*(\d{1,3})\s*A\b/i.exec(okno);
     const faze: 1 | 3 | null =
       /\(\s*3\s*F\s*\)|\btrofazn/i.test(okno) || osig?.[1] === "3" ? 3
