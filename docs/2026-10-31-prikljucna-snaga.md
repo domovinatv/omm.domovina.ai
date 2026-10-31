@@ -115,3 +115,16 @@ Ostaje: druga domena bez maila na D.O.M. računu (Cloudflare) ili Resend s MX sa
 `receive-euw1.forge.rmta.net`, webhook `1b649021-…` → `https://omm.domovina.ai/api/resend`
 (samo `email.received`). Test 2026-10-31 06:48 UTC: mail poslan preko Resenda na
 `racuni+<testni ključ>@` spremljen kao 11,04 kW / 3F / 16 A za 2 s; testni podaci obrisani.
+
+## Pravo prosljeđivanje iz Gmaila (2026-10-31)
+
+- **Kašnjenje**: korisnik je ponovno proslijedio u 06:51 UTC (nakon postavljanja MX-a), stiglo je
+  u 06:59:54. Vjerojatno Gmailov negativni MX cache od prvog pokušaja (SOA minimum 1800 s).
+  Resendu ne treba „inbox“: domena s uključenim primanjem i webhook su dovoljni.
+- **Zamka parsera**: Gmailov Forward u tekst ubaci zaglavlje izvornog maila, a naslov upita
+  („Upit o priključnoj snazi – OMM …“) sadrži isti izraz. Prvi spomen „priključn… snag…“ bio je
+  naslov, okno od 160 znakova odrezalo je „(3F) - 3x16 A“, pa je spremljeno samo 11,04 kW.
+  Popravak (`49abf9b`): ako između spomena i broja kW stoji još jedan spomen, preskoči na njega.
+  Zapis korisnika ručno dopunjen u D1 (faze 3, osigurač 16).
+- Novi oblik odgovora (druga Elektra, drugačija rečenica) testirati na **proslijeđenom** tekstu,
+  ne samo na izvornom odgovoru.
