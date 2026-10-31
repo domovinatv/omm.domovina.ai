@@ -123,6 +123,8 @@ učita, a podnožje ide kroz `footerTemplate` jer `@page` rubne okvire ne crta.
 
 ## Računi mailom
 
+**Ne radi od početka (2026-10-31): `omm.domovina.ai` nema MX**, Email Routing na `domovina.ai`
+je isključen jer je tamo Google Workspace; vidi `docs/2026-10-31-prikljucna-snaga.md` § Prijem maila.
 `racuni+<ključ>@omm.domovina.ai` (Email Routing poddomena `omm`, subaddressing,
 pravilo `racuni@` → ovaj Worker). Zato je `main` u `wrangler.jsonc`
 `src/worker.ts` (Astro `handle` + `email()`), ne adapterov ulaz.
@@ -134,7 +136,7 @@ Lokalni test: `wrangler dev`, pa
 
 **Priključna snaga** (`src/lib/prikljucak.ts`, tablica `prikljucci`): nema je ni na portalu ni na
 računu, ali Elektra je kaže na mail. Gumb na `/` otvori upit (mailto ili Gmail) Elektri po
-prve dvije znamenke OMM-a (potvrđeno samo `01` = Zagreb, inače `info.ods@hep.hr`); korisnik
+prve dvije znamenke OMM-a (redni broj Elektre, 01 Zagreb … 21 Požega; nepoznato → `info.ods@hep.hr`); korisnik
 odgovor proslijedi na isti `racuni+<ključ>@`, a `primiMail` ga, kad nema PDF računa, pročita
 („priključna snaga je 11,04 kW (3F) - 3x16 A“). Tijelo upita ne smije imati broj ispred „kW“.
 Istraživanje i adrese svih 21 Elektre: `docs/2026-10-31-prikljucna-snaga.md`.

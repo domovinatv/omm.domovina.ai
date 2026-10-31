@@ -65,12 +65,26 @@ Rezerva za sve: `info.ods@hep.hr` (prosljeđuje Elektri, +1 korak), tel. 0800 30
 
 ## Koja Elektra za koji OMM
 
-OMM ima 10 znamenki, **prve dvije su distribucijsko područje** (HO CIRED, „Jedinstveni
-sustav daljinski očitavanih mjernih mjesta HEP-ODS-a”, SO6-12). Potvrđeno samo
-`01` = Elektra Zagreb (oba naša OMM-a, 0100031779 i 0112024676). Popis ostalih šifri
-nisam našao javno. Prijedlog: tablica `01 → zagreb`, ostale šifre učiti iz uvoza
-(prefiks OMM-a + mjesto iz adrese); dok šifra nije poznata, klijent nudi izbor Elektre
-ili šalje na `info.ods@hep.hr`.
+OMM ima 10 znamenki, **prve dvije su distribucijsko područje** (HO CIRED SO6-12, HEP-ova
+Pravila o mjernim podacima). Šifra je **redni broj Elektre** istim redom kojim ih HEP ODS
+navodi (tablica gore: 01 Zagreb … 21 Požega), a ne pozivni ni poštanski broj (Varaždin je
+03, pozivni 042, poštanski 42xxx).
+
+Dokaz: OMM-ovi bolnica i ureda s adresama iz HZZO-ove nabave struje 2017.
+([Prilog 8.2 MM](https://hzzo.hr/wp-content/uploads/2017/06/Prilog_8_2_MM.pdf)), npr. 0171010038
+KBC Sestre milosrdnice, 0301218450 Varaždinske Toplice, 1305698243 KBC Split, 1610002700
+OB Dubrovnik, 2103015805 OŽB Požega. Elektrojug je 2017. pisao da OMM nastaje tako da se
+staroj šifri kupca doda 1600 (dulist.hr).
+
+- Sigurno (više lokacija): 01, 03, 05, 09–17, 19.
+- Po jednoj lokaciji: 02 Zabok, 04 Čakovec, 18 Sisak, 20 Virovitica, 21 Požega.
+- Samo po redoslijedu: 06 Bjelovar (nijedan nalaz), 07 Križ (Popovača, Pakrac), 08 Osijek
+  (Našice; KBC Osijek u HZZO-ovu popisu ima šifre s izgubljenim nulama).
+- Šifra prati stari pogon: Jastrebarsko je 17 (Karlovac), Metković i Ploče 13 (Split). Za
+  upit to ne smeta, Elektra ga proslijedi.
+
+U kodu: `elektraZaOmm` u `src/lib/prikljucak.ts`; nepoznata šifra (00, 22+) ide na
+`info.ods@hep.hr`.
 
 ## Prijedlog toka u aplikaciji
 
@@ -87,3 +101,12 @@ ili šalje na `info.ods@hep.hr`.
 
 Gmail Forward ne mijenja tekst odgovora, ali omota poveznice; parser čita samo tekst
 pa to ne smeta.
+
+## Prijem maila: omm.domovina.ai nema MX (2026-10-31)
+
+Prvo pravo prosljeđivanje (06:22 UTC) nije stiglo: `omm.domovina.ai` nema MX zapis, a Email
+Routing za `domovina.ai` je isključen. Prosljeđivanje računa na `racuni+…@` zato nikad nije
+radilo u produkciji. Cloudflare poddomenu dodaje samo kad je Email Routing uključen na
+korijenu, a uključivanje traži Cloudflareove MX na `domovina.ai` (greška 2008 „Non-Cloudflare
+MX records exist“), gdje je Google Workspace. Samostalna poddomena kao zona je Enterprise.
+Ostaje: druga domena bez maila na D.O.M. računu (Cloudflare) ili Resend s MX samo na `omm`.

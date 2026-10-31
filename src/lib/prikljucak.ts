@@ -40,12 +40,17 @@ export const ELEKTRE: Record<string, Elektra> = {
 export const HEP_ODS: Elektra = { naziv: "HEP ODS", email: "info.ods@hep.hr" };
 
 /**
- * Prve dvije znamenke OMM-a su distribucijsko područje (HO CIRED, SO6-12). Javnog
- * popisa šifri nema; potvrđeno je samo ono što smo vidjeli u svojim uvozima.
+ * Prve dvije znamenke OMM-a su distribucijsko područje (HO CIRED SO6-12, HEP-ova Pravila o
+ * mjernim podacima): redni broj Elektre istim redom kojim ih HEP ODS navodi (gore). Javnog
+ * popisa nema; provjereno na OMM-ovima s adresama iz HZZO-ove nabave struje 2017.
+ * (hzzo.hr/wp-content/uploads/2017/06/Prilog_8_2_MM.pdf): sigurno 01, 03, 05, 09–17, 19,
+ * po jednoj lokaciji 02, 04, 18, 20, 21, a 06 (Bjelovar), 07 (Križ: Popovača) i 08 (Osijek:
+ * Našice) samo po redoslijedu. Šifra prati stari pogon, ne današnju Elektru: Jastrebarsko je
+ * 17, Metković 13. Za upit to ne smeta, Elektra ga proslijedi.
  */
-const PODRUCJA: Record<string, string> = { "01": "zagreb" };
+const PODRUCJA = Object.keys(ELEKTRE);
 
-export const elektraZaOmm = (omm: string): Elektra | null => ELEKTRE[PODRUCJA[omm.slice(0, 2)]] ?? null;
+export const elektraZaOmm = (omm: string): Elektra | null => ELEKTRE[PODRUCJA[Number(omm.slice(0, 2)) - 1]] ?? null;
 
 export type Podaci = { omm: string; ime?: string | null; adresa?: string | null; brojilo?: string | null; sifra_kupca?: string | null };
 
