@@ -52,6 +52,22 @@ const PODRUCJA = Object.keys(ELEKTRE);
 
 export const elektraZaOmm = (omm: string): Elektra | null => ELEKTRE[PODRUCJA[Number(omm.slice(0, 2)) - 1]] ?? null;
 
+/** Iz uvoza ime dolazi velikim slovima („STEPANIĆ MATIJA“); Elektri pišemo normalno. */
+export const lijepo = (t?: string | null) =>
+  t?.toLocaleLowerCase("hr").replace(/(^|[\s,./-])(\p{L})/gu, (_, a, b) => a + b.toLocaleUpperCase("hr")) ?? null;
+
+/** Gotove poveznice za upit: mailto i Gmailov compose, s popunjenim primateljem, naslovom i tijelom. */
+export function poveznicaUpita(p: Podaci & { elektra?: Elektra | null }) {
+  const kome = p.elektra ?? elektraZaOmm(p.omm) ?? HEP_ODS;
+  const { naslov, tijelo } = upitHepu({ ...p, ime: lijepo(p.ime), adresa: lijepo(p.adresa) });
+  const q = encodeURIComponent;
+  return {
+    kome,
+    mailto: `mailto:${kome.email}?subject=${q(naslov)}&body=${q(tijelo)}`,
+    gmail: `https://mail.google.com/mail/?view=cm&fs=1&to=${q(kome.email)}&su=${q(naslov)}&body=${q(tijelo)}`,
+  };
+}
+
 export type Podaci = { omm: string; ime?: string | null; adresa?: string | null; brojilo?: string | null; sifra_kupca?: string | null };
 
 /**

@@ -320,7 +320,7 @@ import Podnozje from "../components/Podnozje.astro";
       };
       import { kljuc, kljucIzAdrese, postaviKljuc, skraceno } from "../lib/kljuc-klijent";
       import { WEB_STORE } from "../lib/ekstenzija";
-      import { upitHepu, type Podaci } from "../lib/prikljucak";
+      import { poveznicaUpita, type Podaci } from "../lib/prikljucak";
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
       const drugi = kljucIzAdrese();
       const k = kljuc();
@@ -552,8 +552,6 @@ import Podnozje from "../components/Podnozje.astro";
       const opisPrikljucka = (p: NonNullable<Prikljucni["prikljucak"]>) =>
         [`${kw(p.snaga_kw)} kW`, p.faze === 3 ? "trofazni" : p.faze === 1 ? "jednofazni" : null,
           p.osigurac_a && `${p.faze ?? 1}×${p.osigurac_a} A`].filter(Boolean).join(" · ");
-      // Iz uvoza ime dolazi velikim slovima („STEPANIĆ MATIJA“); Elektri pišemo normalno.
-      const lijepo = (t?: string | null) => t?.toLocaleLowerCase("hr").replace(/(^|[\s,./-])(\p{L})/gu, (_, a, b) => a + b.toLocaleUpperCase("hr")) ?? null;
       async function ucitajPrikljucke() {
         const r = await fetch("/api/prikljucak", { headers: auth });
         if (!r.ok) return;
@@ -578,9 +576,7 @@ import Podnozje from "../components/Podnozje.astro";
           ispravi.textContent = "Ispravi";
           li.lastElementChild!.append(ispravi);
         } else {
-          const kome = o.elektra ?? { naziv: "HEP ODS", email: "info.ods@hep.hr" };
-          const { naslov, tijelo } = upitHepu({ ...o, ime: lijepo(o.ime), adresa: lijepo(o.adresa) });
-          const q = (x: string) => encodeURIComponent(x);
+          const { kome, mailto, gmail } = poveznicaUpita(o);
           const gumbi = el("div", "gumbi");
           const veza = (tekst: string, href: string, glavni: boolean) => {
             const a = el("a", glavni ? "gumb glavni" : "gumb", tekst) as HTMLAnchorElement;
@@ -589,8 +585,8 @@ import Podnozje from "../components/Podnozje.astro";
             return a;
           };
           gumbi.append(
-            veza("Pošalji upit", `mailto:${kome.email}?subject=${q(naslov)}&body=${q(tijelo)}`, true),
-            veza("U Gmailu", `https://mail.google.com/mail/?view=cm&fs=1&to=${q(kome.email)}&su=${q(naslov)}&body=${q(tijelo)}`, false),
+            veza("Pošalji upit", mailto, true),
+            veza("U Gmailu", gmail, false),
           );
           const adresa = el("div", "adresa");
           const kopiraj = el("button", "", "Kopiraj") as HTMLButtonElement;

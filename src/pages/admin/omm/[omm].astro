@@ -1,6 +1,8 @@
 ---
 import AdminOkvir from "../../../components/AdminOkvir.astro";
 import { IZVORI, kad, pregledOmm, uredaji } from "../../../lib/admin/pregled";
+import { poveznicaUpita } from "../../../lib/prikljucak";
+import { popisPrikljucaka } from "../../../lib/prikljucci";
 
 if (!Astro.locals.admin) return new Response(null, { status: 401 });
 
@@ -10,6 +12,12 @@ if (!o) return new Response("Nema tog OMM-a", { status: 404 });
 const dnevnik = await uredaji(o.korisnici.map((k) => k.uredaj));
 const izv = `/admin/izvjestaj/${omm}`;
 const k1 = encodeURIComponent(o.korisnici[0]?.uredaj ?? "");
+// Priključna snaga po ključu: spremljena ili upit Elektri s podacima iz uvoza tog ključa.
+const prikljucci = await Promise.all(o.korisnici.map(async (k) => {
+  const p = (await popisPrikljucaka(k.uredaj)).find((x) => x.omm === omm) ?? { omm, elektra: null, prikljucak: null };
+  return { uredaj: k.uredaj, p, upit: poveznicaUpita(p), proslijedi: `racuni+${k.uredaj}@omm.domovina.ai` };
+}));
+const kw = (n: number) => n.toLocaleString("hr-HR", { maximumFractionDigits: 2 });
 const preglednik = (ua: string | null) =>
   !ua ? "—" : /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : ua.slice(0, 40);
 ---
@@ -43,6 +51,27 @@ const preglednik = (ua: string | null) =>
           </div>
         </>
       )}
+  </div>
+
+  <div class="kartica">
+    <h2 style="margin-top:0">Priključna snaga</h2>
+    {prikljucci.map(({ uredaj, p, upit, proslijedi }) => (
+      <div style="margin-bottom:12px">
+        {prikljucci.length > 1 && <p class="mono blijedo" title={uredaj}>{uredaj}</p>}
+        {p.prikljucak ? (
+          <p><strong>{kw(p.prikljucak.snaga_kw)} kW</strong>
+            {p.prikljucak.faze && ` · ${p.prikljucak.faze === 3 ? "trofazni" : "jednofazni"}`}
+            {p.prikljucak.osigurac_a && ` · ${p.prikljucak.faze ?? 1}×${p.prikljucak.osigurac_a} A`}
+            <span class="blijedo"> · {p.prikljucak.izvor === "mail" ? "iz odgovora HEP-a" : "upisano ručno"}, {kad(p.prikljucak.azuriran)}</span></p>
+        ) : <p class="blijedo">Nije poznata.</p>}
+        <div class="akcije">
+          <a class={p.prikljucak ? "gumb" : "gumb glavni"} href={upit.mailto} target="_blank" rel="noopener"><i class="i i-mail" aria-hidden="true"></i> Upit mailom</a>
+          <a class="gumb" href={upit.gmail} target="_blank" rel="noopener"><i class="i i-mail" aria-hidden="true"></i> U Gmailu</a>
+        </div>
+        <p class="blijedo" style="margin-bottom:0">Prima {upit.kome.naziv} ({upit.kome.email}). HEP podatak daje kupcu, pa je upit
+          potpisan imenom iz uvoza. Odgovor proslijedi na <code class="mono" style="user-select:all">{proslijedi}</code></p>
+      </div>
+    ))}
   </div>
 
   <h2>Korisnici ({o.korisnici.length})</h2>
