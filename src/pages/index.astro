@@ -81,6 +81,14 @@ import Podnozje from "../components/Podnozje.astro";
       ol { padding-left: 22px; margin: 8px 0; } ol li { margin: 6px 0; }
       ol.instalacija li { margin: 10px 0; }
       ol.instalacija .i { vertical-align: -3px; }
+      .pribodi { border: 2px solid var(--akcent); border-radius: 12px; padding: 4px 14px 10px; margin: 10px 0; }
+      .strelica-pribodi { position: fixed; top: 6px; right: 70px; z-index: 10; display: flex; align-items: center; gap: 6px;
+        padding: 8px 14px; border-radius: 999px; background: var(--akcent); color: var(--akcent-tekst); font-weight: 700;
+        box-shadow: 0 2px 10px rgba(0,47,108,.3); animation: pokazi 1.2s ease-in-out infinite; }
+      .strelica-pribodi[hidden] { display: none; }
+      .strelica-pribodi .i { font-size: 1.4rem; }
+      @keyframes pokazi { 50% { transform: translate(6px, -6px); } }
+      @media (prefers-reduced-motion: reduce) { .strelica-pribodi { animation: none; } }
       ul.snimci { list-style: none; padding: 0; margin: 0; }
       ul.snimci li { padding: 8px 0; border-top: 1px solid var(--rub); }
       ul.snimci li:first-child { border-top: 0; }
@@ -186,6 +194,10 @@ import Podnozje from "../components/Podnozje.astro";
         <div class="stanje" id="stanje-primi">Čekam podatke s HEP-ove kartice.</div>
       </section>
 
+      <div class="strelica-pribodi" id="strelica-pribodi" hidden aria-hidden="true">
+        <i class="i i-north_east"></i><span>Slagalica je ovdje gore</span>
+      </div>
+
       <div class="koraci">
       <section class="kartica korak">
         <div class="broj" id="broj1">1</div>
@@ -217,7 +229,16 @@ import Podnozje from "../components/Podnozje.astro";
         <div id="ekstenzija-ima" hidden>
           <h2>Ekstenzija je instalirana</h2>
           <p class="stanje istaknuto" style="text-align:left" id="ekstenzija-povezana" hidden></p>
-          <p class="blijedo">Uvozi iz nje stižu ovamo, pod tvoj ključ. Ikonu ekstenzije pribodi uz adresnu traku
+          <div id="pribodi" class="pribodi" hidden>
+            <p><b>Još jedan korak: pribodi ikonu</b> uz adresnu traku, da je na HEP-ovom portalu odmah vidiš.</p>
+            <ol class="instalacija">
+              <li>Klikni ikonu slagalice <i class="i i-extension" aria-hidden="true"></i> desno
+                od adresne trake, gore desno u prozoru.</li>
+              <li>U popisu kraj „Uvoz s HEP-a za omm.domovina.ai“ klikni pribadaču <i class="i i-push_pin" aria-hidden="true"></i>.</li>
+            </ol>
+            <div class="stanje">Kad je pribodena, ova stranica to sama prepozna.</div>
+          </div>
+          <p class="blijedo" id="ima-tekst">Uvozi iz nje stižu ovamo, pod tvoj ključ. Ikonu ekstenzije pribodi uz adresnu traku
             (ikona slagalice, pa pribadača kraj „Uvoz s HEP-a“). Nastavi s korakom 2.</p>
         </div>
         <div id="postavljanje">
@@ -443,8 +464,18 @@ import Podnozje from "../components/Podnozje.astro";
         if (nacin === "oznaka") return prikaziPostavljeno(zapamceno);
         $("postavljanje").hidden = true;
         $("postavljeno").hidden = true;
-        if (nacin === "ima") $("broj1").replaceChildren(ikona("i-check")); else $("broj1").textContent = "1";
-        $("broj1").classList.toggle("gotov", nacin === "ima");
+        // Pribodenost javlja ekstenzija od v0.7.2 (data-omm-pribodena); starija ne javlja ništa.
+        const pribodena = document.documentElement.dataset.ommPribodena;
+        const nepribodena = nacin === "ima" && pribodena === "0";
+        $("pribodi").hidden = !nepribodena;
+        $("strelica-pribodi").hidden = !nepribodena;
+        $("ima-tekst").textContent = pribodena === "1"
+          ? "Ikona je u traci. Uvozi iz nje stižu ovamo, pod tvoj ključ. Nastavi s korakom 2."
+          : nepribodena ? "Uvozi iz nje stižu ovamo, pod tvoj ključ."
+          : "Uvozi iz nje stižu ovamo, pod tvoj ključ. Ikonu ekstenzije pribodi uz adresnu traku (ikona slagalice, pa pribadača kraj „Uvoz s HEP-a“). Nastavi s korakom 2.";
+        const gotovo = nacin === "ima" && !nepribodena;
+        if (gotovo) $("broj1").replaceChildren(ikona("i-check")); else $("broj1").textContent = "1";
+        $("broj1").classList.toggle("gotov", gotovo);
         if (nacin === "ima" && document.documentElement.dataset.ommEkstenzijaPovezana) {
           $("ekstenzija-povezana").hidden = false;
           $("ekstenzija-povezana").replaceChildren("Povezana s ovim ključem ", ikona("i-check"));
@@ -474,6 +505,7 @@ import Podnozje from "../components/Podnozje.astro";
       // (readyState je već „interactive“), pa se crta odmah i još jednom tada.
       prikaziNacin();
       document.addEventListener("DOMContentLoaded", prikaziNacin);
+      window.addEventListener("omm-pribodena", prikaziNacin);
 
       const NAZIVI: Record<string, string> = {
         hep: "Moja mreža (HEP ODS)",
