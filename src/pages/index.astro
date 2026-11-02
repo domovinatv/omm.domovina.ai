@@ -79,6 +79,8 @@ import Podnozje from "../components/Podnozje.astro";
       kbd { font: .85em ui-monospace, monospace; border: 1px solid var(--rub); border-radius: 4px; padding: 1px 5px; }
       details { margin-top: 10px; } summary { cursor: pointer; font-weight: 600; }
       ol { padding-left: 22px; margin: 8px 0; } ol li { margin: 6px 0; }
+      ol.instalacija li { margin: 10px 0; }
+      ol.instalacija .i { vertical-align: -3px; }
       ul.snimci { list-style: none; padding: 0; margin: 0; }
       ul.snimci li { padding: 8px 0; border-top: 1px solid var(--rub); }
       ul.snimci li:first-child { border-top: 0; }
@@ -195,13 +197,21 @@ import Podnozje from "../components/Podnozje.astro";
         </div>
         <div id="ekstenzija-dodaj" hidden>
           <h2>Dodaj ekstenziju „Uvoz s HEP-a“</h2>
-          <p class="blijedo">Besplatna je i radi samo kad je klikneš na HEP-ovom portalu. Instalira se iz Chrome Web Storea,
-            jednom.</p>
-          <div class="oznaka-red">
-            <a class="oznaka gumb-veza" id="web-store" href="#" target="_blank" rel="noopener"><i class="i i-extension" aria-hidden="true"></i> Dodaj u preglednik</a>
-          </div>
-          <p class="blijedo">Na stranici koja se otvori klikni <b>Add to Chrome</b> (Dodaj u Chrome). Kad se instalira, ova
-            stranica to sama prepozna.</p>
+          <p class="blijedo">Besplatna je, instalira se jednom i radi samo kad je klikneš na HEP-ovom portalu.</p>
+          <ol class="instalacija">
+            <li>Klikni gumb ispod. Otvorit će se Chrome Web Store u novoj kartici.
+              <div class="oznaka-red">
+                <a class="oznaka gumb-veza" id="web-store" href="#" target="_blank" rel="noopener"><i class="i i-extension" aria-hidden="true"></i> Otvori Web Store</a>
+              </div>
+            </li>
+            <li>Tamo klikni plavi gumb <b>Dodaj u Chrome</b> (engleski <b>Add to Chrome</b>; u Braveu <b>Add to Brave</b>, u Edgeu <b>Get</b>).</li>
+            <li>Preglednik pita smije li je dodati: klikni <b>Dodaj proširenje</b> (<b>Add extension</b>).</li>
+            <li>Ekstenzija sama otvori ovu stranicu u novoj kartici, već povezanu s tvojim ključem. Tamo nastavi s korakom 2.</li>
+            <li>Ikonu pribodi uz adresnu traku: klikni ikonu slagalice <i class="i i-extension" aria-hidden="true"></i> desno
+              od adrese, pa pribadaču <i class="i i-push_pin" aria-hidden="true"></i> kraj „Uvoz s HEP-a“.</li>
+          </ol>
+          <div class="stanje istaknuto" id="ekstenzija-cekam" hidden>Instalirao si je? Prijeđi na karticu koju je otvorila
+            ili <a href="#" id="osvjezi">osvježi ovu stranicu</a>.</div>
           <p class="blijedo"><a href="#" id="radije-oznaka">Radije bez instalacije: oznaka u traci</a></p>
         </div>
         <div id="ekstenzija-ima" hidden>
@@ -441,6 +451,15 @@ import Podnozje from "../components/Podnozje.astro";
         }
       };
       $<HTMLAnchorElement>("web-store").href = WEB_STORE || "#";
+      // Instalirana ekstenzija ne ubaci omm.js u već otvorene kartice, nego otvori novu
+      // (background.js, onInstalled). Ova kartica zato ne zna za nju: kad se korisnik vrati
+      // iz Web Storea, uputi ga na novu karticu ili osvježavanje.
+      let otisaoUStore = false;
+      $("web-store").addEventListener("click", () => { otisaoUStore = true; });
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && otisaoUStore && !ekstenzija()) $("ekstenzija-cekam").hidden = false;
+      });
+      $("osvjezi").onclick = (e) => { e.preventDefault(); location.reload(); };
       $("radije-oznaka").onclick = (e) => {
         e.preventDefault();
         try { localStorage.setItem(NACIN, "oznaka"); } catch {}
