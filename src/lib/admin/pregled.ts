@@ -8,7 +8,7 @@ import type { Snimak } from "../izvjestaj/izracun";
 
 const UVOZI = ["hep", "hep-moj-racun", "hep-hepi"];
 
-type Red = { uredaj: string; stvoren: string; izvor: string; omm: string; adresa: string | null; ime: string | null };
+type Red = { uredaj: string; stvoren: string; izvor: string; omm: string; adresa: string | null; ime: string | null; vrsta: string | null };
 
 export type KorisnikOmm = {
   uredaj: string; prvi: string; zadnji: string; uvoza: number; ocitanja: number; racuna: number; izvori: string[];
@@ -16,6 +16,10 @@ export type KorisnikOmm = {
 };
 export type OmmPregled = {
   omm: string; adresa: string | null; ime: string | null; zadnji: string;
+  /** Tarifni model s portala; Moja mreža („Kućanstvo NN Bijeli Mjesečno“) ima prednost pred Hepijem. */
+  vrsta: string | null;
+  /** Zadnja upisana priključna snaga (bilo kojeg ključa), iz tablice `prikljucci`. */
+  snaga: { snaga_kw: number; faze: number | null; osigurac_a: number | null } | null;
   uvoza: number; ocitanja: number; racuna: number; izvori: string[]; korisnici: KorisnikOmm[];
   /** Ključevi ne navode istu adresu ili ime: netko je OMM možda prisvojio (SEC-07). */
   neslaganje: boolean;
@@ -29,24 +33,32 @@ export async function pregledOmm(): Promise<OmmPregled[]> {
   const { results } = await env.DB.prepare(
     `SELECT s.uredaj, s.stvoren, s.izvor, json_extract(m.value, '$.omm') AS omm,
             json_extract(m.value, '$.adresa') AS adresa,
-            COALESCE(json_extract(m.value, '$.korisnik'), json_extract(m.value, '$.ime')) AS ime
+            COALESCE(json_extract(m.value, '$.korisnik'), json_extract(m.value, '$.ime')) AS ime,
+            json_extract(m.value, '$.tarifni_model') AS vrsta
        FROM snimci s,
             json_each(s.uvoz, CASE WHEN json_type(s.uvoz, '$.kupci') = 'array' THEN '$.kupci' ELSE '$.mjesta' END) m
       WHERE s.izvor IN ('hep', 'hep-moj-racun', 'hep-hepi') AND json_valid(s.uvoz)
      UNION ALL
-     SELECT uredaj, stvoren, izvor, omm, NULL, NULL FROM snimci
+     SELECT uredaj, stvoren, izvor, omm, NULL, NULL, NULL FROM snimci
       WHERE izvor NOT IN ('hep', 'hep-moj-racun', 'hep-hepi') AND omm IS NOT NULL`,
   ).all<Red>();
+  const { results: snage } = await env.DB.prepare(
+    `SELECT omm, snaga_kw, faze, osigurac_a FROM prikljucci p
+      WHERE azuriran = (SELECT MAX(azuriran) FROM prikljucci q WHERE q.omm = p.omm)`,
+  ).all<{ omm: string; snaga_kw: number; faze: number | null; osigurac_a: number | null }>();
+  const snagaPo = new Map(snage.map(({ omm, ...s }) => [omm, s]));
 
-  const po = new Map<string, OmmPregled & { _k: Map<string, KorisnikOmm> }>();
+  const po = new Map<string, OmmPregled & { _k: Map<string, KorisnikOmm>; _vrstaHep?: boolean }>();
   for (const r of results.filter((r) => r.omm).sort((a, b) => b.stvoren.localeCompare(a.stvoren))) {
     let o = po.get(r.omm);
     if (!o) {
-      o = { omm: r.omm, adresa: null, ime: null, zadnji: r.stvoren, uvoza: 0, ocitanja: 0, racuna: 0, izvori: [], korisnici: [], neslaganje: false, _k: new Map() };
+      o = { omm: r.omm, adresa: null, ime: null, vrsta: null, snaga: snagaPo.get(r.omm) ?? null, zadnji: r.stvoren, uvoza: 0, ocitanja: 0, racuna: 0, izvori: [], korisnici: [], neslaganje: false, _k: new Map() };
       po.set(r.omm, o);
     }
     o.adresa ??= r.adresa;
     o.ime ??= r.ime;
+    // Redovi idu od najnovijeg: prvi s Moje mreže pobjeđuje, inače prvi s bilo kojeg portala.
+    if (r.vrsta && (!o.vrsta || (r.izvor === "hep" && !o._vrstaHep))) { o.vrsta = r.vrsta; o._vrstaHep = r.izvor === "hep"; }
     let k = o._k.get(r.uredaj);
     if (!k) {
       k = { uredaj: r.uredaj, prvi: r.stvoren, zadnji: r.stvoren, uvoza: 0, ocitanja: 0, racuna: 0, izvori: [], adresa: null, ime: null };
@@ -61,7 +73,7 @@ export async function pregledOmm(): Promise<OmmPregled[]> {
     if (!k.izvori.includes(r.izvor)) k.izvori.push(r.izvor);
   }
   const isto = (a: string | null) => (a ?? "").toLowerCase().replace(/\s+/g, " ").trim();
-  return [...po.values()].map(({ _k, ...o }) => {
+  return [...po.values()].map(({ _k, _vrstaHep, ...o }) => {
     const korisnici = [..._k.values()];
     const razlicitih = (f: (k: KorisnikOmm) => string | null) => new Set(korisnici.map(f).filter(Boolean).map(isto)).size;
     return { ...o, korisnici, neslaganje: razlicitih((k) => k.adresa) > 1 || razlicitih((k) => k.ime) > 1 };

@@ -9,6 +9,7 @@ const korisnika = new Set(omm.flatMap((o) => o.korisnici.map((k) => k.uredaj))).
 const tjedan = new Date(Date.now() - 7 * 86_400_000).toISOString();
 const aktivnih = new Set(omm.flatMap((o) => o.korisnici.filter((k) => k.zadnji > tjedan).map((k) => k.uredaj))).size;
 const uvoza = omm.reduce((s, o) => s + o.uvoza, 0);
+const kw = (n: number) => n.toLocaleString("hr-HR", { maximumFractionDigits: 2 });
 const izv = (o: string, k: string) => `/admin/izvjestaj/${o}?kljuc=${encodeURIComponent(k)}`;
 ---
 <AdminOkvir naslov="Pregled" siroko>
@@ -23,13 +24,20 @@ const izv = (o: string, k: string) => `/admin/izvjestaj/${o}?kljuc=${encodeURICo
   <div class="tablica">
     <table>
       <thead>
-        <tr><th>OMM</th><th>Adresa / kupac</th><th>Korisnici</th><th>Izvori</th><th>Uvoza</th><th>Očitanja</th><th>Zadnje</th><th>Izvještaj</th></tr>
+        <tr><th>OMM</th><th>Adresa / kupac</th><th>Vrsta</th><th>Snaga</th><th>Korisnici</th><th>Izvori</th><th>Uvoza</th><th>Očitanja</th><th>Zadnje</th><th>Izvještaj</th></tr>
       </thead>
       <tbody>
         {omm.map((o) => (
-          <tr data-trazi={[o.omm, o.adresa, o.ime, ...o.korisnici.map((k) => k.uredaj)].join(" ").toLowerCase()}>
+          <tr data-trazi={[o.omm, o.adresa, o.ime, o.vrsta, ...o.korisnici.map((k) => k.uredaj)].join(" ").toLowerCase()}>
             <td><a class="mono" href={`/admin/omm/${o.omm}`}>{o.omm}</a></td>
             <td>{o.adresa ?? "—"}<br /><span class="blijedo">{o.ime ?? ""}</span></td>
+            <td>{o.vrsta ?? <span class="blijedo">—</span>}</td>
+            <td style="white-space:nowrap">{o.snaga ? <>
+              <b>{kw(o.snaga.snaga_kw)} kW</b>
+              {(o.snaga.faze || o.snaga.osigurac_a) && <br />}
+              <span class="blijedo">{[o.snaga.faze === 3 ? "3F" : o.snaga.faze === 1 ? "1F" : null,
+                o.snaga.osigurac_a && `${o.snaga.faze ?? 1}×${o.snaga.osigurac_a} A`].filter(Boolean).join(" · ")}</span>
+            </> : <span class="blijedo">—</span>}</td>
             <td>
               <b>{o.korisnici.length}</b>{" "}
               <span class="blijedo mono">{o.korisnici.slice(0, 3).map((k) => kratko(k.uredaj)).join(", ")}{o.korisnici.length > 3 ? " …" : ""}</span>
