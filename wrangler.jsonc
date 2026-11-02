@@ -51,7 +51,7 @@
     "OCR_MODELI": "",
     // /admin (docs/admin.md): Cloudflare Access na /admin/sso ili passkey.
     // ADMIN_EMAILS se provjerava pri svakom zahtjevu; micanje iz popisa odmah gasi sesije.
-    "ADMIN_EMAILS": "stepanic.matija@gmail.com,ms@ff.hr",
+    "ADMIN_EMAILS": "stepanic.matija@gmail.com,ms@ff.hr,stepanic.ivan@gmail.com",
     "ADMIN_HOST": "omm.domovina.ai",
     "ACCESS_TEAM_DOMAIN": "domovina.cloudflareaccess.com",
     // AUD Access aplikacije „OMM admin (sso)“ koja štiti omm.domovina.ai/admin/sso.

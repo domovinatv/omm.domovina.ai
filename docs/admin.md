@@ -33,6 +33,11 @@ e-mailovima (kao „MPT admin (sso)“). Dok je `ACCESS_AUD` prazan, `/admin/sso
 
 **Oduzimanje pristupa:** makni e-mail iz `ADMIN_EMAILS` (odmah, i za postojeće sesije) i iz politike.
 
+**Admini (2026-11-02):** stepanic.matija@gmail.com, ms@ff.hr, stepanic.ivan@gmail.com (dodan
+2026-11-02, u oba mjesta). Politika „OMM admini“ je od tada reusable i dijeli je i aplikacija
+„LogoMedo admin (sso)“: tko je u njoj, prolazi Access i na `logomedo.com/admin/sso`
+(korisnik je to izričito prihvatio za Ivana); LogoMedo Worker ima svoj popis admina.
+
 ## Lokalno
 
 Access lokalno ne radi. Upiši sesiju u lokalni D1 (`admin_sessions`, `token_hash` =
