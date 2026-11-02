@@ -65,8 +65,8 @@ const preglednik = (ua: string | null) =>
             <span class="blijedo"> · {p.prikljucak.izvor === "mail" ? "iz odgovora HEP-a" : "upisano ručno"}, {kad(p.prikljucak.azuriran)}</span></p>
         ) : <p class="blijedo">Nije poznata.</p>}
         <div class="akcije">
-          <a class={p.prikljucak ? "gumb" : "gumb glavni"} href={upit.mailto} target="_blank" rel="noopener"><i class="i i-mail" aria-hidden="true"></i> Upit mailom</a>
-          <a class="gumb" href={upit.gmail} target="_blank" rel="noopener"><i class="i i-mail" aria-hidden="true"></i> U Gmailu</a>
+          <a class={p.prikljucak ? "gumb" : "gumb glavni"} href={upit.gmail} target="_blank" rel="noopener"><i class="i i-mail" aria-hidden="true"></i> Pošalji u Gmailu</a>
+          <a class="gumb" href={upit.mailto} target="_blank" rel="noopener"><i class="i i-mail" aria-hidden="true"></i> Drugi mail program</a>
         </div>
         <p class="blijedo" style="margin-bottom:0">Prima {upit.kome.naziv} ({upit.kome.email}). HEP podatak daje kupcu, pa je upit
           potpisan imenom iz uvoza. Odgovor proslijedi na <code class="mono" style="user-select:all">{proslijedi}</code></p>

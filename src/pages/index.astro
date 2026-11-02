@@ -585,8 +585,8 @@ import Podnozje from "../components/Podnozje.astro";
             return a;
           };
           gumbi.append(
-            veza("Pošalji upit", mailto, true),
-            veza("U Gmailu", gmail, false),
+            veza("Pošalji u Gmailu", gmail, true),
+            veza("Drugi mail program", mailto, false),
           );
           const adresa = el("div", "adresa");
           const kopiraj = el("button", "", "Kopiraj") as HTMLButtonElement;
