@@ -248,9 +248,12 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
 
   // Zadnjih 12 punih mjeseci prije zadnjeg podatka (uvoza ili ručnog očitanja); kad
   // povijest ne seže toliko unatrag, od prvog punog mjeseca za koji postoji očitanje.
+  // Kraj je i najkasnije mjesec zadnjeg očitanja: uvoz od 2.11. kojem je zadnje stanje
+  // od 1.6. (ODS dugo ne očitava, 2026-11-02) inače traži očitanje nakon 1.11. i pada.
   const dohvaceno = Math.max(...mjesta.map((x) => x.m.dohvaceno).filter(Number.isFinite), ...rucna.map((r) => r.t));
-  const doo = prvi(godina(dohvaceno), mjesec(dohvaceno));
   const sveTocke = [...m.ocitanja.filter((o) => o.t1_kwh != null).map((o) => datum(o.datum)), ...rucna.map((r) => r.t)];
+  const kraj = Math.min(dohvaceno, Math.max(...sveTocke));
+  const doo = prvi(godina(kraj), mjesec(kraj));
   const najranije = Math.min(...sveTocke);
   const prviPuni = (t: number) => (t === prvi(godina(t), mjesec(t)) ? t : prvi(godina(t), mjesec(t) + 1));
   const od = Math.max(prvi(godina(doo) - 1, mjesec(doo)), prviPuni(najranije));
@@ -314,6 +317,10 @@ export function izvjestaj(omm: string, snimci: Snimak[], cjenik: Cjenik, opcije:
   biljeske.push("Uzeta su samo stvarna očitanja (kupac, ODS, daljinsko" + (rucna.length ? ", vlastita s omm.domovina.ai" : "") +
     "). Procjene ODS-a i „preračunata“ stanja su izbačena" +
     (pts.some((p) => p.vrsta === "procjena") ? ", osim gdje bez njih razdoblje nema početak ili kraj." : "."));
+  if (doo < prvi(godina(dohvaceno), mjesec(dohvaceno)))
+    biljeske.push(`Zadnje očitanje (ili procjena) na portalu je od ${hrDatum(kraj)}, pa izvještaj završava ` +
+      `mjesecom prije toga, iako su podaci dohvaćeni ${hrDatum(dohvaceno)} Za novije mjesece pošalji očitanje ` +
+      "brojila na omm.domovina.ai/ocitaj.");
   for (let i = 0; i + 1 < pts.length; i++) {
     const [a, b] = [pts[i], pts[i + 1]];
     const n = dana(a.t, b.t);
