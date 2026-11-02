@@ -38,7 +38,10 @@ export async function odgovorIzvjestaja(
   const preglednik = await puppeteer.launch(env.BROWSER);
   try {
     const tab = await preglednik.newPage();
-    await tab.setContent(stranica, { waitUntil: "networkidle0" });
+    // Sve je ugrađeno (fontovi kao data: URL), pa nema mreže za čekati. networkidle0 je
+    // 2026-11-02 u Browser Renderingu svaki put istekao nakon 30 s (500 na svaki PDF).
+    await tab.setContent(stranica, { waitUntil: "load", timeout: 20_000 });
+    await tab.evaluate(() => document.fonts.ready);
     const pdf = await tab.pdf({
       format: "A4", printBackground: true, preferCSSPageSize: true,
       displayHeaderFooter: true, headerTemplate: "<span></span>", footerTemplate: PODNOZJE,
