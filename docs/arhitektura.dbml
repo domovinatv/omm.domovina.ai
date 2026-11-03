@@ -1,0 +1,428 @@
+// Arhitektura omm.domovina.ai kao DBML: komponente i njihovi odnosi (stanje 2026-11-03).
+//
+// Ovo nije shema baze. Svaka „tablica” je komponenta sustava, njezina „polja” su sučelja
+// (rute, bindingi, skripte, adrese), a Ref je poziv ili tok podataka od pozivatelja (lijevo)
+// prema onome tko poziv prima (desno). Tip polja je protokol, pa Ref spaja isti tip.
+// Tablice baze su u tablici `d1` kao polja; prava shema je u migrations/.
+//
+// Prikaz: https://stepanic.github.io/open-diagram/?url=https://github.com/domovinatv/omm.domovina.ai/blob/main/docs/arhitektura.dbml
+// Isto u Mermaidu i tekstom: docs/2026-11-03-arhitektura.md. Promjena ide u oba.
+
+Project omm_domovina_ai {
+  database_type: 'Arhitektura'
+  Note: '''
+    # omm.domovina.ai: komponente i odnosi
+
+    Servis koji sprema snimke stanja struje (uvoz s HEP-ovih portala, očitanje brojila,
+    računi i priključna snaga mailom) za ponudu za sunčanu elektranu.
+
+    ## Kako čitati
+
+    - **Tablica = komponenta**, boja = gdje živi (korisnikov uređaj, HEP, Cloudflare, vanjski servisi, admin).
+    - **Polje = sučelje** komponente; tip polja je protokol (`https`, `wss`, `smtp`, `binding`, `js`, `sql`).
+    - **Ref = poziv**, od pozivatelja prema primatelju. Isprekidani Ref je rezervni put.
+    - **Dep** (tipka L) = kamo podaci završe.
+    - **DiagramView** (izbornik gore) = jedan tok: uvoz, očitanje, priključna snaga mailom, izvještaj, admin.
+
+    ## Dva pravila
+
+    1. Server nikad ne ulazi na HEP-ove portale; podatke čita kod u korisnikovoj prijavljenoj kartici.
+       Jedina iznimka je javni cjenik HEP Elektre.
+    2. Nema korisničke prijave: ključ uređaja kao `Authorization: Bearer <ključ>`. Prijavu ima samo admin.
+
+    Detalji: `docs/2026-11-03-arhitektura.md`, `CLAUDE.md`.
+  '''
+}
+
+// =====================================================================================
+// Korisnikov uređaj
+// =====================================================================================
+
+Table naslovnica [headercolor: #a21caf, note: 'Astro SSR stranice /, /ocitaj, /privatnost; src/pages/'] {
+  adresa https [pk, note: 'https://omm.domovina.ai/']
+  kljuc js [note: 'ključ uređaja u localStorage; postaviKljuc javlja omm-kljuc']
+  data_omm_ekstenzija js [note: 'atribut koji postavi omm.js: ekstenzija je instalirana']
+  api_poziv https [note: 'fetch /api/* s Bearer ključem: snimci, izvještaj, priključak, brisanje, rotacija']
+  upit_elektri smtp [note: 'mailto ili Gmail compose; adresa Elektre po prve dvije znamenke OMM-a']
+  ocitaj https [note: '/ocitaj: slika brojila → /api/ocitaj']
+  web_store https [note: 'korak 1 u Chromiumu: instalacija ekstenzije']
+}
+
+Table ekstenzija [headercolor: #a21caf, note: 'flutter_moja_mreza/extension, MV3, glavni put uvoza od 2026-10-30'] {
+  id https [pk, note: 'Web Store eaepdcjoahegcgokhpbgppdeanpcfadi, v0.7.x']
+  omm_js js [note: 'content script na omm.domovina.ai: preuzme ključ, postavi data-omm-ekstenzija']
+  popup js [note: 'izbor izvora: Moja mreža, Moj račun, Hepi']
+  execute_script https [note: 'activeTab + scripting: uvoz.js | mojracun.js | hepi.js u HEP-ovu karticu']
+  service_worker https [note: 'background.js: šalje s origina ekstenzije (HEP-ov CSP i COOP ne smetaju)']
+}
+
+Table oznaka [headercolor: #a21caf, note: 'Bookmarklet „Uvezi iz HEP-a”, rezerva gdje nema ekstenzije'] {
+  bookmarklet js [pk, note: 'javascript: oznaka, ključ u fragmentu #k=']
+  iframe_most https [note: 'skriveni iframe /oznaka na HEP-ovoj stranici; postMessage']
+  u_kartici https [note: 'kod se izvrši u HEP-ovoj kartici (eval, ili inline script bez unsafe-eval)']
+  kod js [note: '/hep-uvoz.js, generiran u flutter_moja_mreza (SHA-256 u 3. retku)']
+}
+
+Table flutter_app [headercolor: #a21caf, note: 'flutter_moja_mreza/example; omm_servis.dart'] {
+  app js [pk]
+  webview https [note: 'prijava i uvoz s Moje mreže u WebViewu']
+  kamera https [note: 'slika brojila → /api/ocitaj']
+  api_poziv https [note: '/api/snimak, PATCH /api/snimak/:id']
+  dostava https [note: 'POST /Omm/Dostava u korisnikovoj sesiji']
+}
+
+Table gmail [headercolor: #a21caf, note: 'Korisnikov Gmail (ili drugi sandučić)'] {
+  sanduce smtp [pk, note: 'korisnikova adresa']
+  slanje smtp [note: 'upit Elektri o priključnoj snazi']
+  prosljedivanje smtp [note: 'ručno ili Gmail filter: odgovor Elektre i PDF računi na racuni+<ključ>@omm.domovina.ai']
+  potvrda smtp [note: 'Gmailov kod potvrde prosljeđivanja; korisnik ga vidi kroz GET /api/mail']
+}
+
+// =====================================================================================
+// HEP portali (korisnikova prijava; server ih ne dira)
+// =====================================================================================
+
+Table moja_mreza [headercolor: #0e7490, note: 'HEP ODS, mojamreza.hep.hr; izvor hep'] {
+  portal https [pk, note: 'OMM-ovi, očitanja, potrošnja']
+  omm_dostava https [note: 'POST /Omm/Dostava: predaja očitanja']
+}
+
+Table moj_racun [headercolor: #0e7490, note: 'HEP Elektra, mojracun.hep.hr/elektra; izvor hep-moj-racun'] {
+  portal https [pk, note: 'kupci, saldo, očitanja (bez procjena ODS-a)']
+  cjenik https [note: 'javni /elektra/v1/api/obracun/cjenik; jedini HEP koji server zove']
+}
+
+Table hepi [headercolor: #0e7490, note: 'HEP Opskrba, mojracun.hep.hr/hepi; izvor hep-hepi'] {
+  portal https [pk, note: 'očitanja (sva Elektra), računi u PDF-u']
+}
+
+// =====================================================================================
+// Cloudflare: Worker
+// =====================================================================================
+
+Table worker [headercolor: #ea580c, note: 'Worker omm-domovina-ai, src/worker.ts: Astro handle + email + scheduled; račun D.O.M.'] {
+  host https [pk, note: 'omm.domovina.ai (custom domain; bez workers.dev i preview)']
+  middleware https [note: 'src/middleware.ts: rate limit, ključ (401 za zamijenjen), admin sesija, CSP s nonceom']
+  api_snimak https [note: 'POST/GET/PATCH/DELETE /api/snimak; otisak, duplikat']
+  api_racun https [note: 'POST /api/racun: PDF računa HEP Opskrbe → hep-racun']
+  api_ocitaj https [note: 'POST /api/ocitaj: OCR + usporedba sa zadnjim stanjem']
+  api_prikljucak https [note: 'GET/POST /api/prikljucak']
+  api_izvjestaj https [note: 'GET /api/izvjestaj/:omm (pdf | html | json, anonimno)']
+  api_mail https [note: 'GET /api/mail: zadnji mailovi ključa']
+  api_kljuc https [note: 'POST /api/kljuc/rotiraj']
+  api_resend https [note: 'POST /api/resend: webhook email.received, Svix potpis']
+  oznaka_most https [note: '/oznaka (jedina s frame-ancestors HEP-a) i /hep-uvoz.js']
+  admin_html https [note: '/admin, /admin/omm/:omm, /admin/izvjestaj/:omm']
+  admin_prijava https [note: '/admin/login, /admin/passkey/*, /admin/sso']
+  admin_uzivo wss [note: '/admin/uzivo mimo Astra: host, Origin, sesija → DO']
+  javi_adminu binding [note: 'javiAdminu() nakon upisa (dnevnik, mail, priključak, rotacija), waitUntil']
+  b_db sql [note: 'binding DB']
+  b_slike binding [note: 'binding SLIKE']
+  b_ai binding [note: 'binding AI, OCR_MODEL']
+  b_browser binding [note: 'binding BROWSER']
+  b_limit binding [note: 'LIMIT_API, LIMIT_SKUPO']
+  resend_api https [note: 'GET api.resend.com/emails/receiving/{id} + raw.download_url (RESEND_API_KEY)']
+  cjenik_fetch https [note: 'fetch cjenika s cacheTtl dan']
+  email_handler smtp [note: 'email() za Cloudflare Email Routing; neiskorišten (MX je Resend)']
+  scheduled sql [note: 'cron 17 3 * * *: ciscenje.ts']
+}
+
+// =====================================================================================
+// Cloudflare: podaci
+// =====================================================================================
+
+Table d1 [headercolor: #2563eb, note: 'D1 omm-domovina-ai, migrations/0001–0008'] {
+  baza sql [pk, note: 'binding DB']
+  snimci sql [note: 'pročišćeno: jedan redak po otisku (uvoz, očitanje, račun)']
+  dogadaji sql [note: 'sirovi dnevnik svakog upisa s ishodom; sažetak, ne sadržaj']
+  mailovi sql [note: 'vrsta racun | prikljucak | gmail-potvrda | ostalo, i ishod']
+  prikljucci sql [note: 'priključna snaga po (ključ, OMM), mail ili ručno']
+  kljucevi sql [note: 'poznati ključevi; zamijenjen → 401']
+  admin_sql sql [note: 'admin_passkeys, admin_sessions (sha256 tokena), admin_challenges']
+}
+
+Table r2 [headercolor: #2563eb, note: 'R2 omm-domovina-ai-slike'] {
+  slike binding [pk, note: '<ključ>/<uuid>.jpg; tmp/ dok snimak ne preseli, lifecycle briše tmp/ nakon dana']
+}
+
+Table admin_uzivo [headercolor: #2563eb, note: 'Durable Object AdminUzivo, src/lib/admin/uzivo.ts; jedan (getByName admin), bez trajnog stanja'] {
+  javi binding [pk, note: 'RPC javi({vrsta, ishod}): pošalje svim vezama, istekle sesije zatvori (4001)']
+  websocketi wss [note: 'hibernacijski; ping → pong bez buđenja']
+}
+
+// =====================================================================================
+// Cloudflare: servisi
+// =====================================================================================
+
+Table workers_ai [headercolor: #ca8a04, note: 'Workers AI'] {
+  ocr binding [pk, note: 'OCR_MODEL @cf/meta/llama-4-scout-17b-16e-instruct']
+}
+
+Table browser_rendering [headercolor: #ca8a04, note: 'Browser Rendering, @cloudflare/puppeteer'] {
+  pdf binding [pk, note: 'PDF izvještaja ~4 s; Inter kao data: URL, footerTemplate']
+}
+
+Table rate_limit [headercolor: #ca8a04, note: 'Workers rate limiting (SEC-02)'] {
+  limit binding [pk, note: 'LIMIT_API 120/min po IP-u; LIMIT_SKUPO 10/min po IP-u i ključu (OCR, PDF)']
+}
+
+Table access [headercolor: #ca8a04, note: 'Cloudflare Access, domovina.cloudflareaccess.com'] {
+  sso https [pk, note: 'štiti samo /admin/sso; OTP; ACCESS_AUD']
+}
+
+// =====================================================================================
+// Vanjski servisi
+// =====================================================================================
+
+Table resend [headercolor: #4b5563, note: 'Resend inbound, od 2026-10-31 (Email Routing nije moguć: domovina.ai je na Google Workspaceu)'] {
+  mx smtp [pk, note: 'MX omm.domovina.ai → receive-euw1.forge.rmta.net; racuni+<ključ>@']
+  webhook https [note: 'email.received → POST /api/resend']
+  api https [note: 'GET /emails/receiving/{id}, raw.download_url']
+}
+
+Table elektra [headercolor: #4b5563, note: '21 Elektra (ODS područja), adrese u src/lib/prikljucak.ts; odgovaraju ljudi'] {
+  adresa smtp [pk, note: 'po prve dvije znamenke OMM-a; nepoznato → info.ods@hep.hr']
+}
+
+Table chrome_web_store [headercolor: #4b5563, note: 'Chrome Web Store, objavljeno 2026-11-02'] {
+  stranica https [pk, note: 'WEB_STORE u src/lib/ekstenzija.ts']
+}
+
+// =====================================================================================
+// Admin
+// =====================================================================================
+
+Table admin_preglednik [headercolor: #be123c, note: 'Admin u pregledniku; ADMIN_EMAILS u wrangler.jsonc'] {
+  stranice https [pk, note: '/admin: pregled po OMM-u, detalj, izvještaj za bilo koji ključ']
+  prijava https [note: 'passkey ili OTP kroz Access']
+  uzivo wss [note: 'uzivo-klijent.ts: na događaj dohvati svoj HTML i zamijeni data-uzivo dijelove']
+}
+
+// =====================================================================================
+// Odnosi (pozivatelj > primatelj)
+// =====================================================================================
+
+// Ključ i instalacija
+Ref instalacija: naslovnica.web_store > chrome_web_store.stranica [color: #a21caf]
+Ref instalacija_ext: chrome_web_store.stranica > ekstenzija.id [color: #a21caf]
+Ref kljuc_ext: ekstenzija.omm_js > naslovnica.kljuc [color: #a21caf]
+Ref ext_oznaka: ekstenzija.omm_js > naslovnica.data_omm_ekstenzija [color: #a21caf]
+
+// Uvoz u korisnikovoj kartici
+Ref ext_mm: ekstenzija.execute_script > moja_mreza.portal [color: #0e7490]
+Ref ext_mr: ekstenzija.execute_script > moj_racun.portal [color: #0e7490]
+Ref ext_hepi: ekstenzija.execute_script > hepi.portal [color: #0e7490]
+Ref ozn_mm: oznaka.u_kartici > moja_mreza.portal [color: #0e7490, inactive]
+Ref ozn_mr: oznaka.u_kartici > moj_racun.portal [color: #0e7490, inactive]
+Ref ozn_hepi: oznaka.u_kartici > hepi.portal [color: #0e7490, inactive]
+Ref app_mm: flutter_app.webview > moja_mreza.portal [color: #0e7490]
+Ref app_dostava: flutter_app.dostava > moja_mreza.omm_dostava [color: #0e7490]
+
+// Klijenti → Worker
+Ref ext_snimak: ekstenzija.service_worker > worker.api_snimak [color: #ea580c]
+Ref ext_racun: ekstenzija.service_worker > worker.api_racun [color: #ea580c]
+Ref ozn_most: oznaka.iframe_most > worker.oznaka_most [color: #ea580c, inactive]
+Ref ozn_snimak: worker.oznaka_most > worker.api_snimak [color: #ea580c, inactive]
+Ref ozn_racun: worker.oznaka_most > worker.api_racun [color: #ea580c, inactive]
+Ref app_ocitaj: flutter_app.kamera > worker.api_ocitaj [color: #ea580c]
+Ref app_snimak: flutter_app.api_poziv > worker.api_snimak [color: #ea580c]
+Ref web_snimak: naslovnica.api_poziv > worker.api_snimak [color: #ea580c]
+Ref web_izvjestaj: naslovnica.api_poziv > worker.api_izvjestaj [color: #ea580c]
+Ref web_prikljucak: naslovnica.api_poziv > worker.api_prikljucak [color: #ea580c]
+Ref web_mail: naslovnica.api_poziv > worker.api_mail [color: #ea580c]
+Ref web_kljuc: naslovnica.api_poziv > worker.api_kljuc [color: #ea580c]
+Ref web_ocitaj: naslovnica.ocitaj > worker.api_ocitaj [color: #ea580c]
+
+// Mail: upit, odgovor, prosljeđivanje, webhook
+Ref upit: naslovnica.upit_elektri > gmail.slanje [color: #4b5563]
+Ref upit_elektri: gmail.slanje > elektra.adresa [color: #4b5563]
+Ref odgovor: elektra.adresa > gmail.sanduce [color: #4b5563]
+Ref proslijedi: gmail.prosljedivanje > resend.mx [color: #4b5563]
+Ref potvrda: gmail.potvrda > resend.mx [color: #4b5563]
+Ref webhook: resend.webhook > worker.api_resend [color: #4b5563]
+Ref dohvat_maila: worker.resend_api > resend.api [color: #4b5563]
+Ref email_routing: worker.email_handler > resend.mx [color: #4b5563, inactive]
+
+// Worker → bindingi i servisi
+Ref sql: worker.b_db > d1.baza [color: #2563eb]
+Ref slike: worker.b_slike > r2.slike [color: #2563eb]
+Ref ocr: worker.b_ai > workers_ai.ocr [color: #ca8a04]
+Ref pdf: worker.b_browser > browser_rendering.pdf [color: #ca8a04]
+Ref limit: worker.b_limit > rate_limit.limit [color: #ca8a04]
+Ref cjenik: worker.cjenik_fetch > moj_racun.cjenik [color: #0e7490]
+Ref javi: worker.javi_adminu > admin_uzivo.javi [color: #be123c]
+Ref cron: worker.scheduled > d1.baza [color: #2563eb, inactive]
+
+// Admin
+Ref admin_prijava: admin_preglednik.prijava > worker.admin_prijava [color: #be123c]
+Ref admin_sso: worker.admin_prijava > access.sso [color: #be123c]
+Ref admin_stranice: admin_preglednik.stranice > worker.admin_html [color: #be123c]
+Ref admin_ws: admin_preglednik.uzivo > worker.admin_uzivo [color: #be123c]
+Ref admin_do: worker.admin_uzivo > admin_uzivo.websocketi [color: #be123c]
+
+// =====================================================================================
+// Kamo podaci završe (Dep, tipka L)
+// =====================================================================================
+
+Dep: moja_mreza -> d1
+Dep: moj_racun -> d1
+Dep: hepi -> d1
+Dep: elektra -> d1
+Dep: workers_ai -> d1
+Dep: d1 -> admin_uzivo
+Dep: d1 -> browser_rendering
+
+// =====================================================================================
+// Grupe
+// =====================================================================================
+
+TableGroup korisnik [color: #a21caf, note: 'Korisnikov uređaj: preglednik, ekstenzija, oznaka, aplikacija, Gmail'] {
+  naslovnica
+  ekstenzija
+  oznaka
+  flutter_app
+  gmail
+}
+
+TableGroup hep [color: #0e7490, note: 'HEP portali; podaci se čitaju u korisnikovoj prijavljenoj kartici'] {
+  moja_mreza
+  moj_racun
+  hepi
+}
+
+TableGroup cloudflare_worker [color: #ea580c, note: 'Worker omm-domovina-ai: HTTP, API, admin, webhook, cron'] {
+  worker
+}
+
+TableGroup cloudflare_podaci [color: #2563eb, note: 'Trajno stanje i veze uživo'] {
+  d1
+  r2
+  admin_uzivo
+}
+
+TableGroup cloudflare_servisi [color: #ca8a04, note: 'Bindingi bez stanja i Access'] {
+  workers_ai
+  browser_rendering
+  rate_limit
+  access
+}
+
+TableGroup vanjski [color: #4b5563, note: 'Resend, Elektre, Chrome Web Store'] {
+  resend
+  elektra
+  chrome_web_store
+}
+
+TableGroup admin [color: #be123c, note: 'Admin u pregledniku'] {
+  admin_preglednik
+}
+
+// =====================================================================================
+// Bilješke
+// =====================================================================================
+
+Note pravila [color: #ea580c] {
+  '''
+  Dva pravila
+  1. Server nikad ne ulazi na HEP-ove portale;
+     iznimka je javni cjenik Elektre.
+  2. Nema korisničke prijave: Bearer <ključ uređaja>.
+     Prijavu ima samo admin (passkey ili Access OTP).
+  Isprekidano: rezervni put (oznaka) ili neiskorišteno.
+  '''
+}
+
+Note tok_prikljucka [color: #4b5563] {
+  '''
+  Priključna snaga mailom
+  naslovnica → Gmail → Elektra → odgovor u Gmail
+  → proslijedi na racuni+<ključ>@ → Resend MX
+  → webhook /api/resend → GET raw → prikljucci + mailovi
+  → javiAdminu → AdminUzivo → /admin osvježi red
+  '''
+}
+
+Note tok_uvoza [color: #0e7490] {
+  '''
+  Uvoz ekstenzijom
+  ključ iz localStorage (omm.js) → korisnik se prijavi na HEP
+  → executeScript parsera u kartici → JSON
+  → service worker POST /api/snimak (+ /api/racun za Hepi)
+  → snimci (otisak, duplikat) + dogadaji → javiAdminu
+  '''
+}
+
+// =====================================================================================
+// Pogledi: po jedan tok
+// =====================================================================================
+
+DiagramView uvoz {
+  TableGroups {
+    hep
+  }
+  Tables {
+    naslovnica
+    ekstenzija
+    oznaka
+    flutter_app
+    chrome_web_store
+    worker
+    d1
+    admin_uzivo
+  }
+  Notes {
+    tok_uvoza
+  }
+}
+
+DiagramView ocitanje {
+  Tables {
+    naslovnica
+    flutter_app
+    moja_mreza
+    worker
+    r2
+    workers_ai
+    d1
+    rate_limit
+  }
+}
+
+DiagramView prikljucak_mail {
+  Tables {
+    naslovnica
+    gmail
+    elektra
+    resend
+    worker
+    d1
+    admin_uzivo
+    admin_preglednik
+  }
+  Notes {
+    tok_prikljucka
+  }
+}
+
+DiagramView izvjestaj {
+  Tables {
+    naslovnica
+    admin_preglednik
+    worker
+    d1
+    moj_racun
+    browser_rendering
+    rate_limit
+  }
+}
+
+DiagramView admin {
+  TableGroups {
+    admin
+    cloudflare_podaci
+  }
+  Tables {
+    worker
+    access
+  }
+}

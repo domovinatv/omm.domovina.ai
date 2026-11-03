@@ -5,7 +5,8 @@ Servis koji sprema **snimke** stanja struje: očitanje brojila (slika zaslona �
 za sunčanu elektranu. Live: https://omm.domovina.ai (Worker `omm-domovina-ai`,
 D.O.M. račun).
 
-Arhitektura (sve komponente, tokovi, Mermaid): `docs/2026-11-03-arhitektura.md`.
+Arhitektura (sve komponente, tokovi, Mermaid): `docs/2026-11-03-arhitektura.md`; isto kao DBML za
+open-diagram (`docs/arhitektura.dbml`, DiagramView po toku). Promjena ide u oba.
 
 Klijenti i parser žive u `~/git/stepanic/flutter_moja_mreza` (Flutter plugin +
 example app, Chrome ekstenzija). Plan i odgođena sigurnost:

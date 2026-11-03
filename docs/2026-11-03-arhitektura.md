@@ -12,6 +12,10 @@ Dva pravila oblikuju sve ispod:
 2. **Nema korisničke prijave.** Klijent ima nasumični ključ uređaja i šalje ga kao
    `Authorization: Bearer <ključ>`. Prijavu ima samo admin (Cloudflare Access ili passkey).
 
+Interaktivno (DBML, boje po grupi, pogled po toku): [`docs/arhitektura.dbml`](arhitektura.dbml) u
+[open-diagramu](https://stepanic.github.io/open-diagram/?url=https://github.com/domovinatv/omm.domovina.ai/blob/main/docs/arhitektura.dbml).
+Komponentu ili odnos mijenjaj u oba.
+
 ## Komponente
 
 | # | Komponenta | Gdje živi | Uloga |
