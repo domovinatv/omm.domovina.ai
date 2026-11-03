@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { javiAdminu } from "./admin/uzivo";
 
 /**
  * Upis u `dogadaji`. Dnevnik nikad ne smije srušiti zahtjev, pa se greška
@@ -33,6 +34,8 @@ export async function zapisi(
         cf?.country ?? null,
       )
       .run();
+    // /admin vidi snimke, ne OCR pokušaje ni duplikate.
+    if (d.vrsta !== "ocitaj" && (d.ishod === "novo" || d.ishod === "ok")) javiAdminu({ vrsta: d.vrsta, ishod: d.ishod });
   } catch (e) {
     console.error("dnevnik", e);
   }

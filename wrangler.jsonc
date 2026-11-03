@@ -29,6 +29,10 @@
   "ai": { "binding": "AI" },
   // Browser Rendering: PDF izvještaja iz HTML stranice (src/pages/api/izvjestaj).
   "browser": { "binding": "BROWSER" },
+  // Admin uživo (src/lib/admin/uzivo.ts): jedan DO drži WebSockete otvorenih /admin
+  // stranica i javi im svaki upis u bazu.
+  "durable_objects": { "bindings": [{ "name": "ADMIN_UZIVO", "class_name": "AdminUzivo" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AdminUzivo"] }],
 
   // Ograničenje brzine za /api/* (src/middleware.ts, SEC-02). Brojač je po lokaciji
   // Cloudflarea i približan, dovoljan protiv petlje skripte. Prvi uvoz s Hepija

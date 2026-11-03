@@ -2,8 +2,11 @@
 // Okvir admin stranica: isti tokeni boja kao naslovnica, širi raspored za tablice.
 // Bez sesije baca (500) umjesto da prikaže stranicu, osim na prijavi (`javno`): druga
 // obrana ako middleware neku admin putanju ne prepozna (SEC-08).
-interface Props { naslov: string; siroko?: boolean; javno?: boolean }
-const { naslov, siroko = false, javno = false } = Astro.props;
+// `uzivo`: stranica se sama osvježi kad se baza promijeni (WebSocket na /admin/uzivo,
+// src/lib/admin/uzivo.ts). Zamijene se elementi s `data-uzivo`, a bez njih cijeli <main>,
+// pa stranica sa skriptama u <main> (passkeyi) to ne smije uključiti.
+interface Props { naslov: string; siroko?: boolean; javno?: boolean; uzivo?: boolean }
+const { naslov, siroko = false, javno = false, uzivo = false } = Astro.props;
 const admin = Astro.locals.admin;
 if (!admin && !javno) throw new Error("Admin stranica bez sesije");
 import Ikone from "./Ikone.astro";
@@ -60,6 +63,13 @@ import Marka from "./Marka.astro";
         font-size: .75rem; font-weight: 600; margin: 0 4px 2px 0; white-space: nowrap; }
       .oznaka.upozorenje { background: none; color: var(--greska); box-shadow: inset 0 0 0 1px var(--greska); }
       .akcije { display: flex; gap: 6px; flex-wrap: wrap; }
+      .uzivo { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--blijedo); }
+      .uzivo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--rub); }
+      .uzivo[data-stanje="da"]::before { background: #2e9e5b; box-shadow: 0 0 0 3px color-mix(in srgb, #2e9e5b 25%, transparent); }
+      .uzivo[data-stanje="van"] { color: var(--greska); }
+      .uzivo[data-stanje="van"]::before { background: var(--greska); }
+      @keyframes uzivo-novo { from { background: var(--akcent-blago); } to { background: transparent; } }
+      .uzivo-novo, .uzivo-novo > td { animation: uzivo-novo 4s ease-out; }
     </style>
   </head>
   <body>
@@ -69,6 +79,7 @@ import Marka from "./Marka.astro";
           <span class="admin-marka"><Marka dodatak="admin" /></span>
           <a href="/admin">Pregled</a>
           <a href="/admin/passkeys">Passkeyi</a>
+          {uzivo && <span id="uzivo" class="uzivo" data-stanje="ne" title="Spajanje…">uživo</span>}
           <span class="blijedo">{admin.email}</span>
           <PrekidacTeme />
           <form method="post" action="/admin/logout"><button class="mali" type="submit">Odjava</button></form>
@@ -76,5 +87,6 @@ import Marka from "./Marka.astro";
       </header>
     )}
     <main class:list={{ siroko }}><slot /></main>
+    {uzivo && admin && <script>import "../lib/admin/uzivo-klijent";</script>}
   </body>
 </html>

@@ -1,5 +1,6 @@
 /** Tablica `prikljucci` (migrations/0008): priključna snaga po OMM-u ključa. */
 import { env } from "cloudflare:workers";
+import { javiAdminu } from "./admin/uzivo";
 import { snimciKljuca } from "./izvjestaj/snimci";
 import { elektraZaOmm, type Elektra, type Podaci, type Prikljucak } from "./prikljucak";
 
@@ -13,6 +14,7 @@ export async function spremiPrikljucak(uredaj: string, omm: string, p: Prikljuca
   )
     .bind(uredaj, omm, p.snaga_kw, p.faze, p.osigurac_a, izvor, tekst, new Date().toISOString())
     .run();
+  javiAdminu({ vrsta: "prikljucak", ishod: izvor });
 }
 
 const UVOZI = ["hep", "hep-moj-racun", "hep-hepi"];

@@ -15,6 +15,7 @@ import PostalMime from "postal-mime";
 import { procitajRacun } from "./hep-racun";
 import { slabKljuc } from "./http";
 import { registriraj, stanjeKljuca } from "./kljucevi";
+import { javiAdminu } from "./admin/uzivo";
 import { procitajPrikljucak } from "./prikljucak";
 import { popisPrikljucaka, spremiPrikljucak } from "./prikljucci";
 import { spremiRacun } from "./racuni";
@@ -54,6 +55,7 @@ async function zapisiMail(uredaj: string, od: string, naslov: string, z: Zapis) 
     .bind(crypto.randomUUID(), uredaj, new Date().toISOString(), od, naslov, z.vrsta, z.ishod,
       z.poruka === undefined ? null : JSON.stringify(z.poruka), z.snimakId ?? null)
     .run();
+  javiAdminu({ vrsta: `mail-${z.vrsta}`, ishod: z.ishod });
 }
 
 /** Cloudflare Email Routing (nije uključen: domovina.ai ima Google Workspace, vidi CLAUDE.md). */

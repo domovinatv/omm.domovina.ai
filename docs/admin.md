@@ -54,6 +54,17 @@ PDF lokalno visi (Browser Rendering), `?oblik=html` radi.
   MPT ili pipeline admin, na `/admin/sso` uđe bez novog koda.
 - Admin PDF na produkciji: ~330 kB, ~3,5 s (Browser Rendering), isto kao korisnički.
 
+## Uživo (od 2026-11-03)
+
+Pregled i detalj OMM-a osvježe se sami kad se baza promijeni: točka „uživo“ u zaglavlju je
+zelena dok je WebSocket na `/admin/uzivo` otvoren. Durable Object `AdminUzivo` (jedan za sve
+admine, hibernacijski WebSocketi, ping bez buđenja) prima `javiAdminu()` nakon svakog upisa
+(`dogadaji` osim OCR-a i duplikata, `mailovi`, `prikljucci`, rotacija ključa) i svim vezama
+pošalje samo vrstu događaja. Stranica zatim dohvati svoj HTML i zamijeni dijelove s
+`data-uzivo` (bez njih cijeli `<main>`, zato passkeyi to nemaju); novi retci zasvijetle.
+Ruta ide mimo Astra (`src/worker.ts`), pa sama provjerava host, `Origin` (CSWSH) i sesiju;
+veza se zatvara (4001) pri prvom događaju nakon isteka sesije.
+
 ## Otvoreno
 
 - Telegram/mail alarm kad se doda passkey (pay ga ima, ovdje je samo `console.warn`).

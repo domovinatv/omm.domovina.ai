@@ -103,6 +103,7 @@ Dnevnik (`dogadaji.tijelo`) sprema sažetak, ne uvoz.
 | `/privatnost` | politika privatnosti; rokovi iz `src/lib/ciscenje.ts` (dnevni cron) |
 | `/uvoz` | 301 na `/` (stara adresa) |
 | `/admin` | admin (Access OTP ili passkey): korisnici po OMM-u, izvještaj za bilo koji OMM po ključu (`?kljuc=`) ili izričito spojen (`?svi=1`), jer uvoz šalje korisnik; `docs/admin.md` |
+| `/admin/uzivo` | WebSocket za `/admin` i detalj OMM-a: Durable Object `AdminUzivo` (jedan, hibernacija, `src/lib/admin/uzivo.ts`) dobiva `javiAdminu()` iz `zapisi` (dnevnik), `zapisiMail`, `spremiPrikljucak` i rotacije ključa, a stranica dohvati svoj HTML i zamijeni `data-uzivo` dijelove (`uzivo-klijent.ts`). Ide mimo Astra (`src/worker.ts`) pa sam provjerava host, Origin i sesiju |
 | `/oznaka` | skriveni iframe (most) koji oznaka ubaci kad HEP-ov CSP priječi i `<script>` i fetch (Moj račun, Hepi): pošalje kod `/hep-uvoz.js` preko postMessage (oznaka ga izvrši kroz eval, a bez `unsafe-eval` kao inline `<script>`) i šalje zahtjeve na `/api/snimak` i `/api/racun`. Jedina stranica s `frame-ancestors` HEP-ovih portala (popup ne ide: COOP od 2026-10-30). Tijek: `flutter_moja_mreza/docs/2026-10-14-uvoz-bez-instalacije.md` § „HEP-ov CSP“ |
 | `/hep-uvoz.js` | kod bookmarkleta; **generiran** u flutter_moja_mreza (`cd extension && npm run bookmarklet`), ne mijenjati ovdje: treći redak nosi SHA-256, `npm run build` pada kad se ne slaže |
 

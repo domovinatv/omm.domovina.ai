@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { greska, json, opcije, uredaj } from "../../../lib/http";
+import { javiAdminu } from "../../../lib/admin/uzivo";
 import { noviKljuc } from "../../../lib/kljucevi";
 
 /**
@@ -45,6 +46,7 @@ export const POST: APIRoute = async ({ request }) => {
     ).bind(stari, sad),
   ]);
   for (let i = 0; i < stare.length; i += 1000) await env.SLIKE.delete(stare.slice(i, i + 1000));
+  javiAdminu({ vrsta: "kljuc", ishod: "rotiran" });
   return json({ kljuc: novi, slika: stare.length });
 };
 
