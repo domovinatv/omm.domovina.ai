@@ -276,3 +276,20 @@ iz `/privatnost`.
 - `flutter_moja_mreza/docs/2026-10-14-uvoz-bez-instalacije.md` — oznaka, iframe, HEP-ov CSP, ekstenzija
 - `flutter_moja_mreza/docs/2026-10-12-omm-domovina-ai-plan.md` — izvorni plan
 - `flutter_moja_mreza/docs/2026-10-13-izvjestaj-potrosnje.md` — izvještaj
+
+## Kako je napravljen PDF i provjeren DBML (2026-11-03)
+
+PDF ovog dokumenta (poslan Ivanu) nije u repou; ponovi ga ovako, u praznom direktoriju:
+
+1. `npx @mermaid-js/mermaid-cli -p p.json -i 2026-11-03-arhitektura.md -o out.md -e svg`, gdje je
+   `p.json` `{"executablePath":"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}`;
+   bez njega mmdc traži vlastiti Chromium i padne.
+2. `npx marked --gfm -i out.md -o body.html`, pa SVG-ove umetni inline umjesto `<img>`.
+3. CSS: `@page { size: A4 landscape }`, `break-before: page` na „Cjelina”, „Tokovi”, „Podaci” i
+   odjeljcima 3–6 (inače naslov ostane sam na dnu stranice), ER dijagram `max-height: 95mm`.
+4. `Google Chrome --headless=new --no-pdf-header-footer --print-to-pdf=… arhitektura.html` (10 stranica).
+
+DBML: provjera je `node scripts/smoke-test.mjs <putanja>.dbml` u `~/git/stepanic/open-diagram`
+(screenshotovi u `test-output/`). Pet provjera pada jer traže nazive iz open-ledger primjera; to nije
+greška ovog modela. Ref mora spajati polja istog tipa (inače upozorenje „types differ”), a bilješke
+„foreign key has no index” su neizbježne jer komponente nisu tablice.
