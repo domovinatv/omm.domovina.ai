@@ -65,6 +65,17 @@ pošalje samo vrstu događaja. Stranica zatim dohvati svoj HTML i zamijeni dijel
 Ruta ide mimo Astra (`src/worker.ts`), pa sama provjerava host, `Origin` (CSWSH) i sesiju;
 veza se zatvara (4001) pri prvom događaju nakon isteka sesije.
 
+Provjera i zamke:
+
+- `curl` na produkciji ide preko HTTP/2 i ne šalje `Upgrade`, pa dobiješ 426 kao da ruta ne
+  radi. Treba `--http1.1` uz `Sec-WebSocket-Key`/`-Version`: bez sesije 401, tuđi `Origin` 403.
+- Lokalno (`wrangler dev`): upiši sesiju u lokalni D1 (`admin_sessions.token_hash` = sha256
+  tokena, `expires_at` u budućnosti), pa Nodeov globalni `WebSocket` prima
+  `{ headers: { Origin, Cookie: "__Host-omm_admin=<token>" } }`. `POST /api/prikljucak`
+  tada mora stići kao `{"vrsta":"prikljucak",…}`. Testiran tako 2026-11-03.
+- Odmah nakon deploya jedan zahtjev je još dobio staru verziju (302 na prijavu).
+- Cijeli tijek na produkciji (prava sesija + pravi mail) još nije gledan u pregledniku.
+
 ## Otvoreno
 
 - Telegram/mail alarm kad se doda passkey (pay ga ima, ovdje je samo `console.warn`).
