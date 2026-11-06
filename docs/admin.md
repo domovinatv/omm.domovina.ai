@@ -38,6 +38,12 @@ e-mailovima (kao „MPT admin (sso)“). Dok je `ACCESS_AUD` prazan, `/admin/sso
 „LogoMedo admin (sso)“: tko je u njoj, prolazi Access i na `logomedo.com/admin/sso`
 (korisnik je to izričito prihvatio za Ivana); LogoMedo Worker ima svoj popis admina.
 
+**Partneri (2026-11-06):** matej.galic988@gmail.com, solardei.elektrane@gmail.com. U `ADMIN_EMAILS`
+i u posebnoj politici „OMM partneri“ (reusable, vezana **samo** uz „OMM admin (sso)“), ne u
+„OMM admini“, da ne prolaze Access na LogoMedu. Oduzimanje: iz `ADMIN_EMAILS` i iz te politike.
+Politike i aplikacija se mogu mijenjati iz konzole na dashboardu (`fetch('/api/v4/accounts/<račun>/access/…',
+{headers:{'x-cross-site-security':'dash'}})`); wrangler OAuth nema Access scope.
+
 ## Lokalno
 
 Access lokalno ne radi. Upiši sesiju u lokalni D1 (`admin_sessions`, `token_hash` =
